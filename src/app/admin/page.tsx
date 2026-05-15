@@ -688,7 +688,7 @@ export default function AdminDashboard() {
               </motion.div>
             </div>
           )}
-        </AnimatePresence>
+
           {isModalOpen && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsModalOpen(false)} className="absolute inset-0 bg-soft-black/60 backdrop-blur-md" />
@@ -699,108 +699,104 @@ export default function AdminDashboard() {
                     <button type="button" onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-text-black/5 rounded-full transition-colors"><CloseIcon size={24} /></button>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-6">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Informations</label>
-                        <input type="text" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="Titre du projet" className="w-full bg-transparent border-b border-text-black/20 py-3 outline-none text-xl font-serif" required />
+                        <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Titre du projet</label>
+                        <input type="text" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none font-serif text-xl" required />
                       </div>
                       <div className="grid grid-cols-2 gap-4">
-                        <input type="text" value={formCategory} onChange={(e) => setFormCategory(e.target.value)} placeholder="Catégorie" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" />
-                        <input type="text" value={formDate} onChange={(e) => setFormDate(e.target.value)} placeholder="Date (ex: Mai 2024)" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" required />
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Catégorie</label>
+                          <input type="text" value={formCategory} onChange={(e) => setFormCategory(e.target.value)} className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Date / Année</label>
+                          <input type="text" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" />
+                        </div>
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Image Principale (URL)</label>
-                        <input type="text" value={formImage} onChange={(e) => setFormImage(e.target.value)} placeholder="https://..." className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" required />
-                        {formImage && (
-                          <div className="relative aspect-video rounded-sm overflow-hidden bg-text-black/5 border border-text-black/10 mt-4">
-                            <Image src={formImage} alt="Preview" fill className="object-cover" unoptimized />
-                          </div>
-                        )}
+                        <input type="text" value={formImage} onChange={(e) => setFormImage(e.target.value)} className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" required />
                       </div>
-                      <div className="space-y-4 pt-4">
-                         <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Lien du projet</label>
-                         <select value={formLinkType} onChange={(e) => setFormLinkType(e.target.value as any)} className="w-full bg-transparent border border-text-black/10 p-3 text-sm outline-none">
-                           <option value="internal">Page Interne (Blog/Détails)</option>
-                           <option value="external">Lien Externe (Site web, Behance...)</option>
-                         </select>
-                         {formLinkType === "external" && (
-                           <input type="text" value={formUrl} onChange={(e) => setFormUrl(e.target.value)} placeholder="URL de destination" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" />
-                         )}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Lien</label>
+                          <select value={formLinkType} onChange={(e:any) => setFormLinkType(e.target.value)} className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm">
+                            <option value="internal">Interne</option>
+                            <option value="external">Externe</option>
+                          </select>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">URL / Slug</label>
+                          <input type="text" value={formUrl} onChange={(e) => setFormUrl(e.target.value)} className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" />
+                        </div>
                       </div>
                     </div>
 
                     <div className="space-y-6">
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-center border-b border-text-black/10 pb-4">
-                          <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Caroussel Media (Images/Vidéos)</label>
-                          <div className="flex gap-2">
-                            <button type="button" onClick={() => addGalleryItem('image')} className="text-primary-red text-[10px] font-bold uppercase border border-primary-red/20 px-2 py-1 rounded-sm hover:bg-primary-red/5"> + Image </button>
-                            <button type="button" onClick={() => addGalleryItem('video')} className="text-primary-red text-[10px] font-bold uppercase border border-primary-red/20 px-2 py-1 rounded-sm hover:bg-primary-red/5"> + Vidéo YT </button>
-                          </div>
+                      <div className="flex justify-between items-center mb-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Carrousel Media (Galerie)</label>
+                        <div className="flex gap-2">
+                          <button type="button" onClick={() => addGalleryItem('image')} className="text-[9px] font-bold text-primary-red uppercase border border-primary-red/20 px-2 py-1 rounded-xs">+ Image</button>
+                          <button type="button" onClick={() => addGalleryItem('video')} className="text-[9px] font-bold text-primary-red uppercase border border-primary-red/20 px-2 py-1 rounded-xs">+ Vidéo YT</button>
                         </div>
-                        
-                        <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
-                          {formGallery.length === 0 ? <p className="text-xs opacity-30 italic text-center py-8 border border-dashed border-text-black/10">Aucun élément dans le caroussel.</p> : (
-                            formGallery.map((item, idx) => {
-                              const isVideo = item.type === 'video';
-                              const ytId = isVideo ? getYoutubeId(item.url) : null;
-                              const thumb = isVideo ? getYoutubeThumbnail(ytId || "") : item.url;
-                              
-                              return (
-                                <div key={idx} className="flex items-center gap-4 bg-text-black/5 p-3 rounded-sm group">
-                                  <div className="relative w-16 h-12 bg-black rounded-xs overflow-hidden flex-shrink-0">
-                                    <Image src={thumb} alt="thumb" fill className="object-cover opacity-80" unoptimized />
-                                    {isVideo && <div className="absolute inset-0 flex items-center justify-center"><Play size={12} fill="white" className="text-white" /></div>}
-                                  </div>
-                                  <div className="flex-1 truncate text-xs opacity-60 font-mono">{item.url}</div>
-                                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button type="button" onClick={() => moveGalleryItem(idx, 'up')} className="p-1.5 hover:bg-text-black/10 rounded-sm"><ArrowLeft size={14} className="rotate-90" /></button>
-                                    <button type="button" onClick={() => moveGalleryItem(idx, 'down')} className="p-1.5 hover:bg-text-black/10 rounded-sm"><ArrowLeft size={14} className="-rotate-90" /></button>
-                                    <button type="button" onClick={() => removeGalleryItem(idx)} className="p-1.5 hover:bg-red-600/10 text-red-600 rounded-sm"><Trash2 size={14} /></button>
-                                  </div>
-                                </div>
-                              );
-                            })
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex justify-between items-center pt-4">
-                        <div className="flex items-center gap-4">
-                          <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Contenu / Description</label>
-                          <div className="flex bg-text-black/5 p-1 rounded-sm">
-                            <button type="button" onClick={() => setIsPreviewMode(false)} className={`px-3 py-1 text-[10px] font-bold uppercase rounded-sm transition-all ${!isPreviewMode ? 'bg-white shadow-sm' : 'opacity-40'}`}>Éditer</button>
-                            <button type="button" onClick={() => setIsPreviewMode(true)} className={`px-3 py-1 text-[10px] font-bold uppercase rounded-sm transition-all ${isPreviewMode ? 'bg-white shadow-sm' : 'opacity-40'}`}>Aperçu</button>
-                          </div>
-                        </div>
-                        <span className="text-[10px] opacity-30 italic">Supporte le HTML</span>
                       </div>
                       
-                      {isPreviewMode ? (
-                        <div className="w-full h-[400px] overflow-y-auto bg-white border border-text-black/10 p-8 rounded-sm prose prose-sm max-w-none">
-                          <h1 className="font-serif text-3xl mb-4">{formTitle}</h1>
-                          <div dangerouslySetInnerHTML={{ __html: formContent.replace(/\n/g, '<br/>') }} />
-                        </div>
-                      ) : (
-                        <textarea value={formContent} onChange={(e) => setFormContent(e.target.value)} rows={15} className="w-full bg-text-black/[0.02] border border-text-black/10 p-6 outline-none resize-none font-mono text-sm leading-relaxed rounded-sm focus:border-primary-red/30 transition-colors" placeholder="Décrivez votre projet ici..." />
-                      )}
+                      <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                        {formGallery.map((item, idx) => (
+                          <div key={idx} className="flex items-center gap-4 bg-text-black/5 p-3 rounded-sm group">
+                            <div className="relative w-12 h-12 rounded-xs overflow-hidden flex-shrink-0">
+                              <Image src={item.type === 'video' ? `https://img.youtube.com/vi/${getYoutubeId(item.url)}/default.jpg` : item.url} alt="Gallery" fill className="object-cover" unoptimized />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[9px] font-bold uppercase opacity-30 mb-1">{item.type === 'video' ? 'YouTube' : 'Image'}</p>
+                              <p className="text-[10px] truncate opacity-60">{item.url}</p>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <button type="button" onClick={() => moveGalleryItem(idx, 'up')} className="p-1 hover:text-primary-red opacity-0 group-hover:opacity-100 transition-opacity"><ArrowLeft size={12} className="rotate-90" /></button>
+                              <button type="button" onClick={() => moveGalleryItem(idx, 'down')} className="p-1 hover:text-primary-red opacity-0 group-hover:opacity-100 transition-opacity"><ArrowLeft size={12} className="-rotate-90" /></button>
+                              <button type="button" onClick={() => removeGalleryItem(idx)} className="p-1 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={12} /></button>
+                            </div>
+                          </div>
+                        ))}
+                        {formGallery.length === 0 && <p className="text-center py-8 text-xs opacity-20 italic">Aucun média dans la galerie</p>}
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex gap-4 pt-6 border-t border-text-black/10">
-                    <button type="submit" className="flex-1 bg-text-black text-white py-4 rounded-sm font-bold text-xs tracking-widest uppercase hover:bg-soft-black transition-all">Enregistrer le Projet</button>
-                    <button type="button" onClick={() => setFormStatus(formStatus === "Publié" ? "Brouillon" : "Publié")} className={`px-8 py-4 rounded-sm font-bold text-xs tracking-widest uppercase transition-all ${formStatus === "Publié" ? "bg-green-600/10 text-green-600" : "bg-orange-600/10 text-orange-600"}`}>
-                      {formStatus}
-                    </button>
+                  <div className="space-y-4 pt-4">
+                    <div className="flex justify-between items-center">
+                      <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Description (Contenu HTML)</label>
+                      <button type="button" onClick={() => setIsPreviewMode(!isPreviewMode)} className="text-[10px] font-bold uppercase tracking-widest text-primary-red underline">
+                        {isPreviewMode ? "Éditeur" : "Prévisualisation"}
+                      </button>
+                    </div>
+                    {isPreviewMode ? (
+                      <div className="w-full bg-text-black/5 p-4 rounded-sm min-h-[200px] prose prose-sm max-w-none prose-invert text-text-black" dangerouslySetInnerHTML={{ __html: formContent }} />
+                    ) : (
+                      <textarea value={formContent} onChange={(e) => setFormContent(e.target.value)} rows={10} className="w-full bg-text-black/5 p-4 rounded-sm outline-none focus:border-primary-red resize-none text-sm" placeholder="Contenu du projet..." required />
+                    )}
                   </div>
+
+                  <button type="submit" className="w-full bg-text-black text-white py-5 rounded-sm font-bold text-xs tracking-widest uppercase hover:bg-soft-black transition-all shadow-xl">
+                    ENREGISTRER LE PROJET
+                  </button>
                 </form>
               </motion.div>
             </div>
           )}
         </AnimatePresence>
-        
-        {uploadSuccess && <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="fixed bottom-12 right-12 bg-green-600 text-white px-8 py-3 rounded-sm font-bold text-xs tracking-widest shadow-2xl uppercase">Synchronisé !</motion.div>}
+        {uploadSuccess && (
+          <motion.div 
+            initial={{ opacity: 0, y: 50 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            exit={{ opacity: 0 }} 
+            className="fixed bottom-12 right-12 bg-green-600 text-white px-8 py-3 rounded-sm font-bold text-xs tracking-widest shadow-2xl uppercase"
+          >
+            Synchronisé !
+          </motion.div>
+        )}
       </main>
     </div>
   );
