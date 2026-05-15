@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Plus, Settings, FileText, Image as ImageIcon, 
   LogOut, Check, X as CloseIcon, Edit2, Trash2, Upload, AlertCircle, Link as LinkIcon,
-  Share2, Mail, MessageSquare, Zap, User, Clock, Music, Play, Pause, Send
+  Share2, Mail, MessageSquare, Zap, User, Clock, Music, Play, Pause, Send, ArrowLeft
 } from "lucide-react";
 import { FaLinkedin, FaGithub, FaTwitter, FaInstagram, FaYoutube, FaTiktok, FaGlobe } from "react-icons/fa";
 import Link from "next/link";
