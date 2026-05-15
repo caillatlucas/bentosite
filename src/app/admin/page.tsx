@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Plus, Settings, FileText, Image as ImageIcon, 
   LogOut, Check, X as CloseIcon, Edit2, Trash2, Upload, AlertCircle, Link as LinkIcon,
-  Share2, Mail, MessageSquare, Zap, User, Clock, Music, Play, Pause, Send, ArrowLeft
+  Share2, Mail, MessageSquare, Zap, User, Clock, Music, Play, Pause, Send, ArrowLeft,
+  Download, ExternalLink
 } from "lucide-react";
 import { FaLinkedin, FaGithub, FaTwitter, FaInstagram, FaYoutube, FaTiktok, FaGlobe } from "react-icons/fa";
 import Link from "next/link";
@@ -531,10 +532,18 @@ export default function AdminDashboard() {
                   <p className="text-sm leading-relaxed text-text-black/70">{msg.content}</p>
                   
                   {msg.attachments && msg.attachments.length > 0 && (
-                    <div className="flex gap-2 pt-2">
+                    <div className="flex gap-4 pt-2">
                       {msg.attachments.map((url, i) => (
-                        <div key={i} className="relative w-20 h-20 rounded-sm overflow-hidden border border-text-black/10">
+                        <div key={i} className="relative w-24 h-24 rounded-sm overflow-hidden border border-text-black/10 group/img">
                           <Image src={url} alt="attachment" fill className="object-cover" unoptimized />
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                            <a href={url} target="_blank" rel="noopener noreferrer" className="p-1.5 bg-white/20 hover:bg-white/40 rounded-full text-white transition-colors" title="Ouvrir">
+                              <ExternalLink size={14} />
+                            </a>
+                            <a href={url} download={`attachment-${msg.id}-${i}`} className="p-1.5 bg-white/20 hover:bg-white/40 rounded-full text-white transition-colors" title="Télécharger">
+                              <Download size={14} />
+                            </a>
+                          </div>
                         </div>
                       ))}
                     </div>
