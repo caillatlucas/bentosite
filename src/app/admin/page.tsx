@@ -289,7 +289,21 @@ export default function AdminDashboard() {
     console.log("Starting MFA enrollment...");
     setMfaError("");
     try {
-      const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp' });
+      // Clean up any existing unverified factors first to avoid "factor already exists" error
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      if (factors) {
+        const unverified = factors.all.filter(f => f.status === 'unverified');
+        for (const factor of unverified) {
+          await supabase.auth.mfa.unenroll({ factorId: factor.id });
+        }
+      }
+
+      const { data, error } = await supabase.auth.mfa.enroll({ 
+        factorType: 'totp',
+        issuer: 'Lucas Portfolio',
+        friendlyName: 'Admin Access'
+      });
+
       if (error) {
         console.error("MFA Enroll Error:", error);
         setMfaError(error.message);
