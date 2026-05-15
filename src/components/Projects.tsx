@@ -20,17 +20,29 @@ interface Project {
 export default function Projects() {
   const [projects, setProjects] = useState<Project[]>([]);
 
+  const fetchProjects = async () => {
+    const { data } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('status', 'Publié')
+      .order('created_at', { ascending: false });
+    
+    if (data) setProjects(data);
+  };
+
   useEffect(() => {
-    const fetchProjects = async () => {
-      const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('status', 'Publié')
-        .order('created_at', { ascending: false });
-      
-      if (data) setProjects(data);
-    };
     fetchProjects();
+
+    const channel = supabase
+      .channel('projects-realtime')
+      .on('postgres_changes', { event: '*', table: 'projects', schema: 'public' }, () => {
+        fetchProjects();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return (
@@ -65,7 +77,7 @@ export default function Projects() {
                   {/* Content Overlay */}
                   <div className="absolute bottom-0 left-0 w-full p-6 md:p-8 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
                     {project.category && (
-                      <p className="text-white/70 text-xs md:text-sm tracking-widest uppercase mb-2">
+                      <p className="text-white/70 text-[10px] md:text-sm tracking-widest uppercase mb-2">
                         {project.category}
                       </p>
                     )}

@@ -15,15 +15,6 @@ interface MediaItem {
   name: string;
 }
 
-interface Message {
-  id: string;
-  name: string;
-  title: string;
-  content: string;
-  contact?: string;
-  date: string;
-}
-
 export default function Home() {
   const [isClient, setIsClient] = useState(false);
   const [settings, setSettings] = useState({ 
@@ -88,8 +79,27 @@ export default function Home() {
 
     fetchData();
 
+    // REALTIME SUBSCRIPTIONS
+    const settingsChannel = supabase
+      .channel('settings-changes')
+      .on('postgres_changes', { event: '*', table: 'settings', schema: 'public' }, () => {
+        fetchData();
+      })
+      .subscribe();
+
+    const mediaChannel = supabase
+      .channel('media-changes')
+      .on('postgres_changes', { event: '*', table: 'media', schema: 'public' }, () => {
+        fetchData();
+      })
+      .subscribe();
+
     window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      supabase.removeChannel(settingsChannel);
+      supabase.removeChannel(mediaChannel);
+    };
   }, [mouseX, mouseY]);
 
   const fetchData = async () => {
@@ -123,22 +133,10 @@ export default function Home() {
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    const newMessage = { 
-      name: formName, 
-      title: formTitle, 
-      content: formContent, 
-      contact: formContact, 
-      date: new Date().toLocaleString("fr-FR") 
-    };
-    
+    const newMessage = { name: formName, title: formTitle, content: formContent, contact: formContact, date: new Date().toLocaleString("fr-FR") };
     const { error } = await supabase.from('messages').insert(newMessage);
-    
-    if (error) {
-      alert("Erreur lors de l'envoi: " + error.message);
-    } else {
-      setIsSubmitting(false); setShowSuccess(true);
-      setTimeout(() => { setShowSuccess(false); setIsContactOpen(false); setFormName(""); setFormTitle(""); setFormContent(""); setFormContact(""); }, 2000);
-    }
+    if (error) alert("Erreur: " + error.message);
+    else { setIsSubmitting(false); setShowSuccess(true); setTimeout(() => { setShowSuccess(false); setIsContactOpen(false); setFormName(""); setFormTitle(""); setFormContent(""); setFormContact(""); }, 2000); }
   };
 
   if (!isClient) return null;
@@ -161,8 +159,8 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      <motion.button onClick={() => setIsContactOpen(true)} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="fixed bottom-8 right-8 md:bottom-12 md:right-16 z-[100] bg-primary-red text-white w-16 h-16 rounded-full shadow-2xl flex items-center justify-center group overflow-hidden">
-        <motion.div animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 2 }}><Zap size={28} fill="currentColor" /></motion.div>
+      <motion.button onClick={() => setIsContactOpen(true)} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="fixed bottom-8 right-8 md:bottom-12 md:right-16 z-[100] bg-primary-red text-white w-14 h-14 md:w-16 md:h-16 rounded-full shadow-2xl flex items-center justify-center group overflow-hidden">
+        <motion.div animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 2 }}><Zap size={24} fill="currentColor" /></motion.div>
       </motion.button>
 
       <AnimatePresence>
@@ -194,26 +192,30 @@ export default function Home() {
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }} className="fixed top-8 right-8 md:top-12 md:right-16 z-50">
         <Link href="/admin" className="transition-colors">
-          <motion.span style={{ color: adminBtnColor }} className="flex items-center gap-1 text-sm uppercase tracking-widest font-medium">Admin <ArrowUpRight size={16} /></motion.span>
+          <motion.span style={{ color: adminBtnColor }} className="flex items-center gap-1 text-[10px] md:text-sm uppercase tracking-widest font-bold">Admin <ArrowUpRight size={14} /></motion.span>
         </Link>
       </motion.div>
 
       <section className="flex-1 flex flex-col justify-center min-h-[85vh] relative z-10 mt-24 md:mt-0 max-w-[1600px] mx-auto w-full">
         <div className="relative" style={{ perspective: 1000 }}>
+          {/* MUSIC PLAYER - OPTIMIZED FOR MOBILE */}
           {settings.musicEnabled && musicId && (
-            <motion.div style={{ rotateX, rotateY, transformStyle: "preserve-3d" }} className="absolute -top-16 right-0 md:-right-12 z-30">
-              <div className="bg-white/10 backdrop-blur-md border border-white/20 p-2 md:p-3 rounded-2xl flex items-center gap-4 shadow-2xl group hover:bg-white/20 transition-all">
-                <div className="relative w-12 h-12 md:w-16 md:h-16 overflow-hidden rounded-xl shadow-lg animate-spin-slow">
-                  {settings.musicCover ? <Image src={settings.musicCover} alt="Cover" fill className="object-cover" unoptimized /> : <div className="w-full h-full bg-primary-red flex items-center justify-center"><Music size={24} className="text-white" /></div>}
+            <motion.div 
+              style={{ rotateX, rotateY, transformStyle: "preserve-3d" }} 
+              className="absolute -top-24 right-0 md:-top-16 md:-right-12 z-30 scale-90 md:scale-100 origin-right"
+            >
+              <div className="bg-white/10 backdrop-blur-md border border-white/20 p-2 md:p-3 rounded-2xl flex items-center gap-3 md:gap-4 shadow-2xl group hover:bg-white/20 transition-all">
+                <div className="relative w-10 h-10 md:w-16 md:h-16 overflow-hidden rounded-xl shadow-lg animate-spin-slow flex-shrink-0">
+                  {settings.musicCover ? <Image src={settings.musicCover} alt="Cover" fill className="object-cover" unoptimized /> : <div className="w-full h-full bg-primary-red flex items-center justify-center"><Music size={20} className="text-white" /></div>}
                 </div>
-                <div className="pr-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/60">Now Playing</p>
+                <div className="pr-2 md:pr-4">
+                  <div className="flex items-center gap-1.5 mb-0.5 md:mb-1">
+                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                    <p className="text-[8px] md:text-[9px] font-bold uppercase tracking-[0.2em] text-white/60">Live</p>
                   </div>
                   <button onClick={() => setIsMuted(!isMuted)} className="text-white hover:text-primary-red transition-colors flex items-center gap-2">
-                    {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
-                    <span className="text-[10px] font-bold uppercase tracking-widest">{isMuted ? "Unmute" : "Playing"}</span>
+                    {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                    <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest">{isMuted ? "Unmute" : "Mute"}</span>
                   </button>
                 </div>
                 <iframe width="0" height="0" src={`https://www.youtube.com/embed/${musicId}?autoplay=1&mute=${isMuted ? 1 : 0}&loop=1&playlist=${musicId}`} allow="autoplay" className="hidden" />
@@ -222,40 +224,40 @@ export default function Home() {
           )}
 
           <motion.div style={{ rotateX, rotateY, textShadow, transformStyle: "preserve-3d" }} className="relative z-10 flex justify-center md:justify-start">
-            <motion.h1 style={{ color: textColor }} className="font-serif text-[22vw] md:text-[180px] lg:text-[220px] leading-[0.8] tracking-tighter select-none relative z-10">{settings.heroTitleMain}</motion.h1>
+            <motion.h1 style={{ color: textColor }} className="font-serif text-[20vw] md:text-[180px] lg:text-[220px] leading-[0.8] tracking-tighter select-none relative z-10">{settings.heroTitleMain}</motion.h1>
           </motion.div>
-          <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 1, delay: 0.2 }} className="absolute -top-16 md:-top-32 left-[10%] md:left-[15%] z-20 pointer-events-none">
-            <motion.h2 style={{ color: lucasColor }} className="font-serif italic text-6xl md:text-8xl lg:text-[140px] opacity-90 select-none">{settings.heroTitleSub}</motion.h2>
+          <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 1, delay: 0.2 }} className="absolute -top-12 md:-top-32 left-[10%] md:left-[15%] z-20 pointer-events-none">
+            <motion.h2 style={{ color: lucasColor }} className="font-serif italic text-5xl md:text-8xl lg:text-[140px] opacity-90 select-none">{settings.heroTitleSub}</motion.h2>
           </motion.div>
         </div>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, delay: 0.5 }} className="mt-16 md:mt-24 max-w-xl self-center md:self-start text-center md:text-left">
-          <motion.p style={{ color: textColor }} className="text-xl md:text-3xl font-light tracking-wide leading-relaxed mb-4">{settings.profession}</motion.p>
-          {settings.bio && <motion.p style={{ color: secondaryTextColor }} className="text-sm md:text-lg font-medium leading-relaxed max-w-md">{settings.bio}</motion.p>}
-          <motion.div style={{ backgroundColor: textColor }} className="h-[1px] w-12 mt-8 opacity-30 mx-auto md:mx-0"></motion.div>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, delay: 0.5 }} className="mt-12 md:mt-24 max-w-xl self-center md:self-start text-center md:text-left">
+          <motion.p style={{ color: textColor }} className="text-lg md:text-3xl font-light tracking-wide leading-relaxed mb-3 md:mb-4">{settings.profession}</motion.p>
+          {settings.bio && <motion.p style={{ color: secondaryTextColor }} className="text-xs md:text-lg font-medium leading-relaxed max-w-md px-4 md:px-0">{settings.bio}</motion.p>}
+          <motion.div style={{ backgroundColor: textColor }} className="h-[1px] w-12 mt-6 md:mt-8 opacity-30 mx-auto md:mx-0"></motion.div>
         </motion.div>
       </section>
 
-      <div className="h-32 md:h-48"></div>
+      <div className="h-24 md:h-48"></div>
 
-      <div className="max-w-[1600px] mx-auto w-full space-y-48">
+      <div className="max-w-[1600px] mx-auto w-full space-y-32 md:space-y-48">
         <section>
-          <div className="flex justify-between items-end mb-16 border-b border-text-black/10 pb-6">
-            <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl text-soft-black">Projets Récents</h2>
-            <span className="text-text-black/50 text-sm tracking-widest uppercase hidden md:block">{settings.projectsTitle}</span>
+          <div className="flex justify-between items-end mb-12 md:mb-16 border-b border-text-black/10 pb-6">
+            <h2 className="font-serif text-3xl md:text-5xl lg:text-6xl text-soft-black">Projets Récents</h2>
+            <span className="text-text-black/50 text-[10px] md:text-sm tracking-widest uppercase hidden md:block">{settings.projectsTitle}</span>
           </div>
           <Projects />
         </section>
 
         {galleryMedia.length > 0 && (
           <section>
-            <div className="flex justify-between items-end mb-16 border-b border-text-black/10 pb-6">
-              <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl text-soft-black">{settings.galleryTitle}</h2>
-              <span className="text-text-black/50 text-sm tracking-widest uppercase hidden md:block">Bento Grid (Cloud)</span>
+            <div className="flex justify-between items-end mb-12 md:mb-16 border-b border-text-black/10 pb-6">
+              <h2 className="font-serif text-3xl md:text-5xl lg:text-6xl text-soft-black">{settings.galleryTitle}</h2>
+              <span className="text-text-black/50 text-[10px] md:text-sm tracking-widest uppercase hidden md:block">Bento Grid (Realtime)</span>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 grid-rows-2 gap-4 h-[800px]">
+            <div className="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-4 md:h-[800px]">
               {galleryMedia.slice(0, 5).map((item, i) => (
-                <motion.div key={item.id} initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} onClick={() => setSelectedImage(item)} className={`relative overflow-hidden rounded-sm bg-text-black/5 group cursor-zoom-in ${i === 0 ? "md:col-span-2 md:row-span-2" : i === 1 ? "md:col-span-2 md:row-span-1" : "md:col-span-1 md:row-span-1"}`}>
+                <motion.div key={item.id} initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} onClick={() => setSelectedImage(item)} className={`relative overflow-hidden rounded-sm bg-text-black/5 group cursor-zoom-in aspect-square md:aspect-auto ${i === 0 ? "md:col-span-2 md:row-span-2" : i === 1 ? "md:col-span-2 md:row-span-1" : "md:col-span-1 md:row-span-1"}`}>
                   <Image src={item.url} alt={item.name} fill className="object-cover transition-transform duration-700 group-hover:scale-105" unoptimized />
                 </motion.div>
               ))}
@@ -267,16 +269,12 @@ export default function Home() {
           <div className="max-w-md text-center md:text-left relative">
             <motion.h3 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} className="font-serif text-3xl md:text-4xl text-soft-black mb-6">Discutons de votre projet.</motion.h3>
             <div className="relative inline-block">
-              <button onClick={copyEmail} className="group flex items-center gap-3 text-xl border-b border-primary-red text-text-black hover:text-primary-red transition-all pb-1 font-medium">
+              <button onClick={copyEmail} className="group flex items-center gap-3 text-lg md:text-xl border-b border-primary-red text-text-black hover:text-primary-red transition-all pb-1 font-medium">
                 {settings.email || "contact@lucascaillat.fr"}
                 <Copy size={16} className="opacity-0 group-hover:opacity-40 transition-opacity" />
               </button>
               <AnimatePresence>
-                {copied && (
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: -10 }} exit={{ opacity: 0, y: 0 }} className="absolute -top-12 left-0 bg-text-black text-white px-4 py-2 rounded-sm text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 shadow-xl">
-                    <Check size={12} className="text-green-500" /> Email Copié !
-                  </motion.div>
-                )}
+                {copied && <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: -10 }} exit={{ opacity: 0, y: 0 }} className="absolute -top-12 left-0 bg-text-black text-white px-4 py-2 rounded-sm text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 shadow-xl"><Check size={12} className="text-green-500" /> Email Copié !</motion.div>}
               </AnimatePresence>
             </div>
           </div>
