@@ -10,7 +10,7 @@ import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 
 interface MediaItem { id: string; url: string; name: string; }
-interface Message { id: string; name: string; title: string; content: string; contact?: string; date: string; reply?: string; order_id?: string; attachments?: string[]; }
+interface Message { id: string; name: string; title: string; content: string; contact?: string; date: string; reply?: string; order_id?: string; attachments?: string[]; agreed_to_pay?: boolean; replies?: { text: string; date: string; from: string }[]; }
 interface Product { id: string; name: string; price: number; description: string; images: string[]; link?: string; link_text?: string; }
 
 export default function Home() {
@@ -138,10 +138,11 @@ export default function Home() {
     const myMsgIdsRaw = localStorage.getItem("my_sent_messages");
     if (!myMsgIdsRaw) return;
     const myMsgIds = JSON.parse(myMsgIdsRaw);
-    const { data } = await supabase.from('messages').select('*').in('id', myMsgIds).not('reply', 'is', null);
+    const { data } = await supabase.from('messages').select('*').in('id', myMsgIds).order('created_at', { ascending: false });
     if (data) {
       setReplies(data);
-      setUnreadCount(data.length);
+      const unread = data.filter(m => m.reply && !localStorage.getItem(`read_reply_${m.id}`)).length;
+      setUnreadCount(unread);
     }
   };
 
@@ -190,6 +191,7 @@ export default function Home() {
       contact: formContact, 
       order_id: formOrderId || null,
       attachments: formAttachments,
+      agreed_to_pay: orderAgreed,
       date: new Date().toLocaleString("fr-FR") 
     };
     
@@ -358,17 +360,33 @@ export default function Home() {
             <div className="p-4 max-h-[400px] overflow-y-auto space-y-4">
               {replies.length === 0 ? <p className="text-xs text-text-black/40 text-center py-8">Aucune réponse pour le moment.</p> : (
                 replies.map(r => (
-                  <div key={r.id} className="bg-text-black/[0.02] border border-text-black/5 rounded-sm p-4 relative group">
-                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-2">{r.title}</p>
-                    <p className="text-sm font-medium mb-3">{r.reply}</p>
+                  <div key={r.id} className="bg-text-black/[0.02] border border-text-black/5 rounded-sm p-4 relative group" onClick={() => { if(r.reply) localStorage.setItem(`read_reply_${r.id}`, "true"); checkReplies(); }}>
+                    <div className="flex justify-between items-start mb-2">
+                      <p className="text-[10px] font-bold uppercase tracking-widest opacity-40">{r.title}</p>
+                      {r.order_id && <span className="text-[9px] font-bold text-primary-red">Code: {r.order_id}</span>}
+                    </div>
+                    <div className="space-y-3 mb-3">
+                      {r.replies && r.replies.length > 0 ? (
+                        r.replies.map((rep, idx) => (
+                          <div key={idx} className={`${rep.from === 'Lucas' ? 'bg-text-black/5 border-l-2 border-primary-red pl-3 py-1' : ''}`}>
+                            <p className="text-[9px] font-bold uppercase opacity-30 mb-1">{rep.from} • {rep.date}</p>
+                            <p className="text-sm font-medium">{rep.text}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm font-medium">{r.reply || <span className="opacity-30 italic">En attente de réponse...</span>}</p>
+                      )}
+                    </div>
                     <div className="flex justify-between items-center">
-                      <p className="text-[9px] opacity-30 italic">Répondu par Lucas</p>
-                      <button 
-                        onClick={() => handleReplyToMessage(r)}
-                        className="text-[10px] font-bold text-primary-red uppercase tracking-widest hover:underline flex items-center gap-1"
-                      >
-                        <Send size={10} /> Répondre
-                      </button>
+                      <p className="text-[9px] opacity-30 italic">{r.reply ? "Répondu par Lucas" : "Envoyé par vous"}</p>
+                      {r.reply && (
+                        <button 
+                          onClick={() => handleReplyToMessage(r)}
+                          className="text-[10px] font-bold text-primary-red uppercase tracking-widest hover:underline flex items-center gap-1"
+                        >
+                          <Send size={10} /> Répondre
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))

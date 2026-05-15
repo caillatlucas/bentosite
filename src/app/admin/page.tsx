@@ -44,6 +44,8 @@ interface Message {
   reply?: string;
   order_id?: string;
   attachments?: string[];
+  agreed_to_pay?: boolean;
+  replies?: { text: string; date: string; from: string }[];
 }
 
 interface Product {
@@ -138,9 +140,15 @@ export default function AdminDashboard() {
   const [prodLinkText, setProdLinkText] = useState("");
 
   useEffect(() => {
-    const auth = localStorage.getItem("admin_auth");
-    if (auth !== "true") router.push("/admin/login");
-    fetchData();
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push("/admin/login");
+      } else {
+        fetchData();
+      }
+    };
+    checkAuth();
 
     // Real-time Messages
     const msgChannel = supabase.channel('admin-msgs')
@@ -236,19 +244,38 @@ export default function AdminDashboard() {
   };
 
   const handleReply = async (msgId: string) => {
-    const reply = replyText[msgId];
-    if (!reply) return;
-    const { error } = await supabase.from('messages').update({ reply }).eq('id', msgId);
+    const text = replyText[msgId];
+    if (!text) return;
+    const msg = messages.find(m => m.id === msgId);
+    if (!msg) return;
+    
+    const newReply = { 
+      text, 
+      date: new Date().toLocaleString("fr-FR"),
+      from: "Lucas"
+    };
+    
+    const updatedReplies = [...(msg.replies || []), newReply];
+    
+    const { error } = await supabase.from('messages').update({ 
+      reply: text, 
+      replies: updatedReplies 
+    }).eq('id', msgId);
+
     if (!error) {
-      setMessages(messages.map(m => m.id === msgId ? { ...m, reply } : m));
+      setMessages(messages.map(m => m.id === msgId ? { ...m, reply: text, replies: updatedReplies } : m));
       setReplyText({ ...replyText, [msgId]: "" });
-      alert("Réponse envoyée !");
     }
   };
 
   const deleteProject = async (id: string) => { if (confirm("Supprimer?")) { await supabase.from('projects').delete().eq('id', id); setProjects(projects.filter(p => p.id !== id)); } };
   const deleteMedia = async (id: string) => { await supabase.from('media').delete().eq('id', id); setMediaItems(mediaItems.filter(m => m.id !== id)); };
   const deleteMessage = async (id: string) => { await supabase.from('messages').delete().eq('id', id); setMessages(messages.filter(m => m.id !== id)); };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/admin/login");
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -397,7 +424,7 @@ export default function AdminDashboard() {
             })}
           </nav>
         </div>
-        <button onClick={() => { localStorage.removeItem("admin_auth"); router.push("/admin/login"); }} className="flex items-center gap-3 text-text-black/50 hover:text-primary-red transition-all p-4">
+        <button onClick={handleLogout} className="flex items-center gap-3 text-text-black/50 hover:text-primary-red transition-all p-4">
           <LogOut size={20} /> <span className="text-sm font-medium">Déconnexion</span>
         </button>
       </aside>
@@ -530,9 +557,10 @@ export default function AdminDashboard() {
               {messages.map((msg) => (
                 <div key={msg.id} className="bg-white/60 border border-text-black/5 rounded-sm p-8 space-y-6 relative group">
                   <button onClick={() => deleteMessage(msg.id)} className="absolute top-6 right-6 text-text-black/20 hover:text-red-600"><Trash2 size={18} /></button>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-wrap">
                     <h3 className="font-serif text-2xl text-soft-black">{msg.title}</h3>
                     {msg.order_id && <span className="bg-primary-red/10 text-primary-red px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest rounded-xs">Commande: {msg.order_id}</span>}
+                    {msg.agreed_to_pay && <span className="bg-green-600/10 text-green-600 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest rounded-xs flex items-center gap-1"><Check size={10} /> S'est engagé à payer</span>}
                   </div>
                   <p className="text-sm leading-relaxed text-text-black/70">{msg.content}</p>
                   
@@ -556,24 +584,28 @@ export default function AdminDashboard() {
 
                   <div className="text-[10px] font-bold uppercase tracking-widest opacity-40">Par {msg.name} le {msg.date} • {msg.contact}</div>
                   
-                  <div className="mt-8 pt-8 border-t border-text-black/10">
-                    {msg.reply ? (
-                      <div className="bg-primary-red/5 p-4 rounded-sm border-l-2 border-primary-red">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-primary-red mb-2">Ma Réponse :</p>
-                        <p className="text-sm italic">{msg.reply}</p>
-                      </div>
-                    ) : (
-                      <div className="flex gap-4">
-                        <input 
-                          type="text" 
-                          placeholder="Écrire une réponse..." 
-                          value={replyText[msg.id] || ""}
-                          onChange={(e) => setReplyText({ ...replyText, [msg.id]: e.target.value })}
-                          className="flex-1 bg-transparent border-b border-text-black/10 py-2 text-sm outline-none focus:border-primary-red"
-                        />
-                        <button onClick={() => handleReply(msg.id)} className="bg-text-black text-white px-6 py-2 text-xs font-bold rounded-sm flex items-center gap-2"> <Send size={14} /> RÉPONDRE </button>
+                  <div className="mt-8 pt-8 border-t border-text-black/10 space-y-6">
+                    {msg.replies && msg.replies.length > 0 && (
+                      <div className="space-y-4">
+                        {msg.replies.map((r, idx) => (
+                          <div key={idx} className="bg-primary-red/5 p-4 rounded-sm border-l-2 border-primary-red">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-primary-red mb-2">Ma Réponse ({r.date}) :</p>
+                            <p className="text-sm italic">{r.text}</p>
+                          </div>
+                        ))}
                       </div>
                     )}
+                    
+                    <div className="flex gap-4">
+                      <input 
+                        type="text" 
+                        placeholder="Écrire une autre réponse..." 
+                        value={replyText[msg.id] || ""}
+                        onChange={(e) => setReplyText({ ...replyText, [msg.id]: e.target.value })}
+                        className="flex-1 bg-transparent border-b border-text-black/10 py-2 text-sm outline-none focus:border-primary-red"
+                      />
+                      <button onClick={() => handleReply(msg.id)} className="bg-text-black text-white px-6 py-2 text-xs font-bold rounded-sm flex items-center gap-2"> <Send size={14} /> RÉPONDRE </button>
+                    </div>
                   </div>
                 </div>
               ))}

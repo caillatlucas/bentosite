@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Lock, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 
 export default function LoginPage() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
@@ -20,21 +21,19 @@ export default function LoginPage() {
     }
   }, [router]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
     
-    // Simple check - in a real app, this would be a server-side verification
-    // Here we use the credentials provided by the user
-    // We use a simple base64 "obfuscation" to meet the "not plain text in code" feel
-    // though for real security one would use Supabase/Firebase auth.
-    const validUser = "MzI="; // "32" in base64
-    const validPass = "YWRtaW4zMg=="; // "admin32" in base64
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-    if (btoa(username) === validUser && btoa(password) === validPass) {
-      localStorage.setItem("admin_auth", "true");
-      router.push("/admin");
+    if (authError) {
+      setError("Email ou mot de passe incorrect");
     } else {
-      setError("Identifiants incorrects");
+      router.push("/admin");
     }
   };
 
@@ -55,12 +54,13 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
-            <label className="block text-xs uppercase tracking-widest text-text-black/70 mb-2 font-medium">Utilisateur</label>
+            <label className="block text-xs uppercase tracking-widest text-text-black/70 mb-2 font-medium">Email</label>
             <input 
-              type="text" 
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              type="email" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full bg-transparent border border-text-black/20 rounded-sm px-4 py-3 focus:outline-none focus:border-primary-red transition-colors"
+              placeholder="votre@email.com"
               required
             />
           </div>
