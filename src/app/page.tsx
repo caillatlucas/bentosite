@@ -41,6 +41,8 @@ export default function Home() {
   const [galleryMedia, setGalleryMedia] = useState<MediaItem[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedImage, setSelectedImage] = useState<MediaItem | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [activeProdImg, setActiveProdImg] = useState(0);
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   
@@ -58,6 +60,7 @@ export default function Home() {
   const [formAttachments, setFormAttachments] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [orderAgreed, setOrderAgreed] = useState(false);
 
   const [isMuted, setIsMuted] = useState(true);
   const mouseX = useMotionValue(0);
@@ -200,6 +203,7 @@ export default function Home() {
         localStorage.setItem("my_sent_messages", JSON.stringify([...ids, data[0].id]));
         setIsSubmitting(false); 
         setShowSuccess(true);
+        setOrderAgreed(false);
         setTimeout(() => { 
           setShowSuccess(false); 
           setIsContactOpen(false); 
@@ -284,6 +288,58 @@ export default function Home() {
       </div>
 
       <AnimatePresence>
+        {selectedProduct && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-12">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedProduct(null)} className="absolute inset-0 bg-soft-black/80 backdrop-blur-xl" />
+            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-6xl bg-background border border-text-black/10 rounded-sm shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]">
+              
+              {/* Product Visuals */}
+              <div className="w-full md:w-3/5 relative bg-text-black/5 group">
+                <Image src={selectedProduct.images[activeProdImg] || ""} alt={selectedProduct.name} fill className="object-contain p-8 md:p-12" unoptimized />
+                <button onClick={() => setSelectedProduct(null)} className="absolute top-6 left-6 z-10 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-md transition-all"><X size={24} /></button>
+                
+                {selectedProduct.images.length > 1 && (
+                  <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-10 px-4 py-2 bg-black/20 backdrop-blur-md rounded-full">
+                    {selectedProduct.images.map((_, i) => (
+                      <button key={i} onClick={() => setActiveProdImg(i)} className={`w-2.5 h-2.5 rounded-full transition-all ${activeProdImg === i ? 'bg-primary-red scale-125' : 'bg-white/40 hover:bg-white/60'}`} />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Product Info */}
+              <div className="w-full md:w-2/5 p-8 md:p-16 flex flex-col justify-center bg-white overflow-y-auto">
+                <div className="space-y-8">
+                  <div className="space-y-2">
+                    <p className="text-xs md:text-sm font-bold uppercase tracking-[0.2em] text-primary-red">Produit Premium</p>
+                    <h2 className="font-serif text-4xl md:text-6xl text-soft-black leading-tight">{selectedProduct.name}</h2>
+                    <p className="text-3xl font-serif italic text-soft-black/40">{selectedProduct.price}€</p>
+                  </div>
+
+                  <div className="h-[1px] w-20 bg-primary-red/30"></div>
+
+                  <div className="space-y-4">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest opacity-30">Description du produit</h4>
+                    <p className="text-sm md:text-base leading-relaxed text-soft-black/70 whitespace-pre-line">{selectedProduct.description}</p>
+                  </div>
+
+                  <div className="pt-8 space-y-4">
+                    <button 
+                      onClick={() => { handleBuyProduct(selectedProduct); setSelectedProduct(null); }} 
+                      className="w-full bg-text-black text-white py-5 rounded-sm font-bold text-xs tracking-widest uppercase hover:bg-primary-red transition-all shadow-xl shadow-primary-red/10 flex items-center justify-center gap-3"
+                    >
+                      COMMANDER MAINTENANT <Zap size={16} fill="currentColor" />
+                    </button>
+                    <p className="text-[9px] text-center opacity-30 uppercase tracking-widest">Paiement sécurisé via Supabase</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
         {isNotifOpen && (
           <motion.div initial={{ opacity: 0, y: 20, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 20, scale: 0.9 }} className="fixed bottom-32 right-8 md:bottom-44 md:right-16 z-[150] w-72 md:w-96 bg-white shadow-2xl rounded-sm border border-text-black/10 overflow-hidden">
             <div className="bg-text-black p-4 flex justify-between items-center"> <h4 className="text-white font-serif italic">Réponses</h4> <button onClick={() => setIsNotifOpen(false)}><X size={16} className="text-white/50" /></button> </div>
@@ -353,6 +409,22 @@ export default function Home() {
                       </div>
                     )}
                   </div>
+                  
+                  {(formOrderId || formTitle.startsWith("Achat:")) && (
+                    <div className="flex items-start gap-3 bg-primary-red/5 p-4 rounded-sm border border-primary-red/10">
+                      <input 
+                        type="checkbox" 
+                        id="orderAgree" 
+                        checked={orderAgreed} 
+                        onChange={(e) => setOrderAgreed(e.target.checked)} 
+                        className="mt-1 accent-primary-red w-4 h-4 rounded-xs border-text-black/20" 
+                        required 
+                      />
+                      <label htmlFor="orderAgree" className="text-[11px] leading-relaxed opacity-70 cursor-pointer">
+                        Je m'engage à régler le montant de ce produit ({selectedProduct ? `${selectedProduct.price}€` : "indiqué"}) une fois la commande validée par Lucas. <span className="text-primary-red font-bold">*</span>
+                      </label>
+                    </div>
+                  )}
 
                   <button type="submit" disabled={isSubmitting} className="w-full bg-text-black text-white py-4 rounded-sm font-bold text-xs tracking-widest uppercase flex items-center justify-center gap-3"> {isSubmitting ? "Envoi..." : <>ENVOYER <Send size={14} /></>} </button>
                 </form>
@@ -432,15 +504,21 @@ export default function Home() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {products.map((product) => (
-                  <motion.div key={product.id} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="group bg-white/40 border border-text-black/5 rounded-sm overflow-hidden backdrop-blur-md">
+                  <motion.div 
+                    key={product.id} 
+                    initial={{ opacity: 0, y: 20 }} 
+                    whileInView={{ opacity: 1, y: 0 }} 
+                    viewport={{ once: true }} 
+                    onClick={() => { setSelectedProduct(product); setActiveProdImg(0); }}
+                    className="group bg-white/40 border border-text-black/5 rounded-sm overflow-hidden backdrop-blur-md cursor-pointer"
+                  >
                     <div className="relative aspect-square overflow-hidden">
                       <Image src={product.images[0] || ""} alt={product.name} fill className="object-cover group-hover:scale-105 transition-transform duration-700" unoptimized />
                       <div className="absolute top-6 right-6 bg-text-black text-white px-4 py-2 text-sm font-bold shadow-xl">{product.price}€</div>
                     </div>
                     <div className="p-8 space-y-4">
                       <h3 className="font-serif text-2xl">{product.name}</h3>
-                      <p className="text-sm opacity-60 line-clamp-2">{product.description}</p>
-                      <button onClick={() => handleBuyProduct(product)} className="w-full bg-text-black text-white py-4 rounded-sm font-bold text-[10px] tracking-widest uppercase hover:bg-[var(--primary-red)] transition-all flex items-center justify-center gap-2">Commander <Zap size={14} fill="currentColor" /></button>
+                      <p className="text-[10px] font-bold uppercase tracking-widest opacity-40">Voir les détails</p>
                     </div>
                   </motion.div>
                 ))}

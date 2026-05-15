@@ -4,9 +4,9 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-const isConfigured = supabaseUrl && supabaseAnonKey && 
-                   supabaseUrl !== 'https://votre-projet.supabase.co' && 
-                   supabaseAnonKey !== 'votre-cle-anonyme';
+const isConfigured = supabaseUrl && supabaseAnonKey &&
+  supabaseUrl !== 'https://votre-projet.supabase.co' &&
+  supabaseAnonKey !== 'votre-cle-anonyme';
 
 if (!isConfigured) {
   if (typeof window !== 'undefined') {
@@ -23,6 +23,6 @@ if (!isConfigured) {
 // On utilise les valeurs réelles ou des chaines vides pour éviter de planter le build, 
 // mais isConfigured permet de savoir si on peut réellement faire des requêtes.
 export const supabase = createClient(
-  supabaseUrl || 'https://votre-projet.supabase.co', 
+  supabaseUrl || 'https://votre-projet.supabase.co',
   supabaseAnonKey || 'votre-cle-anonyme'
 );
