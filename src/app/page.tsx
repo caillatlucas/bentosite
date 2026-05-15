@@ -189,13 +189,32 @@ export default function Home() {
       attachments: formAttachments,
       date: new Date().toLocaleString("fr-FR") 
     };
-    const { data, error } = await supabase.from('messages').insert(newMessage).select();
-    if (data) {
-      const existing = localStorage.getItem("my_sent_messages");
-      const ids = existing ? JSON.parse(existing) : [];
-      localStorage.setItem("my_sent_messages", JSON.stringify([...ids, data[0].id]));
-      setIsSubmitting(false); setShowSuccess(true);
-      setTimeout(() => { setShowSuccess(false); setIsContactOpen(false); setFormName(""); setFormTitle(""); setFormContent(""); setFormContact(""); setFormOrderId(""); setFormAttachments([]); }, 2000);
+    
+    try {
+      const { data, error } = await supabase.from('messages').insert(newMessage).select();
+      if (error) throw error;
+      
+      if (data) {
+        const existing = localStorage.getItem("my_sent_messages");
+        const ids = existing ? JSON.parse(existing) : [];
+        localStorage.setItem("my_sent_messages", JSON.stringify([...ids, data[0].id]));
+        setIsSubmitting(false); 
+        setShowSuccess(true);
+        setTimeout(() => { 
+          setShowSuccess(false); 
+          setIsContactOpen(false); 
+          setFormName(""); 
+          setFormTitle(""); 
+          setFormContent(""); 
+          setFormContact(""); 
+          setFormOrderId(""); 
+          setFormAttachments([]); 
+        }, 2000);
+      }
+    } catch (error: any) {
+      console.error("Erreur d'envoi:", error);
+      alert("Erreur lors de l'envoi du message : " + (error.message || "Erreur inconnue"));
+      setIsSubmitting(false);
     }
   };
 
