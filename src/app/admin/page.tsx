@@ -146,13 +146,25 @@ export default function AdminDashboard() {
       musicUrl, 
       musicCover 
     };
-    await supabase.from('settings').upsert({ key: 'global', value: s });
-    setUploadSuccess(true); setTimeout(() => setUploadSuccess(false), 3000);
+    const { error } = await supabase.from('settings').upsert({ key: 'global', value: s });
+    if (error) {
+      console.error(error);
+      alert("Erreur lors de l'enregistrement : " + error.message);
+    } else {
+      setUploadSuccess(true); 
+      setTimeout(() => setUploadSuccess(false), 3000);
+    }
   };
 
   const handleSaveSocials = async () => {
-    await supabase.from('settings').upsert({ key: 'socials', value: socials });
-    setUploadSuccess(true); setTimeout(() => setUploadSuccess(false), 3000);
+    const { error } = await supabase.from('settings').upsert({ key: 'socials', value: socials });
+    if (error) {
+      console.error(error);
+      alert("Erreur lors de l'enregistrement des réseaux : " + error.message);
+    } else {
+      setUploadSuccess(true); 
+      setTimeout(() => setUploadSuccess(false), 3000);
+    }
   };
 
   const handleReply = async (msgId: string) => {
