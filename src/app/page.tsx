@@ -14,7 +14,21 @@ interface Message { id: string; name: string; title: string; content: string; co
 
 export default function Home() {
   const [isClient, setIsClient] = useState(false);
-  const [settings, setSettings] = useState({ profession: "Freelance informatique", bio: "", email: "", projectsTitle: "Sélection 2024", galleryTitle: "Galerie", heroTitleMain: "CAILLAT", heroTitleSub: "Lucas", musicEnabled: false, musicUrl: "", musicCover: "" });
+  const [settings, setSettings] = useState({ 
+    profession: "Freelance informatique", 
+    bio: "", 
+    email: "", 
+    projectsTitle: "Sélection 2024", 
+    recentProjectsTitle: "Projets Récents",
+    galleryTitle: "Galerie", 
+    bentoGridTitle: "Bento Grid",
+    heroTitleMain: "CAILLAT", 
+    heroTitleSub: "Lucas", 
+    textEffectImage: "",
+    musicEnabled: false, 
+    musicUrl: "", 
+    musicCover: "" 
+  });
   const [galleryMedia, setGalleryMedia] = useState<MediaItem[]>([]);
   const [selectedImage, setSelectedImage] = useState<MediaItem | null>(null);
   const [isContactOpen, setIsContactOpen] = useState(false);
@@ -44,6 +58,12 @@ export default function Home() {
   const secondaryTextColor = useTransform(scrollYProgress, [0, 0.15], ["rgba(255,255,255,0.7)", "rgba(17,17,17,0.6)"]);
   const adminBtnColor = useTransform(scrollYProgress, [0, 0.15], ["#ffffff", "#111111"]);
   const lucasColor = useTransform(scrollYProgress, [0, 0.15], ["#ffffff", "#ff3131"]);
+
+  // Text Effect Image
+  const hasTextImg = settings.textEffectImage && settings.textEffectImage.length > 0;
+  const textBgImage = useTransform(scrollYProgress, [0, 0.15], ["none", hasTextImg ? `url(${settings.textEffectImage})` : "none"]);
+  const textBgClip = useTransform(scrollYProgress, [0, 0.15], ["none", hasTextImg ? "text" : "none"]);
+  const textFinalColor = useTransform(scrollYProgress, [0, 0.15], ["#ffffff", hasTextImg ? "transparent" : "#ff3131"]);
 
   const springConfig = { damping: 50, stiffness: 400 };
   const smoothX = useSpring(mouseX, springConfig);
@@ -211,10 +231,34 @@ export default function Home() {
           )}
 
           <motion.div style={{ rotateX, rotateY, textShadow, transformStyle: "preserve-3d" }} className="relative z-10 flex justify-center md:justify-start">
-            <motion.h1 style={{ color: textColor }} className="font-serif text-[20vw] md:text-[180px] lg:text-[220px] leading-[0.8] tracking-tighter select-none relative z-10">{settings.heroTitleMain}</motion.h1>
+            <motion.h1 
+              style={{ 
+                color: textFinalColor,
+                backgroundImage: textBgImage,
+                WebkitBackgroundClip: textBgClip as any,
+                backgroundClip: textBgClip as any,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }} 
+              className="font-serif text-[20vw] md:text-[180px] lg:text-[220px] leading-[0.8] tracking-tighter select-none relative z-10"
+            >
+              {settings.heroTitleMain}
+            </motion.h1>
           </motion.div>
           <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 1, delay: 0.2 }} className="absolute -top-12 md:-top-32 left-[10%] md:left-[15%] z-20 pointer-events-none">
-            <motion.h2 style={{ color: lucasColor }} className="font-serif italic text-5xl md:text-8xl lg:text-[140px] opacity-90 select-none">{settings.heroTitleSub}</motion.h2>
+            <motion.h2 
+              style={{ 
+                color: hasTextImg ? textFinalColor : lucasColor,
+                backgroundImage: textBgImage,
+                WebkitBackgroundClip: textBgClip as any,
+                backgroundClip: textBgClip as any,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }} 
+              className="font-serif italic text-5xl md:text-8xl lg:text-[140px] opacity-90 select-none"
+            >
+              {settings.heroTitleSub}
+            </motion.h2>
           </motion.div>
         </div>
 
@@ -230,7 +274,7 @@ export default function Home() {
       <div className="max-w-[1600px] mx-auto w-full space-y-32 md:space-y-48">
         <section>
           <div className="flex justify-between items-end mb-12 md:mb-16 border-b border-text-black/10 pb-6">
-            <h2 className="font-serif text-3xl md:text-5xl lg:text-6xl text-soft-black">Projets Récents</h2>
+            <h2 className="font-serif text-3xl md:text-5xl lg:text-6xl text-soft-black">{settings.recentProjectsTitle || "Projets Récents"}</h2>
             <span className="text-text-black/50 text-[10px] md:text-sm tracking-widest uppercase hidden md:block">{settings.projectsTitle}</span>
           </div>
           <Projects />
@@ -238,7 +282,10 @@ export default function Home() {
 
         {galleryMedia.length > 0 && (
           <section>
-            <div className="flex justify-between items-end mb-12 md:mb-16 border-b border-text-black/10 pb-6"> <h2 className="font-serif text-3xl md:text-5xl lg:text-6xl text-soft-black">{settings.galleryTitle}</h2> <span className="text-text-black/50 text-[10px] md:text-sm tracking-widest uppercase hidden md:block">Bento Grid</span> </div>
+            <div className="flex justify-between items-end mb-12 md:mb-16 border-b border-text-black/10 pb-6"> 
+              <h2 className="font-serif text-3xl md:text-5xl lg:text-6xl text-soft-black">{settings.galleryTitle}</h2> 
+              <span className="text-text-black/50 text-[10px] md:text-sm tracking-widest uppercase hidden md:block">{settings.bentoGridTitle || "Bento Grid"}</span> 
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-4 md:h-[800px]">
               {galleryMedia.slice(0, 5).map((item, i) => (
                 <motion.div key={item.id} initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} onClick={() => setSelectedImage(item)} className={`relative overflow-hidden rounded-sm bg-text-black/5 group cursor-zoom-in aspect-square md:aspect-auto ${i === 0 ? "md:col-span-2 md:row-span-2" : i === 1 ? "md:col-span-2 md:row-span-1" : "md:col-span-1 md:row-span-1"}`}>
