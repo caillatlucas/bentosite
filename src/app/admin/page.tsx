@@ -66,6 +66,7 @@ export default function AdminDashboard() {
   const [profileName, setProfileName] = useState("Lucas Caillat");
   const [profileProfession, setProfileProfession] = useState("Freelance Informatique");
   const [profileBio, setProfileBio] = useState("");
+  const [projectsTitle, setProjectsTitle] = useState("Sélection 2024");
   const [recentProjectsTitle, setRecentProjectsTitle] = useState("Projets Récents");
   const [galleryTitle, setGalleryTitle] = useState("Galerie");
   const [bentoGridTitle, setBentoGridTitle] = useState("Bento Grid");
