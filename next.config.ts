@@ -5,8 +5,7 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
-  // If deploying to a subfolder on GitHub Pages, uncomment the line below and replace 'repo-name'
-  // basePath: '/repo-name',
+  basePath: '/bentosite',
 };
 
 export default nextConfig;
