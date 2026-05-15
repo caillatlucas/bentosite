@@ -326,7 +326,7 @@ export default function Home() {
                   <h3 className="font-serif text-4xl italic text-[var(--primary-red)]">Me contacter</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <input type="text" value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Nom & Prénom" className="w-full bg-transparent border-b border-text-black/10 py-3 outline-none focus:border-[var(--primary-red)]" required />
-                    <input type="text" value={formContact} onChange={(e) => setFormContact(e.target.value)} placeholder="Email / Tél" className="w-full bg-transparent border-b border-text-black/10 py-3 outline-none focus:border-[var(--primary-red)]" />
+                    <input type="text" value={formContact} onChange={(e) => setFormContact(e.target.value)} placeholder="Email / Tél" className="w-full bg-transparent border-b border-text-black/10 py-3 outline-none focus:border-[var(--primary-red)]" required />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <input type="text" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="Objet" className="w-full bg-transparent border-b border-text-black/10 py-3 outline-none focus:border-[var(--primary-red)]" required />
