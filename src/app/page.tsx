@@ -7,6 +7,7 @@ import Projects from "@/components/Projects";
 import Socials from "@/components/Socials";
 import Link from "next/link";
 import Image from "next/image";
+import { supabase } from "@/lib/supabase";
 
 interface MediaItem {
   id: string;
@@ -85,21 +86,26 @@ export default function Home() {
       mouseX.set(x); mouseY.set(y);
     };
 
-    const savedSettings = localStorage.getItem("portfolio_settings");
-    if (savedSettings) setSettings(prev => ({ ...prev, ...JSON.parse(savedSettings) }));
-
-    const savedSocials = localStorage.getItem("portfolio_socials");
-    if (savedSocials) {
-      const s = JSON.parse(savedSocials);
-      setSettings(prev => ({ ...prev, email: s.email }));
-    }
-
-    const savedMedia = localStorage.getItem("portfolio_media");
-    if (savedMedia) setGalleryMedia(JSON.parse(savedMedia));
+    fetchData();
 
     window.addEventListener("mousemove", handleMouseMove);
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, [mouseX, mouseY]);
+
+  const fetchData = async () => {
+    // Settings & Socials
+    const { data: sData } = await supabase.from('settings').select('*');
+    if (sData) {
+      const global = sData.find(s => s.key === 'global')?.value;
+      const soc = sData.find(s => s.key === 'socials')?.value;
+      if (global) setSettings(prev => ({ ...prev, ...global }));
+      if (soc) setSettings(prev => ({ ...prev, email: soc.email }));
+    }
+
+    // Media
+    const { data: mData } = await supabase.from('media').select('*').order('created_at', { ascending: false });
+    if (mData) setGalleryMedia(mData);
+  };
 
   const copyEmail = () => {
     const email = settings.email || "contact@lucascaillat.fr";
@@ -114,17 +120,25 @@ export default function Home() {
     return (match && match[2].length === 11) ? match[2] : null;
   };
 
-  const handleContactSubmit = (e: React.FormEvent) => {
+  const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setTimeout(() => {
-      const newMessage: Message = { id: Math.random().toString(36).substr(2, 9), name: formName, title: formTitle, content: formContent, contact: formContact, date: new Date().toLocaleString("fr-FR") };
-      const savedMessages = localStorage.getItem("portfolio_messages");
-      const messages = savedMessages ? JSON.parse(savedMessages) : [];
-      localStorage.setItem("portfolio_messages", JSON.stringify([newMessage, ...messages]));
+    const newMessage = { 
+      name: formName, 
+      title: formTitle, 
+      content: formContent, 
+      contact: formContact, 
+      date: new Date().toLocaleString("fr-FR") 
+    };
+    
+    const { error } = await supabase.from('messages').insert(newMessage);
+    
+    if (error) {
+      alert("Erreur lors de l'envoi: " + error.message);
+    } else {
       setIsSubmitting(false); setShowSuccess(true);
       setTimeout(() => { setShowSuccess(false); setIsContactOpen(false); setFormName(""); setFormTitle(""); setFormContent(""); setFormContact(""); }, 2000);
-    }, 1500);
+    }
   };
 
   if (!isClient) return null;
@@ -237,7 +251,7 @@ export default function Home() {
           <section>
             <div className="flex justify-between items-end mb-16 border-b border-text-black/10 pb-6">
               <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl text-soft-black">{settings.galleryTitle}</h2>
-              <span className="text-text-black/50 text-sm tracking-widest uppercase hidden md:block">Bento Grid</span>
+              <span className="text-text-black/50 text-sm tracking-widest uppercase hidden md:block">Bento Grid (Cloud)</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 grid-rows-2 gap-4 h-[800px]">
               {galleryMedia.slice(0, 5).map((item, i) => (
@@ -253,22 +267,13 @@ export default function Home() {
           <div className="max-w-md text-center md:text-left relative">
             <motion.h3 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} className="font-serif text-3xl md:text-4xl text-soft-black mb-6">Discutons de votre projet.</motion.h3>
             <div className="relative inline-block">
-              <button 
-                onClick={copyEmail}
-                className="group flex items-center gap-3 text-xl border-b border-primary-red text-text-black hover:text-primary-red transition-all pb-1 font-medium"
-              >
+              <button onClick={copyEmail} className="group flex items-center gap-3 text-xl border-b border-primary-red text-text-black hover:text-primary-red transition-all pb-1 font-medium">
                 {settings.email || "contact@lucascaillat.fr"}
                 <Copy size={16} className="opacity-0 group-hover:opacity-40 transition-opacity" />
               </button>
-              
               <AnimatePresence>
                 {copied && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: -10 }}
-                    exit={{ opacity: 0, y: 0 }}
-                    className="absolute -top-12 left-0 bg-text-black text-white px-4 py-2 rounded-sm text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 shadow-xl"
-                  >
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: -10 }} exit={{ opacity: 0, y: 0 }} className="absolute -top-12 left-0 bg-text-black text-white px-4 py-2 rounded-sm text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 shadow-xl">
                     <Check size={12} className="text-green-500" /> Email Copié !
                   </motion.div>
                 )}

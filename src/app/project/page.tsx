@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Calendar, Tag, User } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { supabase } from "@/lib/supabase";
 
 interface Project {
   id: string;
@@ -14,7 +15,7 @@ interface Project {
   date: string;
   image: string;
   status: string;
-  linkType?: "external" | "internal";
+  link_type?: "external" | "internal";
   url?: string;
   content?: string;
 }
@@ -26,12 +27,11 @@ function ProjectContent() {
 
   useEffect(() => {
     if (!id) return;
-    const saved = localStorage.getItem("portfolio_projects");
-    if (saved) {
-      const projects = JSON.parse(saved) as Project[];
-      const found = projects.find(p => p.id === id);
-      if (found) setProject(found);
-    }
+    const fetchProject = async () => {
+      const { data } = await supabase.from('projects').select('*').eq('id', id).single();
+      if (data) setProject(data);
+    };
+    fetchProject();
   }, [id]);
 
   if (!project) {
@@ -42,7 +42,7 @@ function ProjectContent() {
     );
   }
 
-  const hasExternalLink = project.linkType === "external" && project.url;
+  const hasExternalLink = project.link_type === "external" && project.url;
 
   return (
     <main className="min-h-screen bg-background text-text-black pb-32">

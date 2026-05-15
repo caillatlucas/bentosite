@@ -5,6 +5,7 @@ import { ArrowUpRight } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 
 interface Project {
   id: string;
@@ -12,57 +13,30 @@ interface Project {
   category: string;
   image: string;
   status: string;
-  linkType?: "external" | "internal";
+  link_type?: "external" | "internal";
   url?: string;
 }
-
-const defaultProjects: Project[] = [
-  {
-    id: "1",
-    title: "Refonte E-commerce",
-    category: "Développement Web",
-    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2426&auto=format&fit=crop",
-    status: "Publié",
-    linkType: "internal",
-    url: ""
-  },
-  {
-    id: "2",
-    title: "Application SaaS",
-    category: "React & Node.js",
-    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop",
-    status: "Publié",
-    linkType: "internal",
-    url: ""
-  },
-  {
-    id: "3",
-    title: "Dashboard Admin",
-    category: "UI/UX Design & Intégration",
-    image: "https://images.unsplash.com/photo-1558655146-d09347e92766?q=80&w=2264&auto=format&fit=crop",
-    status: "Publié",
-    linkType: "internal",
-    url: ""
-  },
-];
 
 export default function Projects() {
   const [projects, setProjects] = useState<Project[]>([]);
 
   useEffect(() => {
-    const saved = localStorage.getItem("portfolio_projects");
-    if (saved) {
-      const parsed = JSON.parse(saved) as Project[];
-      setProjects(parsed.filter(p => p.status === "Publié"));
-    } else {
-      setProjects(defaultProjects);
-    }
+    const fetchProjects = async () => {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('status', 'Publié')
+        .order('created_at', { ascending: false });
+      
+      if (data) setProjects(data);
+    };
+    fetchProjects();
   }, []);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">
         {projects.map((project, index) => {
-          const isInternal = project.linkType === "internal" || !project.linkType;
+          const isInternal = project.link_type === "internal" || !project.link_type;
           const href = isInternal ? `/project?id=${project.id}` : project.url || "#";
           const Wrapper = isInternal ? Link : "a";
           const wrapperProps = isInternal ? { href } : { href, target: "_blank", rel: "noopener noreferrer" };
@@ -90,9 +64,11 @@ export default function Projects() {
                   
                   {/* Content Overlay */}
                   <div className="absolute bottom-0 left-0 w-full p-6 md:p-8 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                    <p className="text-white/70 text-xs md:text-sm tracking-widest uppercase mb-2">
-                      {project.category}
-                    </p>
+                    {project.category && (
+                      <p className="text-white/70 text-xs md:text-sm tracking-widest uppercase mb-2">
+                        {project.category}
+                      </p>
+                    )}
                     <h3 className="text-white font-serif text-2xl md:text-3xl flex justify-between items-center">
                       {project.title}
                       <ArrowUpRight className="opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-500 text-primary-red" />
