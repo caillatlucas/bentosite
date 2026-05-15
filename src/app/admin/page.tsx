@@ -52,6 +52,8 @@ interface Product {
   price: number;
   description: string;
   images: string[];
+  link?: string;
+  link_text?: string;
   created_at?: string;
 }
 
@@ -79,6 +81,7 @@ export default function AdminDashboard() {
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [replyText, setReplyText] = useState<{ [key: string]: string }>({});
   const [messages, setMessages] = useState<Message[]>([]);
+  const [selectedAttachment, setSelectedAttachment] = useState<string | null>(null);
   const router = useRouter();
   
   // Settings State
@@ -131,6 +134,8 @@ export default function AdminDashboard() {
   const [prodDesc, setProdDesc] = useState("");
   const [prodImages, setProdImages] = useState<string[]>([]);
   const [prodImagesText, setProdImagesText] = useState("");
+  const [prodLink, setProdLink] = useState("");
+  const [prodLinkText, setProdLinkText] = useState("");
 
   useEffect(() => {
     const auth = localStorage.getItem("admin_auth");
@@ -261,7 +266,7 @@ export default function AdminDashboard() {
   const handleSubmitProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     const finalImages = prodImagesText.split('\n').map(img => img.trim()).filter(img => img !== "");
-    const pData = { name: prodName, price: prodPrice, description: prodDesc, images: finalImages };
+    const pData = { name: prodName, price: prodPrice, description: prodDesc, images: finalImages, link: prodLink, link_text: prodLinkText };
     
     let error;
     if (editingProduct) {
@@ -406,7 +411,7 @@ export default function AdminDashboard() {
             </button>
           )}
           {activeTab === "shop" && (
-            <button onClick={() => { setEditingProduct(null); setProdName(""); setProdPrice(0); setProdDesc(""); setProdImages([]); setProdImagesText(""); setIsProductModalOpen(true); }} className="bg-primary-red text-white px-8 py-3.5 rounded-sm hover:bg-red-600 transition-all flex items-center gap-2 text-sm font-bold shadow-xl shadow-shadow-red/20">
+            <button onClick={() => { setEditingProduct(null); setProdName(""); setProdPrice(0); setProdDesc(""); setProdImages([]); setProdImagesText(""); setProdLink(""); setProdLinkText(""); setIsProductModalOpen(true); }} className="bg-primary-red text-white px-8 py-3.5 rounded-sm hover:bg-red-600 transition-all flex items-center gap-2 text-sm font-bold shadow-xl shadow-shadow-red/20">
               <Plus size={18} /> NOUVEAU PRODUIT
             </button>
           )}
@@ -537,9 +542,9 @@ export default function AdminDashboard() {
                         <div key={i} className="relative w-24 h-24 rounded-sm overflow-hidden border border-text-black/10 group/img">
                           <Image src={url} alt="attachment" fill className="object-cover" unoptimized />
                           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
-                            <a href={url} target="_blank" rel="noopener noreferrer" className="p-1.5 bg-white/20 hover:bg-white/40 rounded-full text-white transition-colors" title="Ouvrir">
+                            <button onClick={() => setSelectedAttachment(url)} className="p-1.5 bg-white/20 hover:bg-white/40 rounded-full text-white transition-colors" title="Ouvrir">
                               <ExternalLink size={14} />
-                            </a>
+                            </button>
                             <a href={url} download={`attachment-${msg.id}-${i}`} className="p-1.5 bg-white/20 hover:bg-white/40 rounded-full text-white transition-colors" title="Télécharger">
                               <Download size={14} />
                             </a>
@@ -588,7 +593,7 @@ export default function AdminDashboard() {
                       <div className="p-6 space-y-4">
                         <h3 className="font-serif text-xl">{product.name}</h3>
                         <div className="flex justify-between items-center pt-4 border-t border-text-black/5">
-                          <button onClick={() => { setEditingProduct(product); setProdName(product.name); setProdPrice(product.price); setProdDesc(product.description); setProdImages(product.images); setProdImagesText(product.images.join('\n')); setIsProductModalOpen(true); }} className="text-[10px] font-bold uppercase tracking-widest hover:text-primary-red transition-colors flex items-center gap-2"><Edit2 size={14} /> Modifier</button>
+                          <button onClick={() => { setEditingProduct(product); setProdName(product.name); setProdPrice(product.price); setProdDesc(product.description); setProdImages(product.images); setProdImagesText(product.images.join('\n')); setProdLink(product.link || ""); setProdLinkText(product.link_text || ""); setIsProductModalOpen(true); }} className="text-[10px] font-bold uppercase tracking-widest hover:text-primary-red transition-colors flex items-center gap-2"><Edit2 size={14} /> Modifier</button>
                           <button onClick={() => deleteProduct(product.id)} className="text-[10px] font-bold uppercase tracking-widest text-red-600 hover:text-red-700 transition-colors flex items-center gap-2"><Trash2 size={14} /> Supprimer</button>
                         </div>
                       </div>
@@ -709,6 +714,17 @@ export default function AdminDashboard() {
                       <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Description</label>
                       <textarea value={prodDesc} onChange={(e) => setProdDesc(e.target.value)} rows={5} className="w-full bg-transparent border border-text-black/10 p-4 outline-none resize-none text-sm" placeholder="Description du produit..." />
                     </div>
+
+                    <div className="grid grid-cols-2 gap-4 pt-2">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Lien Blog / Projet (Optionnel)</label>
+                        <input type="text" value={prodLink} onChange={(e) => setProdLink(e.target.value)} className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" placeholder="https://..." />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Texte du bouton</label>
+                        <input type="text" value={prodLinkText} onChange={(e) => setProdLinkText(e.target.value)} className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" placeholder="En savoir plus" />
+                      </div>
+                    </div>
                   </div>
 
                   <button type="submit" className="w-full bg-text-black text-white py-4 font-bold text-xs tracking-widest uppercase hover:bg-soft-black transition-all">Enregistrer le Produit</button>
@@ -823,6 +839,17 @@ export default function AdminDashboard() {
             className="fixed bottom-12 right-12 bg-green-600 text-white px-8 py-3 rounded-sm font-bold text-xs tracking-widest shadow-2xl uppercase"
           >
             Synchronisé !
+          </motion.div>
+        )}
+        {selectedAttachment && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-12">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedAttachment(null)} className="absolute inset-0 bg-soft-black/90 backdrop-blur-md" />
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full h-full flex items-center justify-center">
+              <button onClick={() => setSelectedAttachment(null)} className="absolute top-8 right-8 z-10 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-md transition-all"><CloseIcon size={32} /></button>
+              <div className="relative w-full h-full">
+                <Image src={selectedAttachment} alt="full-attachment" fill className="object-contain" unoptimized />
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </main>

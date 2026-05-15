@@ -11,7 +11,7 @@ import { supabase } from "@/lib/supabase";
 
 interface MediaItem { id: string; url: string; name: string; }
 interface Message { id: string; name: string; title: string; content: string; contact?: string; date: string; reply?: string; order_id?: string; attachments?: string[]; }
-interface Product { id: string; name: string; price: number; description: string; images: string[]; }
+interface Product { id: string; name: string; price: number; description: string; images: string[]; link?: string; link_text?: string; }
 
 export default function Home() {
   const [isClient, setIsClient] = useState(false);
@@ -312,7 +312,7 @@ export default function Home() {
                 <div className="space-y-8">
                   <div className="space-y-2">
                     <p className="text-xs md:text-sm font-bold uppercase tracking-[0.2em] text-primary-red">Produit Premium</p>
-                    <h2 className="font-serif text-4xl md:text-6xl text-soft-black leading-tight">{selectedProduct.name}</h2>
+                    <h2 className="font-serif text-3xl md:text-5xl text-soft-black leading-tight">{selectedProduct.name}</h2>
                     <p className="text-3xl font-serif italic text-soft-black/40">{selectedProduct.price}€</p>
                   </div>
 
@@ -321,6 +321,18 @@ export default function Home() {
                   <div className="space-y-4">
                     <h4 className="text-[10px] font-bold uppercase tracking-widest opacity-30">Description du produit</h4>
                     <p className="text-sm md:text-base leading-relaxed text-soft-black/70 whitespace-pre-line">{selectedProduct.description}</p>
+                    
+                    {selectedProduct.link && (
+                      <div className="pt-4">
+                        <Link 
+                          href={selectedProduct.link} 
+                          target="_blank"
+                          className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-primary-red border-b border-primary-red/30 pb-1 hover:border-primary-red transition-all"
+                        >
+                          {selectedProduct.link_text || "En savoir plus"} <ArrowUpRight size={12} />
+                        </Link>
+                      </div>
+                    )}
                   </div>
 
                   <div className="pt-8 space-y-4">
@@ -386,7 +398,7 @@ export default function Home() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <input type="text" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="Objet" className="w-full bg-transparent border-b border-text-black/10 py-3 outline-none focus:border-[var(--primary-red)]" required />
-                    <input type="text" value={formOrderId} onChange={(e) => setFormOrderId(e.target.value)} placeholder="ID Commande (Optionnel)" className="w-full bg-transparent border-b border-text-black/10 py-3 outline-none focus:border-[var(--primary-red)]" />
+                    <input type="text" value={formOrderId} onChange={(e) => setFormOrderId(e.target.value)} placeholder="ID Commande (Optionnel)" className="w-full bg-transparent border-b border-text-black/10 py-3 outline-none focus:border-[var(--primary-red)]" readOnly={formTitle.startsWith("Achat:")} />
                   </div>
                   <textarea value={formContent} onChange={(e) => setFormContent(e.target.value)} placeholder="Message..." rows={4} className="w-full bg-text-black/5 p-4 rounded-sm outline-none focus:border-[var(--primary-red)] resize-none" required />
                   
