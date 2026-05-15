@@ -13,6 +13,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
+import { QRCodeSVG } from 'qrcode.react';
 
 interface Project {
   id: string;
@@ -139,6 +140,12 @@ export default function AdminDashboard() {
   const [prodLink, setProdLink] = useState("");
   const [prodLinkText, setProdLinkText] = useState("");
 
+  // MFA State
+  const [mfaFactors, setMfaFactors] = useState<any[]>([]);
+  const [mfaEnrollment, setMfaEnrollment] = useState<any>(null);
+  const [mfaCode, setMfaCode] = useState("");
+  const [mfaError, setMfaError] = useState("");
+
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -149,6 +156,12 @@ export default function AdminDashboard() {
       }
     };
     checkAuth();
+
+    const fetchMfa = async () => {
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      if (factors) setMfaFactors(factors.all.filter(f => f.status === 'verified'));
+    };
+    fetchMfa();
 
     // Real-time Messages
     const msgChannel = supabase.channel('admin-msgs')
@@ -271,6 +284,43 @@ export default function AdminDashboard() {
   const deleteProject = async (id: string) => { if (confirm("Supprimer?")) { await supabase.from('projects').delete().eq('id', id); setProjects(projects.filter(p => p.id !== id)); } };
   const deleteMedia = async (id: string) => { await supabase.from('media').delete().eq('id', id); setMediaItems(mediaItems.filter(m => m.id !== id)); };
   const deleteMessage = async (id: string) => { await supabase.from('messages').delete().eq('id', id); setMessages(messages.filter(m => m.id !== id)); };
+
+  const handleMfaEnroll = async () => {
+    setMfaError("");
+    const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp' });
+    if (error) {
+      setMfaError(error.message);
+    } else {
+      setMfaEnrollment(data);
+    }
+  };
+
+  const handleMfaVerify = async () => {
+    setMfaError("");
+    const { data, error } = await supabase.auth.mfa.challengeAndVerify({
+      factorId: mfaEnrollment.id,
+      code: mfaCode
+    });
+    
+    if (error) {
+      setMfaError(error.message);
+    } else {
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      if (factors) setMfaFactors(factors.all.filter(f => f.status === 'verified'));
+      setMfaEnrollment(null);
+      setMfaCode("");
+      alert("Double authentification activée !");
+    }
+  };
+
+  const handleMfaUnenroll = async (factorId: string) => {
+    if (confirm("Désactiver la double authentification ?")) {
+      const { error } = await supabase.auth.mfa.unenroll({ factorId });
+      if (!error) {
+        setMfaFactors(mfaFactors.filter(f => f.id !== factorId));
+      }
+    }
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -713,7 +763,62 @@ export default function AdminDashboard() {
                 <h3 className="font-serif text-2xl border-b border-text-black/10 pb-4 pt-4">Profil</h3>
                 <div className="grid grid-cols-2 gap-6"> <input type="text" value={profileName} onChange={(e) => setProfileName(e.target.value)} placeholder="Nom" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none" /> <input type="text" value={profileProfession} onChange={(e) => setProfileProfession(e.target.value)} placeholder="Profession" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none" /> </div>
                 <textarea value={profileBio} onChange={(e) => setProfileBio(e.target.value)} rows={3} placeholder="Bio" className="w-full bg-transparent border border-text-black/10 p-4 outline-none resize-none" />
-                <button onClick={handleSaveSettings} className="bg-text-black text-white px-10 py-4 font-bold text-xs tracking-widest uppercase">Enregistrer</button>
+                <button onClick={handleSaveSettings} className="bg-text-black text-white px-10 py-4 font-bold text-xs tracking-widest uppercase">Enregistrer les réglages</button>
+
+                <h3 className="font-serif text-2xl border-b border-text-black/10 pb-4 pt-4">Sécurité (A2F)</h3>
+                <div className="space-y-6">
+                  {mfaFactors.length > 0 ? (
+                    <div className="bg-green-600/5 p-6 rounded-sm border border-green-600/10 flex justify-between items-center">
+                      <div className="flex items-center gap-3 text-green-600">
+                        <Check size={20} />
+                        <div>
+                          <p className="font-bold text-sm uppercase tracking-widest">A2F Activée</p>
+                          <p className="text-[10px] opacity-60">Votre compte est protégé par double authentification.</p>
+                        </div>
+                      </div>
+                      <button onClick={() => handleMfaUnenroll(mfaFactors[0].id)} className="text-[10px] font-bold text-red-600 uppercase tracking-widest hover:underline">Désactiver</button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {!mfaEnrollment ? (
+                        <div className="bg-primary-red/5 p-6 rounded-sm border border-primary-red/10 space-y-4">
+                          <p className="text-sm opacity-70">Renforcez la sécurité de votre accès admin en activant la double authentification par application (Google Authenticator, Authy, etc.).</p>
+                          <button onClick={handleMfaEnroll} className="bg-primary-red text-white px-6 py-3 text-[10px] font-bold uppercase tracking-widest rounded-xs hover:bg-red-600 transition-all">Activer l'A2F</button>
+                        </div>
+                      ) : (
+                        <div className="bg-white border border-text-black/10 p-8 rounded-sm space-y-6">
+                          <div className="flex flex-col md:flex-row gap-8 items-center">
+                            <div className="bg-white p-4 border border-text-black/5 rounded-sm">
+                              <QRCodeSVG value={mfaEnrollment.totp.qr_code} size={180} />
+                            </div>
+                            <div className="space-y-4 flex-1">
+                              <p className="text-sm font-bold uppercase tracking-widest">1. Scannez le QR Code</p>
+                              <p className="text-xs opacity-60">Ouvrez votre application d'authentification et scannez ce code. Si vous ne pouvez pas scanner, utilisez cette clé :</p>
+                              <code className="block bg-text-black/5 p-2 text-[10px] font-mono break-all">{mfaEnrollment.totp.secret}</code>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-4 pt-4 border-t border-text-black/5">
+                            <p className="text-sm font-bold uppercase tracking-widest">2. Vérifiez le code</p>
+                            <div className="flex gap-4">
+                              <input 
+                                type="text" 
+                                value={mfaCode}
+                                onChange={(e) => setMfaCode(e.target.value)}
+                                placeholder="000000"
+                                className="flex-1 bg-transparent border-b border-text-black/20 py-2 outline-none text-center text-2xl tracking-[0.3em] font-serif"
+                                maxLength={6}
+                              />
+                              <button onClick={handleMfaVerify} className="bg-text-black text-white px-8 py-2 text-[10px] font-bold uppercase tracking-widest rounded-xs">Vérifier & Activer</button>
+                            </div>
+                            {mfaError && <p className="text-red-600 text-[10px] font-bold uppercase">{mfaError}</p>}
+                            <button onClick={() => setMfaEnrollment(null)} className="text-[10px] opacity-40 uppercase tracking-widest hover:underline">Annuler</button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </motion.div>
           )}

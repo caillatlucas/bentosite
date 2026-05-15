@@ -10,6 +10,8 @@ import { supabase } from "@/lib/supabase";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [mfaChallenge, setMfaChallenge] = useState<any>(null);
+  const [totpCode, setTotpCode] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
 
@@ -25,13 +27,52 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     
-    const { error: authError } = await supabase.auth.signInWithPassword({
+    const { data, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (authError) {
       setError("Email ou mot de passe incorrect");
+      return;
+    }
+
+    if (data.session) {
+      const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors();
+      if (factorsError) {
+        setError(factorsError.message);
+        return;
+      }
+
+      const totpFactor = factors.all.find(f => f.factor_type === 'totp' && f.status === 'verified');
+      
+      if (totpFactor) {
+        const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({
+          factorId: totpFactor.id
+        });
+        if (challengeError) {
+          setError(challengeError.message);
+        } else {
+          setMfaChallenge(challenge);
+        }
+      } else {
+        router.push("/admin");
+      }
+    }
+  };
+
+  const handleMfaVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    
+    const { error: verifyError } = await supabase.auth.mfa.verify({
+      factorId: mfaChallenge.factor_id,
+      challengeId: mfaChallenge.id,
+      code: totpCode
+    });
+
+    if (verifyError) {
+      setError("Code invalide");
     } else {
       router.push("/admin");
     }
@@ -52,41 +93,80 @@ export default function LoginPage() {
           <p className="text-text-black/50 text-sm uppercase tracking-widest">Accès Administration</p>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-6">
-          <div>
-            <label className="block text-xs uppercase tracking-widest text-text-black/70 mb-2 font-medium">Email</label>
-            <input 
-              type="email" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-transparent border border-text-black/20 rounded-sm px-4 py-3 focus:outline-none focus:border-primary-red transition-colors"
-              placeholder="votre@email.com"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-xs uppercase tracking-widest text-text-black/70 mb-2 font-medium">Mot de passe</label>
-            <input 
-              type="password" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-transparent border border-text-black/20 rounded-sm px-4 py-3 focus:outline-none focus:border-primary-red transition-colors"
-              required
-            />
-          </div>
+        {!mfaChallenge ? (
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div>
+              <label className="block text-xs uppercase tracking-widest text-text-black/70 mb-2 font-medium">Email</label>
+              <input 
+                type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-transparent border border-text-black/20 rounded-sm px-4 py-3 focus:outline-none focus:border-primary-red transition-colors"
+                placeholder="votre@email.com"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs uppercase tracking-widest text-text-black/70 mb-2 font-medium">Mot de passe</label>
+              <input 
+                type="password" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-transparent border border-text-black/20 rounded-sm px-4 py-3 focus:outline-none focus:border-primary-red transition-colors"
+                required
+              />
+            </div>
 
-          {error && (
-            <p className="text-primary-red text-sm font-medium">{error}</p>
-          )}
+            {error && (
+              <p className="text-primary-red text-sm font-medium">{error}</p>
+            )}
 
-          <button 
-            type="submit"
-            className="w-full bg-text-black text-white py-4 rounded-sm hover:bg-soft-black transition-all font-medium flex items-center justify-center gap-2 group"
-          >
-            <Lock size={16} className="group-hover:rotate-12 transition-transform" />
-            Se connecter
-          </button>
-        </form>
+            <button 
+              type="submit"
+              className="w-full bg-text-black text-white py-4 rounded-sm hover:bg-soft-black transition-all font-medium flex items-center justify-center gap-2 group"
+            >
+              <Lock size={16} className="group-hover:rotate-12 transition-transform" />
+              Se connecter
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleMfaVerify} className="space-y-6">
+            <div className="text-center space-y-2 mb-4">
+              <p className="text-sm text-text-black/60">Double authentification requise</p>
+              <p className="text-xs opacity-40 italic">Entrez le code à 6 chiffres de votre application d'authentification.</p>
+            </div>
+            <div>
+              <input 
+                type="text" 
+                value={totpCode}
+                onChange={(e) => setTotpCode(e.target.value)}
+                className="w-full bg-transparent border border-text-black/20 rounded-sm px-4 py-4 text-center text-3xl tracking-[0.5em] font-serif focus:outline-none focus:border-primary-red transition-colors"
+                placeholder="000000"
+                maxLength={6}
+                required
+                autoFocus
+              />
+            </div>
+
+            {error && (
+              <p className="text-primary-red text-sm font-medium text-center">{error}</p>
+            )}
+
+            <button 
+              type="submit"
+              className="w-full bg-text-black text-white py-4 rounded-sm hover:bg-soft-black transition-all font-medium flex items-center justify-center gap-2 group"
+            >
+              Vérifier le code
+            </button>
+            <button 
+              type="button" 
+              onClick={() => setMfaChallenge(null)}
+              className="w-full text-xs uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity"
+            >
+              Retour à la connexion
+            </button>
+          </form>
+        )}
       </motion.div>
     </div>
   );
