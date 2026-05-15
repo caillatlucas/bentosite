@@ -7,7 +7,7 @@ import {
   LogOut, Check, X as CloseIcon, Edit2, Trash2, Upload, AlertCircle, Link as LinkIcon,
   Share2, Mail, MessageSquare, Zap, User, Clock, Music, Play, Pause, Send
 } from "lucide-react";
-import { FaLinkedin, FaGithub, FaTwitter, FaInstagram } from "react-icons/fa";
+import { FaLinkedin, FaGithub, FaTwitter, FaInstagram, FaYoutube, FaTiktok, FaGlobe } from "react-icons/fa";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -48,6 +48,9 @@ interface SocialConfig {
   github: { url: string; enabled: boolean };
   twitter: { url: string; enabled: boolean };
   instagram: { url: string; enabled: boolean };
+  youtube: { url: string; enabled: boolean };
+  tiktok: { url: string; enabled: boolean };
+  customLinks: { name: string; url: string; enabled: boolean }[];
 }
 
 export default function AdminDashboard() {
@@ -84,6 +87,9 @@ export default function AdminDashboard() {
     github: { url: "https://github.com/lucascaillat", enabled: true },
     twitter: { url: "https://twitter.com/lucascaillat", enabled: false },
     instagram: { url: "https://instagram.com/lucascaillat", enabled: false },
+    youtube: { url: "", enabled: false },
+    tiktok: { url: "", enabled: false },
+    customLinks: []
   });
 
   const [formTitle, setFormTitle] = useState("");
@@ -94,11 +100,24 @@ export default function AdminDashboard() {
   const [formLinkType, setFormLinkType] = useState<"external" | "internal">("internal");
   const [formUrl, setFormUrl] = useState("");
   const [formContent, setFormContent] = useState("");
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
 
   useEffect(() => {
     const auth = localStorage.getItem("admin_auth");
     if (auth !== "true") router.push("/admin/login");
     fetchData();
+
+    // Real-time Messages
+    const msgChannel = supabase.channel('admin-msgs')
+      .on('postgres_changes', { event: 'INSERT', table: 'messages', schema: 'public' }, (payload) => {
+        setMessages(prev => [payload.new as Message, ...prev]);
+        // Play sound or notification if needed
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(msgChannel);
+    };
   }, [router]);
 
   const getYoutubeId = (url: string) => { 
@@ -328,13 +347,49 @@ export default function AdminDashboard() {
                 <div className="space-y-6"> <h3 className="font-serif text-2xl border-b border-text-black/10 pb-4">Email</h3> <input type="email" value={socials.email} onChange={(e) => setSocials({...socials, email: e.target.value})} className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none" /> </div>
                 <div className="space-y-8">
                   <h3 className="font-serif text-2xl border-b border-text-black/10 pb-4">Réseaux</h3>
-                  {[ { id: 'linkedin', label: 'LinkedIn', icon: FaLinkedin }, { id: 'github', label: 'GitHub', icon: FaGithub }, { id: 'twitter', label: 'Twitter (X)', icon: FaTwitter }, { id: 'instagram', label: 'Instagram', icon: FaInstagram } ].map((platform) => (
+                  {[ 
+                    { id: 'linkedin', label: 'LinkedIn', icon: FaLinkedin }, 
+                    { id: 'github', label: 'GitHub', icon: FaGithub }, 
+                    { id: 'twitter', label: 'Twitter (X)', icon: FaTwitter }, 
+                    { id: 'instagram', label: 'Instagram', icon: FaInstagram },
+                    { id: 'youtube', label: 'YouTube', icon: FaYoutube },
+                    { id: 'tiktok', label: 'TikTok', icon: FaTiktok }
+                  ].map((platform) => (
                     <div key={platform.id} className="flex items-center gap-8">
                       <div className="w-12 h-12 bg-text-black/5 rounded-sm flex items-center justify-center"><platform.icon size={20} /></div>
-                      <div className="flex-1"> <label className="block text-[10px] font-bold uppercase tracking-widest mb-1 opacity-50">{platform.label}</label> <input type="text" value={(socials as any)[platform.id].url} onChange={(e) => setSocials({...socials, [platform.id]: {...(socials as any)[platform.id], url: e.target.value}})} className="w-full bg-transparent border-b border-text-black/20 py-1 outline-none text-sm" /> </div>
-                      <button onClick={() => setSocials({...socials, [platform.id]: {...(socials as any)[platform.id], enabled: !(socials as any)[platform.id].enabled}})} className={`w-12 h-6 rounded-full transition-colors relative ${ (socials as any)[platform.id].enabled ? 'bg-primary-red' : 'bg-text-black/10' }`}> <motion.div animate={{ x: (socials as any)[platform.id].enabled ? 24 : 4 }} className="w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm" /> </button>
+                      <div className="flex-1"> <label className="block text-[10px] font-bold uppercase tracking-widest mb-1 opacity-50">{platform.label}</label> <input type="text" value={(socials as any)[platform.id]?.url || ""} onChange={(e) => setSocials({...socials, [platform.id]: {...(socials as any)[platform.id], url: e.target.value}})} className="w-full bg-transparent border-b border-text-black/20 py-1 outline-none text-sm" /> </div>
+                      <button onClick={() => setSocials({...socials, [platform.id]: {...(socials as any)[platform.id], enabled: !(socials as any)[platform.id]?.enabled}})} className={`w-12 h-6 rounded-full transition-colors relative ${ (socials as any)[platform.id]?.enabled ? 'bg-primary-red' : 'bg-text-black/10' }`}> <motion.div animate={{ x: (socials as any)[platform.id]?.enabled ? 24 : 4 }} className="w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm" /> </button>
                     </div>
                   ))}
+                </div>
+
+                <div className="space-y-6 pt-4">
+                  <div className="flex justify-between items-center border-b border-text-black/10 pb-4">
+                    <h3 className="font-serif text-2xl">Liens Personnalisés</h3>
+                    <button onClick={() => setSocials({...socials, customLinks: [...(socials.customLinks || []), { name: "Nouveau Lien", url: "https://", enabled: true }]})} className="text-primary-red flex items-center gap-2 text-xs font-bold uppercase tracking-widest">
+                      <Plus size={16} /> Ajouter
+                    </button>
+                  </div>
+                  <div className="space-y-4">
+                    {(socials.customLinks || []).map((link, idx) => (
+                      <div key={idx} className="flex items-center gap-4 bg-text-black/5 p-4 rounded-sm group">
+                        <FaGlobe size={18} className="opacity-30" />
+                        <input type="text" value={link.name} onChange={(e) => {
+                          const newLinks = [...socials.customLinks];
+                          newLinks[idx].name = e.target.value;
+                          setSocials({...socials, customLinks: newLinks});
+                        }} className="w-32 bg-transparent border-b border-text-black/10 text-xs font-bold uppercase outline-none" />
+                        <input type="text" value={link.url} onChange={(e) => {
+                          const newLinks = [...socials.customLinks];
+                          newLinks[idx].url = e.target.value;
+                          setSocials({...socials, customLinks: newLinks});
+                        }} className="flex-1 bg-transparent border-b border-text-black/10 text-sm outline-none" />
+                        <button onClick={() => setSocials({...socials, customLinks: socials.customLinks.filter((_, i) => i !== idx)})} className="opacity-0 group-hover:opacity-40 hover:!opacity-100 text-red-600 transition-opacity">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <button onClick={handleSaveSocials} className="bg-text-black text-white px-10 py-4 font-bold text-xs tracking-widest uppercase">Sauvegarder</button>
               </div>
@@ -429,13 +484,73 @@ export default function AdminDashboard() {
           {isModalOpen && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsModalOpen(false)} className="absolute inset-0 bg-soft-black/60 backdrop-blur-md" />
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-4xl bg-background border border-text-black/10 rounded-sm shadow-2xl p-8 max-h-[90vh] overflow-y-auto">
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <h3 className="font-serif text-3xl italic">{editingProject ? "Modifier" : "Nouveau"} Projet</h3>
-                  <div className="grid grid-cols-3 gap-6"> <input type="text" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="Titre" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none" required /> <input type="text" value={formCategory} onChange={(e) => setFormCategory(e.target.value)} placeholder="Catégorie (Optionnel)" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none" /> <input type="text" value={formDate} onChange={(e) => setFormDate(e.target.value)} placeholder="Date" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none" required /> </div>
-                  <input type="text" value={formImage} onChange={(e) => setFormImage(e.target.value)} placeholder="URL Image" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none" required />
-                  <textarea value={formContent} onChange={(e) => setFormContent(e.target.value)} rows={8} className="w-full bg-transparent border border-text-black/10 p-4 outline-none resize-none" placeholder="Blog content..." />
-                  <button type="submit" className="w-full bg-primary-red text-white py-3 font-bold text-xs tracking-widest uppercase">Enregistrer</button>
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-5xl bg-background border border-text-black/10 rounded-sm shadow-2xl p-8 max-h-[90vh] overflow-y-auto">
+                <form onSubmit={handleSubmit} className="space-y-8">
+                  <div className="flex justify-between items-center border-b border-text-black/10 pb-6">
+                    <h3 className="font-serif text-3xl italic">{editingProject ? "Modifier" : "Nouveau"} Projet</h3>
+                    <button type="button" onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-text-black/5 rounded-full transition-colors"><CloseIcon size={24} /></button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                    <div className="space-y-6">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Informations</label>
+                        <input type="text" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="Titre du projet" className="w-full bg-transparent border-b border-text-black/20 py-3 outline-none text-xl font-serif" required />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <input type="text" value={formCategory} onChange={(e) => setFormCategory(e.target.value)} placeholder="Catégorie" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" />
+                        <input type="text" value={formDate} onChange={(e) => setFormDate(e.target.value)} placeholder="Date (ex: Mai 2024)" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" required />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Image Principale (URL)</label>
+                        <input type="text" value={formImage} onChange={(e) => setFormImage(e.target.value)} placeholder="https://..." className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" required />
+                        {formImage && (
+                          <div className="relative aspect-video rounded-sm overflow-hidden bg-text-black/5 border border-text-black/10 mt-4">
+                            <Image src={formImage} alt="Preview" fill className="object-cover" unoptimized />
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-4 pt-4">
+                         <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Lien du projet</label>
+                         <select value={formLinkType} onChange={(e) => setFormLinkType(e.target.value as any)} className="w-full bg-transparent border border-text-black/10 p-3 text-sm outline-none">
+                           <option value="internal">Page Interne (Blog/Détails)</option>
+                           <option value="external">Lien Externe (Site web, Behance...)</option>
+                         </select>
+                         {formLinkType === "external" && (
+                           <input type="text" value={formUrl} onChange={(e) => setFormUrl(e.target.value)} placeholder="URL de destination" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" />
+                         )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-6">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-4">
+                          <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Contenu / Description</label>
+                          <div className="flex bg-text-black/5 p-1 rounded-sm">
+                            <button type="button" onClick={() => setIsPreviewMode(false)} className={`px-3 py-1 text-[10px] font-bold uppercase rounded-sm transition-all ${!isPreviewMode ? 'bg-white shadow-sm' : 'opacity-40'}`}>Éditer</button>
+                            <button type="button" onClick={() => setIsPreviewMode(true)} className={`px-3 py-1 text-[10px] font-bold uppercase rounded-sm transition-all ${isPreviewMode ? 'bg-white shadow-sm' : 'opacity-40'}`}>Aperçu</button>
+                          </div>
+                        </div>
+                        <span className="text-[10px] opacity-30 italic">Supporte le HTML</span>
+                      </div>
+                      
+                      {isPreviewMode ? (
+                        <div className="w-full h-[400px] overflow-y-auto bg-white border border-text-black/10 p-8 rounded-sm prose prose-sm max-w-none">
+                          <h1 className="font-serif text-3xl mb-4">{formTitle}</h1>
+                          <div dangerouslySetInnerHTML={{ __html: formContent.replace(/\n/g, '<br/>') }} />
+                        </div>
+                      ) : (
+                        <textarea value={formContent} onChange={(e) => setFormContent(e.target.value)} rows={15} className="w-full bg-text-black/[0.02] border border-text-black/10 p-6 outline-none resize-none font-mono text-sm leading-relaxed rounded-sm focus:border-primary-red/30 transition-colors" placeholder="Décrivez votre projet ici..." />
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4 pt-6 border-t border-text-black/10">
+                    <button type="submit" className="flex-1 bg-text-black text-white py-4 rounded-sm font-bold text-xs tracking-widest uppercase hover:bg-soft-black transition-all">Enregistrer le Projet</button>
+                    <button type="button" onClick={() => setFormStatus(formStatus === "Publié" ? "Brouillon" : "Publié")} className={`px-8 py-4 rounded-sm font-bold text-xs tracking-widest uppercase transition-all ${formStatus === "Publié" ? "bg-green-600/10 text-green-600" : "bg-orange-600/10 text-orange-600"}`}>
+                      {formStatus}
+                    </button>
+                  </div>
                 </form>
               </motion.div>
             </div>

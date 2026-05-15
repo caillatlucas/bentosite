@@ -5,7 +5,10 @@ import {
   FaLinkedin, 
   FaGithub, 
   FaTwitter, 
-  FaInstagram 
+  FaInstagram,
+  FaYoutube,
+  FaTiktok,
+  FaGlobe
 } from "react-icons/fa";
 
 interface SocialLink {
@@ -18,6 +21,9 @@ interface SocialConfig {
   github: SocialLink;
   twitter: SocialLink;
   instagram: SocialLink;
+  youtube: SocialLink;
+  tiktok: SocialLink;
+  customLinks: { name: string; url: string; enabled: boolean }[];
 }
 
 const defaultSocials: SocialConfig = {
@@ -25,6 +31,9 @@ const defaultSocials: SocialConfig = {
   github: { url: "https://github.com/lucascaillat", enabled: true },
   twitter: { url: "https://twitter.com/lucascaillat", enabled: false },
   instagram: { url: "https://instagram.com/lucascaillat", enabled: false },
+  youtube: { url: "", enabled: false },
+  tiktok: { url: "", enabled: false },
+  customLinks: []
 };
 
 export default function Socials({ config }: { config?: SocialConfig | null }) {
@@ -35,9 +44,18 @@ export default function Socials({ config }: { config?: SocialConfig | null }) {
     { id: "github", icon: FaGithub, label: "GitHub", data: socials.github },
     { id: "twitter", icon: FaTwitter, label: "Twitter", data: socials.twitter },
     { id: "instagram", icon: FaInstagram, label: "Instagram", data: socials.instagram },
+    { id: "youtube", icon: FaYoutube, label: "YouTube", data: socials.youtube },
+    { id: "tiktok", icon: FaTiktok, label: "TikTok", data: socials.tiktok },
   ];
 
-  const enabledItems = socialItems.filter(item => item.data?.enabled);
+  const customItems = (socials.customLinks || []).map(link => ({
+    id: link.name,
+    icon: FaGlobe,
+    label: link.name,
+    data: { url: link.url, enabled: link.enabled }
+  }));
+
+  const enabledItems = [...socialItems, ...customItems].filter(item => item.data?.enabled && item.data?.url);
 
   if (enabledItems.length === 0) return null;
 
