@@ -10,7 +10,8 @@ import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 
 interface MediaItem { id: string; url: string; name: string; }
-interface Message { id: string; name: string; title: string; content: string; contact?: string; date: string; reply?: string; }
+interface Message { id: string; name: string; title: string; content: string; contact?: string; date: string; reply?: string; order_id?: string; attachments?: string[]; }
+interface Product { id: string; name: string; price: number; description: string; images: string[]; }
 
 export default function Home() {
   const [isClient, setIsClient] = useState(false);
@@ -28,10 +29,17 @@ export default function Home() {
     musicEnabled: false, 
     musicUrl: "", 
     musicCover: "",
-    primaryColor: "#ff3131"
+    primaryColor: "#ff3131",
+    sectionsConfig: [
+      { id: 'projects', label: 'Projets', visible: true },
+      { id: 'shop', label: 'Boutique', visible: true },
+      { id: 'gallery', label: 'Galerie', visible: true },
+      { id: 'bento', label: 'Bento Grid', visible: true }
+    ]
   });
   const [socialsConfig, setSocialsConfig] = useState<any>(null);
   const [galleryMedia, setGalleryMedia] = useState<MediaItem[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [selectedImage, setSelectedImage] = useState<MediaItem | null>(null);
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -46,6 +54,8 @@ export default function Home() {
   const [formTitle, setFormTitle] = useState("");
   const [formContent, setFormContent] = useState("");
   const [formContact, setFormContact] = useState("");
+  const [formOrderId, setFormOrderId] = useState("");
+  const [formAttachments, setFormAttachments] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -117,6 +127,8 @@ export default function Home() {
     }
     const { data: mData } = await supabase.from('media').select('*').order('created_at', { ascending: false });
     if (mData) setGalleryMedia(mData);
+    const { data: pData } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+    if (pData) setProducts(pData);
   };
 
   const checkReplies = async () => {
@@ -134,8 +146,27 @@ export default function Home() {
     setFormName(msg.name);
     setFormTitle(`Re: ${msg.title}`);
     setFormContact(msg.contact || "");
+    setFormOrderId(msg.order_id || "");
     setIsContactOpen(true);
     setIsNotifOpen(false);
+  };
+
+  const handleBuyProduct = (product: Product) => {
+    const randomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+    setFormTitle(`Achat: ${product.name}`);
+    setFormOrderId(randomId);
+    setFormContent(`Bonjour, je souhaite commander le produit "${product.name}" (${product.price}€).`);
+    setIsContactOpen(true);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormAttachments([...formAttachments, reader.result as string]);
+    };
+    reader.readAsDataURL(file);
   };
 
   const copyEmail = () => { navigator.clipboard.writeText(settings.email || "contact@lucascaillat.fr"); setCopied(true); setTimeout(() => setCopied(false), 2000); };
@@ -149,14 +180,22 @@ export default function Home() {
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    const newMessage = { name: formName, title: formTitle, content: formContent, contact: formContact, date: new Date().toLocaleString("fr-FR") };
+    const newMessage = { 
+      name: formName, 
+      title: formTitle, 
+      content: formContent, 
+      contact: formContact, 
+      order_id: formOrderId || null,
+      attachments: formAttachments,
+      date: new Date().toLocaleString("fr-FR") 
+    };
     const { data, error } = await supabase.from('messages').insert(newMessage).select();
     if (data) {
       const existing = localStorage.getItem("my_sent_messages");
       const ids = existing ? JSON.parse(existing) : [];
       localStorage.setItem("my_sent_messages", JSON.stringify([...ids, data[0].id]));
       setIsSubmitting(false); setShowSuccess(true);
-      setTimeout(() => { setShowSuccess(false); setIsContactOpen(false); setFormName(""); setFormTitle(""); setFormContent(""); setFormContact(""); }, 2000);
+      setTimeout(() => { setShowSuccess(false); setIsContactOpen(false); setFormName(""); setFormTitle(""); setFormContent(""); setFormContact(""); setFormOrderId(""); setFormAttachments([]); }, 2000);
     }
   };
 
@@ -266,12 +305,36 @@ export default function Home() {
               ) : (
                 <form onSubmit={handleContactSubmit} className="space-y-6">
                   <h3 className="font-serif text-4xl italic text-[var(--primary-red)]">Me contacter</h3>
-                  <div className="grid grid-cols-1 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <input type="text" value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Nom & Prénom" className="w-full bg-transparent border-b border-text-black/10 py-3 outline-none focus:border-[var(--primary-red)]" required />
-                    <input type="text" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="Objet" className="w-full bg-transparent border-b border-text-black/10 py-3 outline-none focus:border-[var(--primary-red)]" required />
                     <input type="text" value={formContact} onChange={(e) => setFormContact(e.target.value)} placeholder="Email / Tél" className="w-full bg-transparent border-b border-text-black/10 py-3 outline-none focus:border-[var(--primary-red)]" />
                   </div>
-                  <textarea value={formContent} onChange={(e) => setFormContent(e.target.value)} placeholder="Message..." rows={5} className="w-full bg-text-black/5 p-4 rounded-sm outline-none focus:border-[var(--primary-red)] resize-none" required />
+                  <div className="grid grid-cols-2 gap-4">
+                    <input type="text" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="Objet" className="w-full bg-transparent border-b border-text-black/10 py-3 outline-none focus:border-[var(--primary-red)]" required />
+                    <input type="text" value={formOrderId} onChange={(e) => setFormOrderId(e.target.value)} placeholder="ID Commande (Optionnel)" className="w-full bg-transparent border-b border-text-black/10 py-3 outline-none focus:border-[var(--primary-red)]" />
+                  </div>
+                  <textarea value={formContent} onChange={(e) => setFormContent(e.target.value)} placeholder="Message..." rows={4} className="w-full bg-text-black/5 p-4 rounded-sm outline-none focus:border-[var(--primary-red)] resize-none" required />
+                  
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Pièces jointes</label>
+                      <label className="cursor-pointer text-[10px] font-bold text-primary-red uppercase tracking-widest flex items-center gap-2">
+                        <Upload size={14} /> Joindre une image
+                        <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />
+                      </label>
+                    </div>
+                    {formAttachments.length > 0 && (
+                      <div className="flex gap-2 overflow-x-auto pb-2">
+                        {formAttachments.map((img, i) => (
+                          <div key={i} className="relative w-12 h-12 rounded-xs overflow-hidden border border-text-black/10 flex-shrink-0 group">
+                            <Image src={img} alt="attachment" fill className="object-cover" unoptimized />
+                            <button type="button" onClick={() => setFormAttachments(formAttachments.filter((_, idx) => idx !== i))} className="absolute inset-0 bg-red-600/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white"><X size={12} /></button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
                   <button type="submit" disabled={isSubmitting} className="w-full bg-text-black text-white py-4 rounded-sm font-bold text-xs tracking-widest uppercase flex items-center justify-center gap-3"> {isSubmitting ? "Envoi..." : <>ENVOYER <Send size={14} /></>} </button>
                 </form>
               )}
@@ -338,44 +401,90 @@ export default function Home() {
         </motion.div>
       </section>
 
-      <div className="h-24 md:h-48"></div>
-
       <div className="max-w-[1600px] mx-auto w-full space-y-32 md:space-y-48">
-        <section>
-          <div className="flex justify-between items-end mb-12 md:mb-16 border-b border-text-black/10 pb-6">
-            <h2 className="font-serif text-3xl md:text-5xl lg:text-6xl text-soft-black">{settings.recentProjectsTitle || "Projets Récents"}</h2>
-            <span className="text-text-black/50 text-[10px] md:text-sm tracking-widest uppercase hidden md:block">{settings.projectsTitle}</span>
-          </div>
-          <Projects />
-        </section>
-
-        {galleryMedia.length > 0 && (
-          <section>
-            <div className="flex justify-between items-end mb-12 md:mb-16 border-b border-text-black/10 pb-6"> 
-              <h2 className="font-serif text-3xl md:text-5xl lg:text-6xl text-soft-black">{settings.galleryTitle}</h2> 
-              <span className="text-text-black/50 text-[10px] md:text-sm tracking-widest uppercase hidden md:block">{settings.bentoGridTitle || "Bento Grid"}</span> 
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-4 md:h-[800px]">
-              {galleryMedia.slice(0, 5).map((item, i) => {
-                const ytId = getYoutubeId(item.url);
-                const displayUrl = ytId ? getYoutubeThumbnail(ytId) : item.url;
-                
-                return (
-                  <motion.div key={item.id} initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} onClick={() => setSelectedImage(item)} className={`relative overflow-hidden rounded-sm bg-text-black/5 group cursor-zoom-in aspect-square md:aspect-auto ${i === 0 ? "md:col-span-2 md:row-span-2" : i === 1 ? "md:col-span-2 md:row-span-1" : "md:col-span-1 md:row-span-1"}`}>
-                    <Image src={displayUrl} alt={item.name} fill className="object-cover transition-transform duration-700 group-hover:scale-105" unoptimized />
-                    {ytId && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-12 h-12 md:w-16 md:h-16 bg-white/20 backdrop-blur-md text-white rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 group-hover:bg-primary-red transition-all duration-500 border border-white/30">
-                          <Play size={24} fill="currentColor" className="ml-1" />
-                        </div>
-                      </div>
-                    )}
+        {(settings.sectionsConfig || []).filter(s => s.visible).map((section) => {
+          if (section.id === 'projects') return <Projects key="projects" config={settings} />;
+          
+          if (section.id === 'shop' && products.length > 0) return (
+            <section key="shop" className="relative z-10">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-4">
+                <h2 className="font-serif text-6xl md:text-8xl tracking-tighter leading-none italic">Boutique</h2>
+                <p className="text-xl md:text-2xl text-[var(--primary-red)] font-light italic">Nos Produits</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {products.map((product) => (
+                  <motion.div key={product.id} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="group bg-white/40 border border-text-black/5 rounded-sm overflow-hidden backdrop-blur-md">
+                    <div className="relative aspect-square overflow-hidden">
+                      <Image src={product.images[0] || ""} alt={product.name} fill className="object-cover group-hover:scale-105 transition-transform duration-700" unoptimized />
+                      <div className="absolute top-6 right-6 bg-text-black text-white px-4 py-2 text-sm font-bold shadow-xl">{product.price}€</div>
+                    </div>
+                    <div className="p-8 space-y-4">
+                      <h3 className="font-serif text-2xl">{product.name}</h3>
+                      <p className="text-sm opacity-60 line-clamp-2">{product.description}</p>
+                      <button onClick={() => handleBuyProduct(product)} className="w-full bg-text-black text-white py-4 rounded-sm font-bold text-[10px] tracking-widest uppercase hover:bg-[var(--primary-red)] transition-all flex items-center justify-center gap-2">Commander <Zap size={14} fill="currentColor" /></button>
+                    </div>
                   </motion.div>
-                );
-              })}
-            </div>
-          </section>
-        )}
+                ))}
+              </div>
+            </section>
+          );
+
+          if (section.id === 'gallery' && galleryMedia.length > 0) return (
+            <section key="gallery">
+              <div className="flex justify-between items-end mb-12 md:mb-16 border-b border-text-black/10 pb-6"> 
+                <h2 className="font-serif text-3xl md:text-5xl lg:text-6xl text-soft-black">{settings.galleryTitle}</h2> 
+                <span className="text-text-black/50 text-[10px] md:text-sm tracking-widest uppercase hidden md:block">Galerie Photo/Vidéo</span> 
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-4 md:h-[800px]">
+                {galleryMedia.slice(0, 5).map((item, i) => {
+                  const ytId = getYoutubeId(item.url);
+                  const displayUrl = ytId ? getYoutubeThumbnail(ytId) : item.url;
+                  return (
+                    <motion.div key={item.id} initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} onClick={() => setSelectedImage(item)} className={`relative overflow-hidden rounded-sm bg-text-black/5 group cursor-zoom-in aspect-square md:aspect-auto ${i === 0 ? "md:col-span-2 md:row-span-2" : i === 1 ? "md:col-span-2 md:row-span-1" : "md:col-span-1 md:row-span-1"}`}>
+                      <Image src={displayUrl} alt={item.name} fill className="object-cover transition-transform duration-700 group-hover:scale-105" unoptimized />
+                      {ytId && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-12 h-12 md:w-16 md:h-16 bg-white/20 backdrop-blur-md text-white rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 group-hover:bg-primary-red transition-all duration-500 border border-white/30">
+                            <Play size={24} fill="currentColor" className="ml-1" />
+                          </div>
+                        </div>
+                      )}
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </section>
+          );
+
+          if (section.id === 'bento') return (
+            <section key="bento" className="relative z-10">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-4">
+                <h2 className="font-serif text-6xl md:text-8xl tracking-tighter leading-none italic">{settings.bentoGridTitle}</h2>
+                <p className="text-xl md:text-2xl text-[var(--primary-red)] font-light italic">À propos</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="md:col-span-2 aspect-square md:aspect-video bg-white/40 backdrop-blur-md border border-text-black/5 rounded-sm p-12 flex flex-col justify-between group overflow-hidden relative">
+                  <div className="relative z-10"> <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--primary-red)] mb-4">Ma Bio</p> <h3 className="font-serif text-3xl md:text-5xl leading-tight mb-6">{settings.bio || "Exploration créative et solutions techniques."}</h3> </div>
+                  <Socials config={socialsConfig} />
+                </div>
+                <div className="aspect-square bg-[var(--primary-red)] rounded-sm p-10 flex flex-col justify-between text-white relative overflow-hidden group">
+                  <motion.div initial={{ scale: 1 }} whileHover={{ scale: 1.1 }} className="absolute -right-8 -bottom-8 opacity-20"><Zap size={200} fill="white" /></motion.div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] relative z-10">Disponibilité</p>
+                  <h3 className="font-serif text-4xl italic relative z-10">Ouvert aux projets freelance</h3>
+                </div>
+                <div className="aspect-square bg-text-black rounded-sm p-10 flex flex-col justify-between text-white relative overflow-hidden group">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-40">Contact</p>
+                  <div className="space-y-4 relative z-10">
+                    <p className="font-serif text-2xl">{settings.email || "hello@lucascaillat.fr"}</p>
+                    <button onClick={copyEmail} className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 hover:text-primary-red transition-colors"> {copied ? <><Check size={14} /> Copié</> : <><Copy size={14} /> Copier l'email</>} </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+          );
+          
+          return null;
+        })}
 
         <footer className="pt-16 border-t border-text-black/10 flex flex-col md:flex-row justify-between items-center md:items-end gap-12 w-full pb-16">
           <div className="max-w-md text-center md:text-left relative">

@@ -41,6 +41,17 @@ interface Message {
   contact?: string;
   date: string;
   reply?: string;
+  order_id?: string;
+  attachments?: string[];
+}
+
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  description: string;
+  images: string[];
+  created_at?: string;
 }
 
 interface SocialConfig {
@@ -58,9 +69,11 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("pages");
   const [projects, setProjects] = useState<Project[]>([]);
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [replyText, setReplyText] = useState<{ [key: string]: string }>({});
@@ -81,6 +94,12 @@ export default function AdminDashboard() {
   const [musicUrl, setMusicUrl] = useState("");
   const [musicCover, setMusicCover] = useState("");
   const [primaryColor, setPrimaryColor] = useState("#ff3131");
+  const [sectionsConfig, setSectionsConfig] = useState([
+    { id: 'projects', label: 'Projets', visible: true },
+    { id: 'shop', label: 'Boutique', visible: true },
+    { id: 'gallery', label: 'Galerie', visible: true },
+    { id: 'bento', label: 'Bento Grid', visible: true }
+  ]);
 
   const [socials, setSocials] = useState<SocialConfig>({
     email: "contact@lucascaillat.fr",
@@ -103,6 +122,12 @@ export default function AdminDashboard() {
   const [formContent, setFormContent] = useState("");
   const [formGallery, setFormGallery] = useState<{ url: string; type: 'image' | 'video' }[]>([]);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+
+  // Product Form State
+  const [prodName, setProdName] = useState("");
+  const [prodPrice, setProdPrice] = useState(0);
+  const [prodDesc, setProdDesc] = useState("");
+  const [prodImages, setProdImages] = useState<string[]>([]);
 
   useEffect(() => {
     const auth = localStorage.getItem("admin_auth");
@@ -136,6 +161,8 @@ export default function AdminDashboard() {
     if (mData) setMediaItems(mData);
     const { data: msgData } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
     if (msgData) setMessages(msgData);
+    const { data: prodData } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+    if (prodData) setProducts(prodData);
     const { data: sData } = await supabase.from('settings').select('*');
     if (sData) {
       const global = sData.find(s => s.key === 'global')?.value;
@@ -154,6 +181,7 @@ export default function AdminDashboard() {
         setMusicUrl(global.musicUrl || "");
         setMusicCover(global.musicCover || "");
         setPrimaryColor(global.primaryColor || "#ff3131");
+        if (global.sectionsConfig) setSectionsConfig(global.sectionsConfig);
       }
       const soc = sData.find(s => s.key === 'socials')?.value;
       if (soc) setSocials(soc);
@@ -175,7 +203,8 @@ export default function AdminDashboard() {
       musicEnabled, 
       musicUrl, 
       musicCover,
-      primaryColor
+      primaryColor,
+      sectionsConfig
     };
     const { error } = await supabase.from('settings').upsert({ key: 'global', value: s });
     if (error) {
@@ -226,6 +255,16 @@ export default function AdminDashboard() {
     reader.readAsDataURL(file);
   };
 
+  const handleSubmitProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const pData = { name: prodName, price: prodPrice, description: prodDesc, images: prodImages };
+    if (editingProduct) await supabase.from('products').update(pData).eq('id', editingProduct.id);
+    else await supabase.from('products').insert(pData);
+    setIsProductModalOpen(false); fetchData();
+  };
+
+  const deleteProduct = async (id: string) => { if (confirm("Supprimer ce produit ?")) { await supabase.from('products').delete().eq('id', id); setProducts(products.filter(p => p.id !== id)); } };
+
   const addMediaByUrl = async () => {
     const url = prompt("URL Image ou Vidéo YouTube :");
     if (url) {
@@ -253,6 +292,14 @@ export default function AdminDashboard() {
     if (targetIdx < 0 || targetIdx >= newGallery.length) return;
     [newGallery[idx], newGallery[targetIdx]] = [newGallery[targetIdx], newGallery[idx]];
     setFormGallery(newGallery);
+  };
+
+  const moveSection = (idx: number, direction: 'up' | 'down') => {
+    const newSections = [...sectionsConfig];
+    const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= newSections.length) return;
+    [newSections[idx], newSections[targetIdx]] = [newSections[targetIdx], newSections[idx]];
+    setSectionsConfig(newSections);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -296,6 +343,7 @@ export default function AdminDashboard() {
   const tabs = [
     { id: "pages", label: "Projets", icon: FileText },
     { id: "media", label: "Médias", icon: ImageIcon },
+    { id: "shop", label: "Boutique", icon: Zap },
     { id: "messages", label: "Messages", icon: MessageSquare },
     { id: "social", label: "Social", icon: Share2 },
     { id: "settings", label: "Réglages", icon: Settings },
@@ -335,6 +383,11 @@ export default function AdminDashboard() {
           {activeTab === "pages" && (
             <button onClick={() => { setEditingProject(null); setFormTitle(""); setFormCategory(""); setFormDate(""); setFormImage(""); setFormContent(""); setFormGallery([]); setIsModalOpen(true); }} className="bg-primary-red text-white px-8 py-3.5 rounded-sm hover:bg-red-600 transition-all flex items-center gap-2 text-sm font-bold shadow-xl shadow-shadow-red/20">
               <Plus size={18} /> NOUVEAU PROJET
+            </button>
+          )}
+          {activeTab === "shop" && (
+            <button onClick={() => { setEditingProduct(null); setProdName(""); setProdPrice(0); setProdDesc(""); setProdImages([]); setIsProductModalOpen(true); }} className="bg-primary-red text-white px-8 py-3.5 rounded-sm hover:bg-red-600 transition-all flex items-center gap-2 text-sm font-bold shadow-xl shadow-shadow-red/20">
+              <Plus size={18} /> NOUVEAU PRODUIT
             </button>
           )}
         </header>
@@ -452,8 +505,22 @@ export default function AdminDashboard() {
               {messages.map((msg) => (
                 <div key={msg.id} className="bg-white/60 border border-text-black/5 rounded-sm p-8 space-y-6 relative group">
                   <button onClick={() => deleteMessage(msg.id)} className="absolute top-6 right-6 text-text-black/20 hover:text-red-600"><Trash2 size={18} /></button>
-                  <h3 className="font-serif text-2xl text-soft-black">{msg.title}</h3>
+                  <div className="flex items-center gap-3">
+                    <h3 className="font-serif text-2xl text-soft-black">{msg.title}</h3>
+                    {msg.order_id && <span className="bg-primary-red/10 text-primary-red px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest rounded-xs">Commande: {msg.order_id}</span>}
+                  </div>
                   <p className="text-sm leading-relaxed text-text-black/70">{msg.content}</p>
+                  
+                  {msg.attachments && msg.attachments.length > 0 && (
+                    <div className="flex gap-2 pt-2">
+                      {msg.attachments.map((url, i) => (
+                        <div key={i} className="relative w-20 h-20 rounded-sm overflow-hidden border border-text-black/10">
+                          <Image src={url} alt="attachment" fill className="object-cover" unoptimized />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   <div className="text-[10px] font-bold uppercase tracking-widest opacity-40">Par {msg.name} le {msg.date} • {msg.contact}</div>
                   
                   <div className="mt-8 pt-8 border-t border-text-black/10">
@@ -480,6 +547,30 @@ export default function AdminDashboard() {
             </motion.div>
           )}
 
+          {activeTab === "shop" && (
+            <motion.div key="shop" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
+              {products.length === 0 ? <p className="text-center py-20 opacity-30 italic">Aucun produit en vente.</p> : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {products.map((product) => (
+                    <div key={product.id} className="bg-white/60 border border-text-black/5 rounded-sm overflow-hidden group">
+                      <div className="relative aspect-square">
+                        <Image src={product.images[0] || ""} alt={product.name} fill className="object-cover" unoptimized />
+                        <div className="absolute top-4 right-4 bg-text-black text-white px-3 py-1 text-xs font-bold">{product.price}€</div>
+                      </div>
+                      <div className="p-6 space-y-4">
+                        <h3 className="font-serif text-xl">{product.name}</h3>
+                        <div className="flex justify-between items-center pt-4 border-t border-text-black/5">
+                          <button onClick={() => { setEditingProduct(product); setProdName(product.name); setProdPrice(product.price); setProdDesc(product.description); setProdImages(product.images); setIsProductModalOpen(true); }} className="text-[10px] font-bold uppercase tracking-widest hover:text-primary-red transition-colors flex items-center gap-2"><Edit2 size={14} /> Modifier</button>
+                          <button onClick={() => deleteProduct(product.id)} className="text-[10px] font-bold uppercase tracking-widest text-red-600 hover:text-red-700 transition-colors flex items-center gap-2"><Trash2 size={14} /> Supprimer</button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          )}
+
           {activeTab === "settings" && (
             <motion.div key="settings" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="max-w-3xl space-y-8">
               <div className="bg-white/40 border border-text-black/5 rounded-sm p-8 space-y-8">
@@ -500,6 +591,26 @@ export default function AdminDashboard() {
                   </div>
                 </div>
                 
+                <h3 className="font-serif text-2xl border-b border-text-black/10 pb-4 pt-4">Visibilité & Ordre des Sections</h3>
+                <div className="space-y-4">
+                  {sectionsConfig.map((section, idx) => (
+                    <div key={section.id} className="flex items-center gap-6 bg-text-black/5 p-4 rounded-sm group">
+                      <div className="flex flex-col gap-1">
+                        <button onClick={() => moveSection(idx, 'up')} className="opacity-30 hover:opacity-100"><ArrowLeft size={14} className="rotate-90" /></button>
+                        <button onClick={() => moveSection(idx, 'down')} className="opacity-30 hover:opacity-100"><ArrowLeft size={14} className="-rotate-90" /></button>
+                      </div>
+                      <span className="flex-1 font-serif text-lg">{section.label}</span>
+                      <button onClick={() => {
+                        const newSections = [...sectionsConfig];
+                        newSections[idx].visible = !newSections[idx].visible;
+                        setSectionsConfig(newSections);
+                      }} className={`w-12 h-6 rounded-full transition-colors relative ${ section.visible ? 'bg-primary-red' : 'bg-text-black/10' }`}>
+                        <motion.div animate={{ x: section.visible ? 24 : 4 }} className="w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
                 <h3 className="font-serif text-2xl border-b border-text-black/10 pb-4 pt-4">Titres des Sections</h3>
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-2">
@@ -532,6 +643,52 @@ export default function AdminDashboard() {
         </AnimatePresence>
 
         <AnimatePresence>
+          {isProductModalOpen && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsProductModalOpen(false)} className="absolute inset-0 bg-soft-black/60 backdrop-blur-md" />
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-2xl bg-background border border-text-black/10 rounded-sm shadow-2xl p-8 max-h-[90vh] overflow-y-auto">
+                <form onSubmit={handleSubmitProduct} className="space-y-6">
+                  <div className="flex justify-between items-center border-b border-text-black/10 pb-6">
+                    <h3 className="font-serif text-3xl italic">{editingProduct ? "Modifier" : "Nouveau"} Produit</h3>
+                    <button type="button" onClick={() => setIsProductModalOpen(false)} className="p-2 hover:bg-text-black/5 rounded-full transition-colors"><CloseIcon size={24} /></button>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-6">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Nom du produit</label>
+                        <input type="text" value={prodName} onChange={(e) => setProdName(e.target.value)} className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" required />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Prix (€)</label>
+                        <input type="number" value={prodPrice} onChange={(e) => setProdPrice(Number(e.target.value))} className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" required />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Images (Une URL par ligne)</label>
+                      <textarea value={prodImages.join('\n')} onChange={(e) => setProdImages(e.target.value.split('\n').filter(l => l.trim()))} rows={3} className="w-full bg-transparent border border-text-black/10 p-3 outline-none text-sm" placeholder="https://..." />
+                      <div className="flex gap-2 overflow-x-auto py-2">
+                        {prodImages.map((img, i) => (
+                          <div key={i} className="relative w-16 h-16 rounded-xs overflow-hidden border border-text-black/10 flex-shrink-0">
+                            <Image src={img} alt="preview" fill className="object-cover" unoptimized />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Description</label>
+                      <textarea value={prodDesc} onChange={(e) => setProdDesc(e.target.value)} rows={5} className="w-full bg-transparent border border-text-black/10 p-4 outline-none resize-none text-sm" placeholder="Description du produit..." />
+                    </div>
+                  </div>
+
+                  <button type="submit" className="w-full bg-text-black text-white py-4 font-bold text-xs tracking-widest uppercase hover:bg-soft-black transition-all">Enregistrer le Produit</button>
+                </form>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
           {isModalOpen && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsModalOpen(false)} className="absolute inset-0 bg-soft-black/60 backdrop-blur-md" />
