@@ -100,6 +100,13 @@ export default function AdminDashboard() {
     fetchData();
   }, [router]);
 
+  const getYoutubeId = (url: string) => { 
+    if (!url) return null;
+    const match = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/); 
+    return (match && match[2].length === 11) ? match[2] : null; 
+  };
+  const getYoutubeThumbnail = (id: string) => `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
+
   const fetchData = async () => {
     const { data: pData } = await supabase.from('projects').select('*').order('created_at', { ascending: false });
     if (pData) setProjects(pData);
@@ -196,9 +203,11 @@ export default function AdminDashboard() {
   };
 
   const addMediaByUrl = async () => {
-    const url = prompt("URL Image :");
+    const url = prompt("URL Image ou Vidéo YouTube :");
     if (url) {
-      const { data } = await supabase.from('media').insert({ url, name: "URL Image" }).select();
+      const ytId = getYoutubeId(url);
+      const name = ytId ? "Vidéo YouTube" : "URL Image";
+      const { data } = await supabase.from('media').insert({ url, name }).select();
       if (data) setMediaItems([data[0], ...mediaItems]);
     }
   };
@@ -287,14 +296,25 @@ export default function AdminDashboard() {
                 <button onClick={addMediaByUrl} className="flex flex-col items-center justify-center min-h-[150px] border-2 border-dashed border-text-black/10 rounded-sm bg-white/20 hover:border-primary-red/30 transition-all"> <LinkIcon className="mx-auto mb-2 text-primary-red" size={32} /> <p className="font-serif text-lg">Ajouter par URL</p> </button>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
-                {mediaItems.map((item) => (
-                  <div key={item.id} className="group relative aspect-square border border-text-black/5 rounded-sm overflow-hidden shadow-sm">
-                    <Image src={item.url} alt={item.name} fill className="object-cover" unoptimized />
-                    <div className="absolute inset-0 bg-soft-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <button onClick={() => deleteMedia(item.id)} className="p-2 bg-red-600 text-white rounded-sm"><Trash2 size={14} /></button>
+                {mediaItems.map((item) => {
+                  const ytId = getYoutubeId(item.url);
+                  const displayUrl = ytId ? getYoutubeThumbnail(ytId) : item.url;
+                  
+                  return (
+                    <div key={item.id} className="group relative aspect-square border border-text-black/5 rounded-sm overflow-hidden shadow-sm bg-text-black/5">
+                      <Image src={displayUrl} alt={item.name} fill className="object-cover" unoptimized />
+                      {ytId && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                          <Zap size={20} className="text-white fill-current" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-soft-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        <button onClick={() => deleteMedia(item.id)} className="p-2 bg-red-600 text-white rounded-sm"><Trash2 size={14} /></button>
+                      </div>
+                      {ytId && <div className="absolute bottom-2 left-2 bg-text-black/80 text-white text-[8px] px-1.5 py-0.5 rounded-xs uppercase tracking-widest font-bold">Vidéo</div>}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </motion.div>
           )}

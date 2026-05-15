@@ -59,11 +59,14 @@ export default function Home() {
   const adminBtnColor = useTransform(scrollYProgress, [0, 0.15], ["#ffffff", "#111111"]);
   const lucasColor = useTransform(scrollYProgress, [0, 0.15], ["#ffffff", "#ff3131"]);
 
-  // Text Effect Image
+  // Text Effect Image & Background Texture
   const hasTextImg = settings.textEffectImage && settings.textEffectImage.length > 0;
   const textBgImage = useTransform(scrollYProgress, [0, 0.15], ["none", hasTextImg ? `url(${settings.textEffectImage})` : "none"]);
   const textBgClip = useTransform(scrollYProgress, [0, 0.15], ["none", hasTextImg ? "text" : "none"]);
   const textFinalColor = useTransform(scrollYProgress, [0, 0.15], ["#ffffff", hasTextImg ? "transparent" : "#ff3131"]);
+  
+  // Background texture opacity transition
+  const textureOpacity = useTransform(scrollYProgress, [0, 0.15], [hasTextImg ? 1 : 0, 0]);
 
   const springConfig = { damping: 50, stiffness: 400 };
   const smoothX = useSpring(mouseX, springConfig);
@@ -114,7 +117,12 @@ export default function Home() {
   };
 
   const copyEmail = () => { navigator.clipboard.writeText(settings.email || "contact@lucascaillat.fr"); setCopied(true); setTimeout(() => setCopied(false), 2000); };
-  const getYoutubeId = (url: string) => { const match = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/); return (match && match[2].length === 11) ? match[2] : null; };
+  const getYoutubeId = (url: string) => { 
+    if (!url) return null;
+    const match = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/); 
+    return (match && match[2].length === 11) ? match[2] : null; 
+  };
+  const getYoutubeThumbnail = (id: string) => `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,6 +146,16 @@ export default function Home() {
       style={{ backgroundColor }}
       className="min-h-screen relative flex flex-col pt-24 pb-24 md:pt-32 md:pb-32 px-6 md:px-16 w-full overflow-x-hidden"
     >
+      {/* Background Texture Overlay */}
+      {hasTextImg && (
+        <motion.div 
+          style={{ 
+            backgroundImage: `url(${settings.textEffectImage})`,
+            opacity: textureOpacity 
+          }}
+          className="fixed inset-0 z-0 pointer-events-none bg-cover bg-center"
+        />
+      )}
       {/* Portrait Header Force Red Style */}
       <style jsx global>{`
         @media (max-width: 768px) {
@@ -149,7 +167,22 @@ export default function Home() {
         {selectedImage && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedImage(null)} className="fixed inset-0 z-[200] bg-soft-black/95 backdrop-blur-xl flex items-center justify-center p-4 md:p-12 cursor-zoom-out">
             <button className="absolute top-8 right-8 text-white/50 hover:text-white"><X size={32} /></button>
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="relative w-full h-full"> <Image src={selectedImage.url} alt={selectedImage.name} fill className="object-contain" unoptimized /> </motion.div>
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="relative w-full h-full flex items-center justify-center"> 
+              {getYoutubeId(selectedImage.url) ? (
+                <iframe 
+                  width="100%" 
+                  height="100%" 
+                  src={`https://www.youtube.com/embed/${getYoutubeId(selectedImage.url)}?autoplay=1`} 
+                  title={selectedImage.name}
+                  frameBorder="0" 
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                  allowFullScreen
+                  className="max-w-5xl aspect-video shadow-2xl"
+                />
+              ) : (
+                <Image src={selectedImage.url} alt={selectedImage.name} fill className="object-contain" unoptimized /> 
+              )}
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -287,11 +320,23 @@ export default function Home() {
               <span className="text-text-black/50 text-[10px] md:text-sm tracking-widest uppercase hidden md:block">{settings.bentoGridTitle || "Bento Grid"}</span> 
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-4 md:h-[800px]">
-              {galleryMedia.slice(0, 5).map((item, i) => (
-                <motion.div key={item.id} initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} onClick={() => setSelectedImage(item)} className={`relative overflow-hidden rounded-sm bg-text-black/5 group cursor-zoom-in aspect-square md:aspect-auto ${i === 0 ? "md:col-span-2 md:row-span-2" : i === 1 ? "md:col-span-2 md:row-span-1" : "md:col-span-1 md:row-span-1"}`}>
-                  <Image src={item.url} alt={item.name} fill className="object-cover transition-transform duration-700 group-hover:scale-105" unoptimized />
-                </motion.div>
-              ))}
+              {galleryMedia.slice(0, 5).map((item, i) => {
+                const ytId = getYoutubeId(item.url);
+                const displayUrl = ytId ? getYoutubeThumbnail(ytId) : item.url;
+                
+                return (
+                  <motion.div key={item.id} initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} onClick={() => setSelectedImage(item)} className={`relative overflow-hidden rounded-sm bg-text-black/5 group cursor-zoom-in aspect-square md:aspect-auto ${i === 0 ? "md:col-span-2 md:row-span-2" : i === 1 ? "md:col-span-2 md:row-span-1" : "md:col-span-1 md:row-span-1"}`}>
+                    <Image src={displayUrl} alt={item.name} fill className="object-cover transition-transform duration-700 group-hover:scale-105" unoptimized />
+                    {ytId && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-12 h-12 md:w-16 md:h-16 bg-primary-red/90 text-white rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
+                          <Zap size={24} fill="currentColor" />
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
             </div>
           </section>
         )}
