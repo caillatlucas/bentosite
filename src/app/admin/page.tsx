@@ -286,12 +286,21 @@ export default function AdminDashboard() {
   const deleteMessage = async (id: string) => { await supabase.from('messages').delete().eq('id', id); setMessages(messages.filter(m => m.id !== id)); };
 
   const handleMfaEnroll = async () => {
+    console.log("Starting MFA enrollment...");
     setMfaError("");
-    const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp' });
-    if (error) {
-      setMfaError(error.message);
-    } else {
-      setMfaEnrollment(data);
+    try {
+      const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp' });
+      if (error) {
+        console.error("MFA Enroll Error:", error);
+        setMfaError(error.message);
+        alert("Erreur A2F : " + error.message);
+      } else {
+        console.log("MFA Enrollment data received:", data);
+        setMfaEnrollment(data);
+      }
+    } catch (err: any) {
+      console.error("MFA Catch Error:", err);
+      setMfaError(err.message);
     }
   };
 
