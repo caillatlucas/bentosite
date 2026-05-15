@@ -99,7 +99,7 @@ export default function AdminDashboard() {
     { id: 'projects', label: 'Projets', visible: true },
     { id: 'shop', label: 'Boutique', visible: true },
     { id: 'gallery', label: 'Galerie', visible: true },
-    { id: 'bento', label: 'Bento Grid', visible: true }
+    { id: 'bento', label: 'À propos (Bento Grid)', visible: true }
   ]);
 
   const [socials, setSocials] = useState<SocialConfig>({
@@ -129,6 +129,7 @@ export default function AdminDashboard() {
   const [prodPrice, setProdPrice] = useState(0);
   const [prodDesc, setProdDesc] = useState("");
   const [prodImages, setProdImages] = useState<string[]>([]);
+  const [prodImagesText, setProdImagesText] = useState("");
 
   useEffect(() => {
     const auth = localStorage.getItem("admin_auth");
@@ -258,10 +259,27 @@ export default function AdminDashboard() {
 
   const handleSubmitProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    const pData = { name: prodName, price: prodPrice, description: prodDesc, images: prodImages };
-    if (editingProduct) await supabase.from('products').update(pData).eq('id', editingProduct.id);
-    else await supabase.from('products').insert(pData);
-    setIsProductModalOpen(false); fetchData();
+    const finalImages = prodImagesText.split('\n').map(img => img.trim()).filter(img => img !== "");
+    const pData = { name: prodName, price: prodPrice, description: prodDesc, images: finalImages };
+    
+    let error;
+    if (editingProduct) {
+      const { error: err } = await supabase.from('products').update(pData).eq('id', editingProduct.id);
+      error = err;
+    } else {
+      const { error: err } = await supabase.from('products').insert(pData);
+      error = err;
+    }
+
+    if (error) {
+      console.error(error);
+      alert("Erreur lors de l'enregistrement : " + error.message);
+    } else {
+      setIsProductModalOpen(false); 
+      fetchData();
+      setUploadSuccess(true);
+      setTimeout(() => setUploadSuccess(false), 3000);
+    }
   };
 
   const deleteProduct = async (id: string) => { if (confirm("Supprimer ce produit ?")) { await supabase.from('products').delete().eq('id', id); setProducts(products.filter(p => p.id !== id)); } };
@@ -387,7 +405,7 @@ export default function AdminDashboard() {
             </button>
           )}
           {activeTab === "shop" && (
-            <button onClick={() => { setEditingProduct(null); setProdName(""); setProdPrice(0); setProdDesc(""); setProdImages([]); setIsProductModalOpen(true); }} className="bg-primary-red text-white px-8 py-3.5 rounded-sm hover:bg-red-600 transition-all flex items-center gap-2 text-sm font-bold shadow-xl shadow-shadow-red/20">
+            <button onClick={() => { setEditingProduct(null); setProdName(""); setProdPrice(0); setProdDesc(""); setProdImages([]); setProdImagesText(""); setIsProductModalOpen(true); }} className="bg-primary-red text-white px-8 py-3.5 rounded-sm hover:bg-red-600 transition-all flex items-center gap-2 text-sm font-bold shadow-xl shadow-shadow-red/20">
               <Plus size={18} /> NOUVEAU PRODUIT
             </button>
           )}
@@ -561,7 +579,7 @@ export default function AdminDashboard() {
                       <div className="p-6 space-y-4">
                         <h3 className="font-serif text-xl">{product.name}</h3>
                         <div className="flex justify-between items-center pt-4 border-t border-text-black/5">
-                          <button onClick={() => { setEditingProduct(product); setProdName(product.name); setProdPrice(product.price); setProdDesc(product.description); setProdImages(product.images); setIsProductModalOpen(true); }} className="text-[10px] font-bold uppercase tracking-widest hover:text-primary-red transition-colors flex items-center gap-2"><Edit2 size={14} /> Modifier</button>
+                          <button onClick={() => { setEditingProduct(product); setProdName(product.name); setProdPrice(product.price); setProdDesc(product.description); setProdImages(product.images); setProdImagesText(product.images.join('\n')); setIsProductModalOpen(true); }} className="text-[10px] font-bold uppercase tracking-widest hover:text-primary-red transition-colors flex items-center gap-2"><Edit2 size={14} /> Modifier</button>
                           <button onClick={() => deleteProduct(product.id)} className="text-[10px] font-bold uppercase tracking-widest text-red-600 hover:text-red-700 transition-colors flex items-center gap-2"><Trash2 size={14} /> Supprimer</button>
                         </div>
                       </div>
@@ -668,11 +686,11 @@ export default function AdminDashboard() {
                     
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Images (Une URL par ligne)</label>
-                      <textarea value={prodImages.join('\n')} onChange={(e) => setProdImages(e.target.value.split('\n').filter(l => l.trim()))} rows={3} className="w-full bg-transparent border border-text-black/10 p-3 outline-none text-sm" placeholder="https://..." />
+                      <textarea value={prodImagesText} onChange={(e) => setProdImagesText(e.target.value)} rows={3} className="w-full bg-transparent border border-text-black/10 p-3 outline-none text-sm" placeholder="https://..." />
                       <div className="flex gap-2 overflow-x-auto py-2">
-                        {prodImages.map((img, i) => (
+                        {prodImagesText.split('\n').filter(img => img.trim()).map((img, i) => (
                           <div key={i} className="relative w-16 h-16 rounded-xs overflow-hidden border border-text-black/10 flex-shrink-0">
-                            <Image src={img} alt="preview" fill className="object-cover" unoptimized />
+                            <Image src={img.trim()} alt="preview" fill className="object-cover" unoptimized />
                           </div>
                         ))}
                       </div>
