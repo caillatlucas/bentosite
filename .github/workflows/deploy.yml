@@ -1,5 +1,8 @@
-name: Deploy Next.js to GitHub Pages
-
+name: Build with Next.js
+  run: ${{ steps.detect-package-manager.outputs.runner }} next build
+  env:
+    NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 on:
   push:
     branches: ["main"]
