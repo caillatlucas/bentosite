@@ -77,6 +77,7 @@ export default function AdminDashboard() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [replyText, setReplyText] = useState<{ [key: string]: string }>({});
+  const [messages, setMessages] = useState<Message[]>([]);
   const router = useRouter();
   
   // Settings State
