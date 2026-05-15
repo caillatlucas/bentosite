@@ -130,6 +130,14 @@ export default function Home() {
     }
   };
 
+  const handleReplyToMessage = (msg: Message) => {
+    setFormName(msg.name);
+    setFormTitle(`Re: ${msg.title}`);
+    setFormContact(msg.contact || "");
+    setIsContactOpen(true);
+    setIsNotifOpen(false);
+  };
+
   const copyEmail = () => { navigator.clipboard.writeText(settings.email || "contact@lucascaillat.fr"); setCopied(true); setTimeout(() => setCopied(false), 2000); };
   const getYoutubeId = (url: string) => { 
     if (!url) return null;
@@ -221,13 +229,21 @@ export default function Home() {
         {isNotifOpen && (
           <motion.div initial={{ opacity: 0, y: 20, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 20, scale: 0.9 }} className="fixed bottom-32 right-8 md:bottom-44 md:right-16 z-[150] w-72 md:w-96 bg-white shadow-2xl rounded-sm border border-text-black/10 overflow-hidden">
             <div className="bg-text-black p-4 flex justify-between items-center"> <h4 className="text-white font-serif italic">Réponses</h4> <button onClick={() => setIsNotifOpen(false)}><X size={16} className="text-white/50" /></button> </div>
-            <div className="p-4 max-h-[300px] overflow-y-auto space-y-4">
+            <div className="p-4 max-h-[400px] overflow-y-auto space-y-4">
               {replies.length === 0 ? <p className="text-xs text-text-black/40 text-center py-8">Aucune réponse pour le moment.</p> : (
                 replies.map(r => (
-                  <div key={r.id} className="border-l-2 border-primary-red pl-4 py-1">
-                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-1">{r.title}</p>
-                    <p className="text-sm font-medium mb-2">{r.reply}</p>
-                    <p className="text-[9px] opacity-30 italic">Répondu par Lucas</p>
+                  <div key={r.id} className="bg-text-black/[0.02] border border-text-black/5 rounded-sm p-4 relative group">
+                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-2">{r.title}</p>
+                    <p className="text-sm font-medium mb-3">{r.reply}</p>
+                    <div className="flex justify-between items-center">
+                      <p className="text-[9px] opacity-30 italic">Répondu par Lucas</p>
+                      <button 
+                        onClick={() => handleReplyToMessage(r)}
+                        className="text-[10px] font-bold text-primary-red uppercase tracking-widest hover:underline flex items-center gap-1"
+                      >
+                        <Send size={10} /> Répondre
+                      </button>
+                    </div>
                   </div>
                 ))
               )}
