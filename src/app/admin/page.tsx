@@ -664,12 +664,24 @@ export default function AdminDashboard() {
                         <button onClick={() => moveSection(idx, 'up')} className="opacity-30 hover:opacity-100"><ArrowLeft size={14} className="rotate-90" /></button>
                         <button onClick={() => moveSection(idx, 'down')} className="opacity-30 hover:opacity-100"><ArrowLeft size={14} className="-rotate-90" /></button>
                       </div>
-                      <span className="flex-1 font-serif text-lg">{section.label}</span>
+                      <div className="flex-1 flex flex-col md:flex-row md:items-center gap-4">
+                        <input 
+                          type="text" 
+                          value={section.label} 
+                          onChange={(e) => {
+                            const newSections = [...sectionsConfig];
+                            newSections[idx].label = e.target.value;
+                            setSectionsConfig(newSections);
+                          }}
+                          className="bg-transparent border-b border-text-black/10 py-1 outline-none font-serif text-lg focus:border-primary-red transition-all w-full md:w-auto md:min-w-[200px]"
+                        />
+                        <span className="text-[9px] font-bold uppercase tracking-widest opacity-30">ID: {section.id}</span>
+                      </div>
                       <button onClick={() => {
                         const newSections = [...sectionsConfig];
                         newSections[idx].visible = !newSections[idx].visible;
                         setSectionsConfig(newSections);
-                      }} className={`w-12 h-6 rounded-full transition-colors relative ${ section.visible ? 'bg-primary-red' : 'bg-text-black/10' }`}>
+                      }} className={`w-12 h-6 rounded-full transition-colors relative shrink-0 ${ section.visible ? 'bg-primary-red' : 'bg-text-black/10' }`}>
                         <motion.div animate={{ x: section.visible ? 24 : 4 }} className="w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm" />
                       </button>
                     </div>

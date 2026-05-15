@@ -558,12 +558,12 @@ export default function Home() {
 
       <div className="max-w-[1600px] mx-auto w-full space-y-32 md:space-y-48">
         {(settings.sectionsConfig || []).filter(s => s.visible).map((section) => {
-          if (section.id === 'projects') return <Projects key="projects" config={settings} />;
+          if (section.id === 'projects') return <Projects key="projects" config={settings} label={section.label} />;
           
           if (section.id === 'shop' && products.length > 0) return (
             <section key="shop" className="relative z-10">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-4">
-                <h2 className="font-serif text-6xl md:text-8xl tracking-tighter leading-none italic">Boutique</h2>
+                <h2 className="font-serif text-6xl md:text-8xl tracking-tighter leading-none italic">{section.label || "Boutique"}</h2>
                 <p className="text-xl md:text-2xl text-[var(--primary-red)] font-light italic">Nos Produits</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
