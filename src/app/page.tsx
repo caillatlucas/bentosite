@@ -2,38 +2,29 @@
 
 import { motion, useMotionValue, useSpring, useTransform, useScroll, useMotionTemplate, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
-import { ArrowUpRight, Zap, X, Send, User, MessageSquare, CheckCircle2, Mail, Music, Volume2, VolumeX, Copy, Check } from "lucide-react";
+import { ArrowUpRight, Zap, X, Send, User, MessageSquare, CheckCircle2, Mail, Music, Volume2, VolumeX, Copy, Check, Bell } from "lucide-react";
 import Projects from "@/components/Projects";
 import Socials from "@/components/Socials";
 import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 
-interface MediaItem {
-  id: string;
-  url: string;
-  name: string;
-}
+interface MediaItem { id: string; url: string; name: string; }
+interface Message { id: string; name: string; title: string; content: string; contact?: string; date: string; reply?: string; }
 
 export default function Home() {
   const [isClient, setIsClient] = useState(false);
-  const [settings, setSettings] = useState({ 
-    profession: "Freelance informatique", 
-    bio: "", 
-    email: "", 
-    projectsTitle: "Sélection 2024",
-    galleryTitle: "Galerie",
-    heroTitleMain: "CAILLAT",
-    heroTitleSub: "Lucas",
-    musicEnabled: false,
-    musicUrl: "",
-    musicCover: ""
-  });
+  const [settings, setSettings] = useState({ profession: "Freelance informatique", bio: "", email: "", projectsTitle: "Sélection 2024", galleryTitle: "Galerie", heroTitleMain: "CAILLAT", heroTitleSub: "Lucas", musicEnabled: false, musicUrl: "", musicCover: "" });
   const [galleryMedia, setGalleryMedia] = useState<MediaItem[]>([]);
   const [selectedImage, setSelectedImage] = useState<MediaItem | null>(null);
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   
+  // Notification System
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [replies, setReplies] = useState<Message[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
   // Form State
   const [formName, setFormName] = useState("");
   const [formTitle, setFormTitle] = useState("");
@@ -42,14 +33,12 @@ export default function Home() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // Music State
   const [isMuted, setIsMuted] = useState(true);
-
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
-
   const { scrollYProgress } = useScroll();
 
+  // Color transition - Adjusted for portrait
   const backgroundColor = useTransform(scrollYProgress, [0, 0.15], ["#ff3131", "#d3d3d3"]);
   const textColor = useTransform(scrollYProgress, [0, 0.15], ["#ffffff", "#ff3131"]);
   const secondaryTextColor = useTransform(scrollYProgress, [0, 0.15], ["rgba(255,255,255,0.7)", "rgba(17,17,17,0.6)"]);
@@ -59,12 +48,10 @@ export default function Home() {
   const springConfig = { damping: 50, stiffness: 400 };
   const smoothX = useSpring(mouseX, springConfig);
   const smoothY = useSpring(mouseY, springConfig);
-
   const rotateX = useTransform(smoothY, [-0.5, 0.5], [15, -15]);
   const rotateY = useTransform(smoothX, [-0.5, 0.5], [-15, 15]);
   const textShadowX = useTransform(smoothX, [-0.5, 0.5], [20, -20]);
   const textShadowY = useTransform(smoothY, [-0.5, 0.5], [20, -20]);
-  
   const shadowColor = useTransform(scrollYProgress, [0, 0.15], ["rgba(255,255,255,0.3)", "rgba(255, 49, 49, 0.2)"]);
   const textShadow = useMotionTemplate`${textShadowX}px ${textShadowY}px 40px ${shadowColor}`;
 
@@ -72,38 +59,18 @@ export default function Home() {
     setIsClient(true);
     const handleMouseMove = (e: MouseEvent) => {
       const { innerWidth, innerHeight } = window;
-      const x = e.clientX / innerWidth - 0.5;
-      const y = e.clientY / innerHeight - 0.5;
-      mouseX.set(x); mouseY.set(y);
+      mouseX.set(e.clientX / innerWidth - 0.5);
+      mouseY.set(e.clientY / innerHeight - 0.5);
     };
-
     fetchData();
+    checkReplies();
 
-    // REALTIME SUBSCRIPTIONS
-    const settingsChannel = supabase
-      .channel('settings-changes')
-      .on('postgres_changes', { event: '*', table: 'settings', schema: 'public' }, () => {
-        fetchData();
-      })
-      .subscribe();
-
-    const mediaChannel = supabase
-      .channel('media-changes')
-      .on('postgres_changes', { event: '*', table: 'media', schema: 'public' }, () => {
-        fetchData();
-      })
-      .subscribe();
-
+    const msgChannel = supabase.channel('msg-realtime').on('postgres_changes', { event: '*', table: 'messages', schema: 'public' }, () => { checkReplies(); }).subscribe();
     window.addEventListener("mousemove", handleMouseMove);
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      supabase.removeChannel(settingsChannel);
-      supabase.removeChannel(mediaChannel);
-    };
+    return () => { window.removeEventListener("mousemove", handleMouseMove); supabase.removeChannel(msgChannel); };
   }, [mouseX, mouseY]);
 
   const fetchData = async () => {
-    // Settings & Socials
     const { data: sData } = await supabase.from('settings').select('*');
     if (sData) {
       const global = sData.find(s => s.key === 'global')?.value;
@@ -111,36 +78,39 @@ export default function Home() {
       if (global) setSettings(prev => ({ ...prev, ...global }));
       if (soc) setSettings(prev => ({ ...prev, email: soc.email }));
     }
-
-    // Media
     const { data: mData } = await supabase.from('media').select('*').order('created_at', { ascending: false });
     if (mData) setGalleryMedia(mData);
   };
 
-  const copyEmail = () => {
-    const email = settings.email || "contact@lucascaillat.fr";
-    navigator.clipboard.writeText(email);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const checkReplies = async () => {
+    const myMsgIdsRaw = localStorage.getItem("my_sent_messages");
+    if (!myMsgIdsRaw) return;
+    const myMsgIds = JSON.parse(myMsgIdsRaw);
+    const { data } = await supabase.from('messages').select('*').in('id', myMsgIds).not('reply', 'is', null);
+    if (data) {
+      setReplies(data);
+      setUnreadCount(data.length);
+    }
   };
 
-  const getYoutubeId = (url: string) => {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = url.match(regExp);
-    return (match && match[2].length === 11) ? match[2] : null;
-  };
+  const copyEmail = () => { navigator.clipboard.writeText(settings.email || "contact@lucascaillat.fr"); setCopied(true); setTimeout(() => setCopied(false), 2000); };
+  const getYoutubeId = (url: string) => { const match = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/); return (match && match[2].length === 11) ? match[2] : null; };
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     const newMessage = { name: formName, title: formTitle, content: formContent, contact: formContact, date: new Date().toLocaleString("fr-FR") };
-    const { error } = await supabase.from('messages').insert(newMessage);
-    if (error) alert("Erreur: " + error.message);
-    else { setIsSubmitting(false); setShowSuccess(true); setTimeout(() => { setShowSuccess(false); setIsContactOpen(false); setFormName(""); setFormTitle(""); setFormContent(""); setFormContact(""); }, 2000); }
+    const { data, error } = await supabase.from('messages').insert(newMessage).select();
+    if (data) {
+      const existing = localStorage.getItem("my_sent_messages");
+      const ids = existing ? JSON.parse(existing) : [];
+      localStorage.setItem("my_sent_messages", JSON.stringify([...ids, data[0].id]));
+      setIsSubmitting(false); setShowSuccess(true);
+      setTimeout(() => { setShowSuccess(false); setIsContactOpen(false); setFormName(""); setFormTitle(""); setFormContent(""); setFormContact(""); }, 2000);
+    }
   };
 
   if (!isClient) return null;
-
   const musicId = settings.musicUrl ? getYoutubeId(settings.musicUrl) : null;
 
   return (
@@ -148,20 +118,50 @@ export default function Home() {
       style={{ backgroundColor }}
       className="min-h-screen relative flex flex-col pt-24 pb-24 md:pt-32 md:pb-32 px-6 md:px-16 w-full overflow-x-hidden"
     >
+      {/* Portrait Header Force Red Style */}
+      <style jsx global>{`
+        @media (max-width: 768px) {
+          html, body { background-color: #ff3131 !important; }
+        }
+      `}</style>
+
       <AnimatePresence>
         {selectedImage && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedImage(null)} className="fixed inset-0 z-[200] bg-soft-black/95 backdrop-blur-xl flex items-center justify-center p-4 md:p-12 cursor-zoom-out">
             <button className="absolute top-8 right-8 text-white/50 hover:text-white"><X size={32} /></button>
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="relative w-full h-full">
-              <Image src={selectedImage.url} alt={selectedImage.name} fill className="object-contain" unoptimized />
-            </motion.div>
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="relative w-full h-full"> <Image src={selectedImage.url} alt={selectedImage.name} fill className="object-contain" unoptimized /> </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <motion.button onClick={() => setIsContactOpen(true)} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="fixed bottom-8 right-8 md:bottom-12 md:right-16 z-[100] bg-primary-red text-white w-14 h-14 md:w-16 md:h-16 rounded-full shadow-2xl flex items-center justify-center group overflow-hidden">
-        <motion.div animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 2 }}><Zap size={24} fill="currentColor" /></motion.div>
-      </motion.button>
+      <div className="fixed bottom-8 right-8 md:bottom-12 md:right-16 z-[100] flex flex-col gap-4">
+        <motion.button onClick={() => setIsNotifOpen(!isNotifOpen)} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="bg-white text-primary-red w-12 h-12 md:w-14 md:h-14 rounded-full shadow-2xl flex items-center justify-center relative">
+          <Bell size={24} />
+          {unreadCount > 0 && <span className="absolute -top-1 -right-1 bg-black text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white">{unreadCount}</span>}
+        </motion.button>
+        <motion.button onClick={() => setIsContactOpen(true)} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="bg-primary-red text-white w-14 h-14 md:w-16 md:h-16 rounded-full shadow-2xl flex items-center justify-center group overflow-hidden">
+          <motion.div animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 2 }}><Zap size={24} fill="currentColor" /></motion.div>
+        </motion.button>
+      </div>
+
+      <AnimatePresence>
+        {isNotifOpen && (
+          <motion.div initial={{ opacity: 0, y: 20, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 20, scale: 0.9 }} className="fixed bottom-32 right-8 md:bottom-44 md:right-16 z-[150] w-72 md:w-96 bg-white shadow-2xl rounded-sm border border-text-black/10 overflow-hidden">
+            <div className="bg-text-black p-4 flex justify-between items-center"> <h4 className="text-white font-serif italic">Réponses</h4> <button onClick={() => setIsNotifOpen(false)}><X size={16} className="text-white/50" /></button> </div>
+            <div className="p-4 max-h-[300px] overflow-y-auto space-y-4">
+              {replies.length === 0 ? <p className="text-xs text-text-black/40 text-center py-8">Aucune réponse pour le moment.</p> : (
+                replies.map(r => (
+                  <div key={r.id} className="border-l-2 border-primary-red pl-4 py-1">
+                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-1">{r.title}</p>
+                    <p className="text-sm font-medium mb-2">{r.reply}</p>
+                    <p className="text-[9px] opacity-30 italic">Répondu par Lucas</p>
+                  </div>
+                ))
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {isContactOpen && (
@@ -172,6 +172,7 @@ export default function Home() {
                 <div className="py-12 text-center space-y-4">
                   <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-20 h-20 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto"><CheckCircle2 size={40} /></motion.div>
                   <h3 className="font-serif text-3xl">Message envoyé !</h3>
+                  <p className="text-xs opacity-50">Lucas vous répondra bientôt.</p>
                 </div>
               ) : (
                 <form onSubmit={handleContactSubmit} className="space-y-6">
@@ -182,7 +183,7 @@ export default function Home() {
                     <input type="text" value={formContact} onChange={(e) => setFormContact(e.target.value)} placeholder="Email / Tél" className="w-full bg-transparent border-b border-text-black/10 py-3 outline-none focus:border-primary-red" />
                   </div>
                   <textarea value={formContent} onChange={(e) => setFormContent(e.target.value)} placeholder="Message..." rows={5} className="w-full bg-text-black/5 p-4 rounded-sm outline-none focus:border-primary-red resize-none" required />
-                  <button type="submit" disabled={isSubmitting} className="w-full bg-text-black text-white py-4 rounded-sm font-bold text-xs tracking-widest uppercase flex items-center justify-center gap-3">{isSubmitting ? "Envoi..." : <>ENVOYER <Send size={14} /></>}</button>
+                  <button type="submit" disabled={isSubmitting} className="w-full bg-text-black text-white py-4 rounded-sm font-bold text-xs tracking-widest uppercase flex items-center justify-center gap-3"> {isSubmitting ? "Envoi..." : <>ENVOYER <Send size={14} /></>} </button>
                 </form>
               )}
             </motion.div>
@@ -191,32 +192,18 @@ export default function Home() {
       </AnimatePresence>
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }} className="fixed top-8 right-8 md:top-12 md:right-16 z-50">
-        <Link href="/admin" className="transition-colors">
-          <motion.span style={{ color: adminBtnColor }} className="flex items-center gap-1 text-[10px] md:text-sm uppercase tracking-widest font-bold">Admin <ArrowUpRight size={14} /></motion.span>
-        </Link>
+        <Link href="/admin" className="transition-colors"> <motion.span style={{ color: adminBtnColor }} className="flex items-center gap-1 text-[10px] md:text-sm uppercase tracking-widest font-bold">Admin <ArrowUpRight size={14} /></motion.span> </Link>
       </motion.div>
 
       <section className="flex-1 flex flex-col justify-center min-h-[85vh] relative z-10 mt-24 md:mt-0 max-w-[1600px] mx-auto w-full">
         <div className="relative" style={{ perspective: 1000 }}>
-          {/* MUSIC PLAYER - OPTIMIZED FOR MOBILE */}
           {settings.musicEnabled && musicId && (
-            <motion.div 
-              style={{ rotateX, rotateY, transformStyle: "preserve-3d" }} 
-              className="absolute -top-24 right-0 md:-top-16 md:-right-12 z-30 scale-90 md:scale-100 origin-right"
-            >
+            <motion.div style={{ rotateX, rotateY, transformStyle: "preserve-3d" }} className="absolute -top-24 right-0 md:-top-16 md:-right-12 z-30 scale-90 md:scale-100 origin-right">
               <div className="bg-white/10 backdrop-blur-md border border-white/20 p-2 md:p-3 rounded-2xl flex items-center gap-3 md:gap-4 shadow-2xl group hover:bg-white/20 transition-all">
-                <div className="relative w-10 h-10 md:w-16 md:h-16 overflow-hidden rounded-xl shadow-lg animate-spin-slow flex-shrink-0">
-                  {settings.musicCover ? <Image src={settings.musicCover} alt="Cover" fill className="object-cover" unoptimized /> : <div className="w-full h-full bg-primary-red flex items-center justify-center"><Music size={20} className="text-white" /></div>}
-                </div>
+                <div className="relative w-10 h-10 md:w-16 md:h-16 overflow-hidden rounded-xl shadow-lg animate-spin-slow flex-shrink-0"> {settings.musicCover ? <Image src={settings.musicCover} alt="Cover" fill className="object-cover" unoptimized /> : <div className="w-full h-full bg-primary-red flex items-center justify-center"><Music size={20} className="text-white" /></div>} </div>
                 <div className="pr-2 md:pr-4">
-                  <div className="flex items-center gap-1.5 mb-0.5 md:mb-1">
-                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                    <p className="text-[8px] md:text-[9px] font-bold uppercase tracking-[0.2em] text-white/60">Live</p>
-                  </div>
-                  <button onClick={() => setIsMuted(!isMuted)} className="text-white hover:text-primary-red transition-colors flex items-center gap-2">
-                    {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-                    <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest">{isMuted ? "Unmute" : "Mute"}</span>
-                  </button>
+                  <div className="flex items-center gap-1.5 mb-0.5 md:mb-1"> <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> <p className="text-[8px] md:text-[9px] font-bold uppercase tracking-[0.2em] text-white/60">Live</p> </div>
+                  <button onClick={() => setIsMuted(!isMuted)} className="text-white hover:text-primary-red transition-colors flex items-center gap-2"> {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />} <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest">{isMuted ? "Unmute" : "Mute"}</span> </button>
                 </div>
                 <iframe width="0" height="0" src={`https://www.youtube.com/embed/${musicId}?autoplay=1&mute=${isMuted ? 1 : 0}&loop=1&playlist=${musicId}`} allow="autoplay" className="hidden" />
               </div>
@@ -251,10 +238,7 @@ export default function Home() {
 
         {galleryMedia.length > 0 && (
           <section>
-            <div className="flex justify-between items-end mb-12 md:mb-16 border-b border-text-black/10 pb-6">
-              <h2 className="font-serif text-3xl md:text-5xl lg:text-6xl text-soft-black">{settings.galleryTitle}</h2>
-              <span className="text-text-black/50 text-[10px] md:text-sm tracking-widest uppercase hidden md:block">Bento Grid (Realtime)</span>
-            </div>
+            <div className="flex justify-between items-end mb-12 md:mb-16 border-b border-text-black/10 pb-6"> <h2 className="font-serif text-3xl md:text-5xl lg:text-6xl text-soft-black">{settings.galleryTitle}</h2> <span className="text-text-black/50 text-[10px] md:text-sm tracking-widest uppercase hidden md:block">Bento Grid</span> </div>
             <div className="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-4 md:h-[800px]">
               {galleryMedia.slice(0, 5).map((item, i) => (
                 <motion.div key={item.id} initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} onClick={() => setSelectedImage(item)} className={`relative overflow-hidden rounded-sm bg-text-black/5 group cursor-zoom-in aspect-square md:aspect-auto ${i === 0 ? "md:col-span-2 md:row-span-2" : i === 1 ? "md:col-span-2 md:row-span-1" : "md:col-span-1 md:row-span-1"}`}>
@@ -269,13 +253,8 @@ export default function Home() {
           <div className="max-w-md text-center md:text-left relative">
             <motion.h3 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} className="font-serif text-3xl md:text-4xl text-soft-black mb-6">Discutons de votre projet.</motion.h3>
             <div className="relative inline-block">
-              <button onClick={copyEmail} className="group flex items-center gap-3 text-lg md:text-xl border-b border-primary-red text-text-black hover:text-primary-red transition-all pb-1 font-medium">
-                {settings.email || "contact@lucascaillat.fr"}
-                <Copy size={16} className="opacity-0 group-hover:opacity-40 transition-opacity" />
-              </button>
-              <AnimatePresence>
-                {copied && <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: -10 }} exit={{ opacity: 0, y: 0 }} className="absolute -top-12 left-0 bg-text-black text-white px-4 py-2 rounded-sm text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 shadow-xl"><Check size={12} className="text-green-500" /> Email Copié !</motion.div>}
-              </AnimatePresence>
+              <button onClick={copyEmail} className="group flex items-center gap-3 text-lg md:text-xl border-b border-primary-red text-text-black hover:text-primary-red transition-all pb-1 font-medium"> {settings.email || "contact@lucascaillat.fr"} <Copy size={16} className="opacity-0 group-hover:opacity-40 transition-opacity" /> </button>
+              <AnimatePresence> {copied && <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: -10 }} exit={{ opacity: 0, y: 0 }} className="absolute -top-12 left-0 bg-text-black text-white px-4 py-2 rounded-sm text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 shadow-xl"><Check size={12} className="text-green-500" /> Email Copié !</motion.div>} </AnimatePresence>
             </div>
           </div>
           <Socials />
