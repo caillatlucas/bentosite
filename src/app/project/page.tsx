@@ -18,6 +18,7 @@ interface Project {
   link_type?: "external" | "internal";
   url?: string;
   content?: string;
+  gallery?: { url: string; type: 'image' | 'video' }[];
 }
 
 function ProjectContent() {
@@ -91,9 +92,44 @@ function ProjectContent() {
               {project.content || "Aucune description disponible."}
             </div>
             
-            <div className="my-16 aspect-video relative rounded-sm overflow-hidden shadow-2xl">
-               <Image src={project.image} alt="detail" fill className="object-cover" unoptimized />
-            </div>
+            {project.gallery && project.gallery.length > 0 && (
+              <div className="mt-16 space-y-6">
+                <div className="flex justify-between items-center border-b border-text-black/10 pb-4">
+                  <h3 className="font-serif text-3xl italic">Galerie Media</h3>
+                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-30">Défilement horizontal →</p>
+                </div>
+                <div className="flex gap-6 overflow-x-auto pb-8 snap-x snap-mandatory no-scrollbar">
+                  {project.gallery.map((item, i) => {
+                    const isVideo = item.type === 'video';
+                    const ytId = isVideo ? item.url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/)?.[2] : null;
+                    
+                    return (
+                      <div key={i} className="min-w-[85vw] md:min-w-[700px] aspect-video relative rounded-sm overflow-hidden shadow-2xl bg-text-black/5 snap-center">
+                        {isVideo ? (
+                          <iframe 
+                            width="100%" 
+                            height="100%" 
+                            src={`https://www.youtube.com/embed/${ytId}`} 
+                            title={`Video ${i}`}
+                            frameBorder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowFullScreen
+                          />
+                        ) : (
+                          <Image src={item.url} alt={`Detail ${i}`} fill className="object-cover" unoptimized />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {!project.gallery && project.image && (
+              <div className="my-16 aspect-video relative rounded-sm overflow-hidden shadow-2xl">
+                 <Image src={project.image} alt="detail" fill className="object-cover" unoptimized />
+              </div>
+            )}
           </div>
         </motion.div>
 

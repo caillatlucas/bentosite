@@ -23,6 +23,7 @@ interface Project {
   link_type: "external" | "internal";
   url: string;
   content: string;
+  gallery: { url: string; type: 'image' | 'video' }[];
 }
 
 interface MediaItem {
@@ -100,6 +101,7 @@ export default function AdminDashboard() {
   const [formLinkType, setFormLinkType] = useState<"external" | "internal">("internal");
   const [formUrl, setFormUrl] = useState("");
   const [formContent, setFormContent] = useState("");
+  const [formGallery, setFormGallery] = useState<{ url: string; type: 'image' | 'video' }[]>([]);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
 
   useEffect(() => {
@@ -234,9 +236,38 @@ export default function AdminDashboard() {
     }
   };
 
+  const addGalleryItem = (type: 'image' | 'video') => {
+    const url = prompt(type === 'video' ? "Lien YouTube :" : "URL Image :");
+    if (url) {
+      setFormGallery([...formGallery, { url, type }]);
+    }
+  };
+
+  const removeGalleryItem = (idx: number) => {
+    setFormGallery(formGallery.filter((_, i) => i !== idx));
+  };
+
+  const moveGalleryItem = (idx: number, direction: 'up' | 'down') => {
+    const newGallery = [...formGallery];
+    const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= newGallery.length) return;
+    [newGallery[idx], newGallery[targetIdx]] = [newGallery[targetIdx], newGallery[idx]];
+    setFormGallery(newGallery);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const projectData = { title: formTitle, category: formCategory || null, date: formDate, image: formImage, status: formStatus, link_type: formLinkType, url: formUrl, content: formContent };
+    const projectData = { 
+      title: formTitle, 
+      category: formCategory || null, 
+      date: formDate, 
+      image: formImage, 
+      status: formStatus, 
+      link_type: formLinkType, 
+      url: formUrl, 
+      content: formContent,
+      gallery: formGallery
+    };
     if (editingProject) await supabase.from('projects').update(projectData).eq('id', editingProject.id);
     else await supabase.from('projects').insert(projectData);
     setIsModalOpen(false); fetchData();
@@ -282,7 +313,7 @@ export default function AdminDashboard() {
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-16 gap-6">
           <h2 className="font-serif text-5xl text-soft-black italic">{tabs.find((t) => t.id === activeTab)?.label}</h2>
           {activeTab === "pages" && (
-            <button onClick={() => { setEditingProject(null); setFormTitle(""); setFormCategory(""); setFormDate(""); setFormImage(""); setFormContent(""); setIsModalOpen(true); }} className="bg-primary-red text-white px-8 py-3.5 rounded-sm hover:bg-red-600 transition-all flex items-center gap-2 text-sm font-bold shadow-xl shadow-shadow-red/20">
+            <button onClick={() => { setEditingProject(null); setFormTitle(""); setFormCategory(""); setFormDate(""); setFormImage(""); setFormContent(""); setFormGallery([]); setIsModalOpen(true); }} className="bg-primary-red text-white px-8 py-3.5 rounded-sm hover:bg-red-600 transition-all flex items-center gap-2 text-sm font-bold shadow-xl shadow-shadow-red/20">
               <Plus size={18} /> NOUVEAU PROJET
             </button>
           )}
@@ -299,7 +330,7 @@ export default function AdminDashboard() {
                   </div>
                   <div className="col-span-4 hidden md:block text-[10px] font-bold text-text-black/40 tracking-widest uppercase truncate">{project.date}</div>
                   <div className="col-span-2 text-right flex justify-end gap-4">
-                    <button onClick={() => { setEditingProject(project); setFormTitle(project.title); setFormCategory(project.category || ""); setFormDate(project.date); setFormImage(project.image); setFormStatus(project.status); setFormLinkType(project.link_type); setFormUrl(project.url); setFormContent(project.content); setIsModalOpen(true); }} className="p-2 text-text-black/30 hover:text-primary-red"><Edit2 size={16} /></button>
+                    <button onClick={() => { setEditingProject(project); setFormTitle(project.title); setFormCategory(project.category || ""); setFormDate(project.date); setFormImage(project.image); setFormStatus(project.status); setFormLinkType(project.link_type); setFormUrl(project.url); setFormContent(project.content); setFormGallery(project.gallery || []); setIsModalOpen(true); }} className="p-2 text-text-black/30 hover:text-primary-red"><Edit2 size={16} /></button>
                     <button onClick={() => deleteProject(project.id)} className="p-2 text-text-black/30 hover:text-red-600"><Trash2 size={16} /></button>
                   </div>
                 </div>
@@ -523,7 +554,42 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="space-y-6">
-                      <div className="flex justify-between items-center">
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center border-b border-text-black/10 pb-4">
+                          <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Caroussel Media (Images/Vidéos)</label>
+                          <div className="flex gap-2">
+                            <button type="button" onClick={() => addGalleryItem('image')} className="text-primary-red text-[10px] font-bold uppercase border border-primary-red/20 px-2 py-1 rounded-sm hover:bg-primary-red/5"> + Image </button>
+                            <button type="button" onClick={() => addGalleryItem('video')} className="text-primary-red text-[10px] font-bold uppercase border border-primary-red/20 px-2 py-1 rounded-sm hover:bg-primary-red/5"> + Vidéo YT </button>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+                          {formGallery.length === 0 ? <p className="text-xs opacity-30 italic text-center py-8 border border-dashed border-text-black/10">Aucun élément dans le caroussel.</p> : (
+                            formGallery.map((item, idx) => {
+                              const isVideo = item.type === 'video';
+                              const ytId = isVideo ? getYoutubeId(item.url) : null;
+                              const thumb = isVideo ? getYoutubeThumbnail(ytId || "") : item.url;
+                              
+                              return (
+                                <div key={idx} className="flex items-center gap-4 bg-text-black/5 p-3 rounded-sm group">
+                                  <div className="relative w-16 h-12 bg-black rounded-xs overflow-hidden flex-shrink-0">
+                                    <Image src={thumb} alt="thumb" fill className="object-cover opacity-80" unoptimized />
+                                    {isVideo && <div className="absolute inset-0 flex items-center justify-center"><Play size={12} fill="white" className="text-white" /></div>}
+                                  </div>
+                                  <div className="flex-1 truncate text-xs opacity-60 font-mono">{item.url}</div>
+                                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button type="button" onClick={() => moveGalleryItem(idx, 'up')} className="p-1.5 hover:bg-text-black/10 rounded-sm"><ArrowLeft size={14} className="rotate-90" /></button>
+                                    <button type="button" onClick={() => moveGalleryItem(idx, 'down')} className="p-1.5 hover:bg-text-black/10 rounded-sm"><ArrowLeft size={14} className="-rotate-90" /></button>
+                                    <button type="button" onClick={() => removeGalleryItem(idx)} className="p-1.5 hover:bg-red-600/10 text-red-600 rounded-sm"><Trash2 size={14} /></button>
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between items-center pt-4">
                         <div className="flex items-center gap-4">
                           <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Contenu / Description</label>
                           <div className="flex bg-text-black/5 p-1 rounded-sm">
