@@ -17,7 +17,15 @@ interface Project {
   url?: string;
 }
 
-export default function Projects() {
+interface ProjectsProps {
+  config: {
+    projectsTitle: string;
+    recentProjectsTitle: string;
+    [key: string]: any;
+  };
+}
+
+export default function Projects({ config }: ProjectsProps) {
   const [projects, setProjects] = useState<Project[]>([]);
 
   const fetchProjects = async () => {
@@ -46,7 +54,12 @@ export default function Projects() {
   }, []);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">
+    <section>
+      <div className="flex justify-between items-end mb-12 md:mb-16 border-b border-text-black/10 pb-6">
+        <h2 className="font-serif text-3xl md:text-5xl lg:text-6xl text-soft-black">{config.recentProjectsTitle || "Projets Récents"}</h2>
+        <span className="text-text-black/50 text-[10px] md:text-sm tracking-widest uppercase hidden md:block">{config.projectsTitle}</span>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">
         {projects.map((project, index) => {
           const isInternal = project.link_type === "internal" || !project.link_type;
           const href = isInternal ? `/project?id=${project.id}` : project.url || "#";
@@ -62,8 +75,7 @@ export default function Projects() {
               transition={{ duration: 0.8, delay: index * 0.2 }}
               className="group relative cursor-pointer"
             >
-              {/* @ts-ignore */}
-              <Wrapper {...wrapperProps}>
+              <Wrapper {...(wrapperProps as any)}>
                 <div className="relative aspect-[4/5] overflow-hidden rounded-sm bg-text-black/5 transition-transform duration-700 ease-out group-hover:scale-[1.02] shadow-sm group-hover:shadow-2xl group-hover:shadow-shadow-red">
                   <Image
                     src={project.image}
@@ -92,5 +104,6 @@ export default function Projects() {
           );
         })}
       </div>
+    </section>
   );
 }
