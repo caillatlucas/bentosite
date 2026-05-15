@@ -158,7 +158,7 @@ export default function Home() {
     const randomId = Math.random().toString(36).substring(2, 8).toUpperCase();
     setFormTitle(`Achat: ${product.name}`);
     setFormOrderId(randomId);
-    setFormContent(`Bonjour, je souhaite commander le produit "${product.name}" (${product.price}€).`);
+    setFormContent(`Bonjour, je souhaite commander le produit "${product.name}" (${product.price}€).\n\nL'album est : [Titre de l'album]\nL'artiste est : [Nom de l'artiste]`);
     setIsContactOpen(true);
   };
 
@@ -294,7 +294,7 @@ export default function Home() {
             <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-6xl bg-background border border-text-black/10 rounded-sm shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]">
               
               {/* Product Visuals */}
-              <div className="w-full md:w-3/5 relative bg-text-black/5 group">
+              <div className="w-full h-80 md:h-auto md:w-3/5 relative bg-text-black/5 group shrink-0">
                 <Image src={selectedProduct.images[activeProdImg] || ""} alt={selectedProduct.name} fill className="object-contain p-8 md:p-12" unoptimized />
                 <button onClick={() => setSelectedProduct(null)} className="absolute top-6 left-6 z-10 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-md transition-all"><X size={24} /></button>
                 
@@ -342,7 +342,7 @@ export default function Home() {
                     >
                       COMMANDER MAINTENANT <Zap size={16} fill="currentColor" />
                     </button>
-                    <p className="text-[9px] text-center opacity-30 uppercase tracking-widest">Paiement sécurisé via Supabase</p>
+                    <p className="text-[9px] text-center opacity-30 uppercase tracking-widest">Paiement en cash sur place</p>
                   </div>
                 </div>
               </div>
@@ -384,10 +384,19 @@ export default function Home() {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsContactOpen(false)} className="absolute inset-0 bg-soft-black/60 backdrop-blur-md" />
             <motion.div initial={{ opacity: 0, y: 50, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 50, scale: 0.9 }} className="relative w-full max-w-lg bg-background border border-text-black/10 rounded-sm shadow-2xl p-8 md:p-12 overflow-hidden">
               {showSuccess ? (
-                <div className="py-12 text-center space-y-4">
+                <div className="py-12 text-center space-y-6">
                   <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-20 h-20 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto"><CheckCircle2 size={40} /></motion.div>
-                  <h3 className="font-serif text-3xl">Message envoyé !</h3>
-                  <p className="text-xs opacity-50">Lucas vous répondra bientôt.</p>
+                  <div className="space-y-2">
+                    <h3 className="font-serif text-3xl italic">Message envoyé !</h3>
+                    <p className="text-xs opacity-50">Lucas vous répondra bientôt.</p>
+                  </div>
+                  {formOrderId && (
+                    <div className="bg-primary-red/5 p-6 rounded-sm border border-primary-red/20 space-y-3">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-primary-red">Votre code de commande</p>
+                      <p className="text-4xl font-serif text-soft-black">{formOrderId}</p>
+                      <p className="text-[9px] opacity-40 italic">Notez ce code pour le donner lors du paiement en cash.</p>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <form onSubmit={handleContactSubmit} className="space-y-6">
