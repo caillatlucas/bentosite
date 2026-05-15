@@ -2,7 +2,7 @@
 
 import { motion, useMotionValue, useSpring, useTransform, useScroll, useMotionTemplate, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
-import { ArrowUpRight, Zap, X, Send, User, MessageSquare, CheckCircle2, Mail, Music, Volume2, VolumeX, Copy, Check, Bell, Play } from "lucide-react";
+import { ArrowUpRight, Zap, X, Send, User, MessageSquare, CheckCircle2, Mail, Music, Volume2, VolumeX, Copy, Check, Bell, Play, Upload } from "lucide-react";
 import Projects from "@/components/Projects";
 import Socials from "@/components/Socials";
 import Link from "next/link";
