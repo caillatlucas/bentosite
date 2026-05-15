@@ -27,7 +27,8 @@ export default function Home() {
     textEffectImage: "",
     musicEnabled: false, 
     musicUrl: "", 
-    musicCover: "" 
+    musicCover: "",
+    primaryColor: "#ff3131"
   });
   const [socialsConfig, setSocialsConfig] = useState<any>(null);
   const [galleryMedia, setGalleryMedia] = useState<MediaItem[]>([]);
@@ -54,17 +55,18 @@ export default function Home() {
   const { scrollYProgress } = useScroll();
 
   // Color transition - Adjusted for portrait
-  const backgroundColor = useTransform(scrollYProgress, [0, 0.15], ["#ff3131", "#d3d3d3"]);
-  const textColor = useTransform(scrollYProgress, [0, 0.15], ["#ffffff", "#ff3131"]);
+  const pColor = settings.primaryColor || "#ff3131";
+  const backgroundColor = useTransform(scrollYProgress, [0, 0.15], [pColor, "#d3d3d3"]);
+  const textColor = useTransform(scrollYProgress, [0, 0.15], ["#ffffff", pColor]);
   const secondaryTextColor = useTransform(scrollYProgress, [0, 0.15], ["rgba(255,255,255,0.7)", "rgba(17,17,17,0.6)"]);
   const adminBtnColor = useTransform(scrollYProgress, [0, 0.15], ["#ffffff", "#111111"]);
-  const lucasColor = useTransform(scrollYProgress, [0, 0.15], ["#ffffff", "#ff3131"]);
+  const lucasColor = useTransform(scrollYProgress, [0, 0.15], ["#ffffff", pColor]);
 
   // Text Effect Image & Background Texture
   const hasTextImg = settings.textEffectImage && settings.textEffectImage.length > 0;
   const textBgImage = useTransform(scrollYProgress, [0, 0.15], ["none", hasTextImg ? `url(${settings.textEffectImage})` : "none"]);
   const textBgClip = useTransform(scrollYProgress, [0, 0.15], ["none", hasTextImg ? "text" : "none"]);
-  const textFinalColor = useTransform(scrollYProgress, [0, 0.15], ["#ffffff", hasTextImg ? "transparent" : "#ff3131"]);
+  const textFinalColor = useTransform(scrollYProgress, [0, 0.15], ["#ffffff", hasTextImg ? "transparent" : pColor]);
   
   // Background texture opacity transition
   const textureOpacity = useTransform(scrollYProgress, [0, 0.15], [hasTextImg ? 1 : 0, 0]);
@@ -76,7 +78,7 @@ export default function Home() {
   const rotateY = useTransform(smoothX, [-0.5, 0.5], [-15, 15]);
   const textShadowX = useTransform(smoothX, [-0.5, 0.5], [20, -20]);
   const textShadowY = useTransform(smoothY, [-0.5, 0.5], [20, -20]);
-  const shadowColor = useTransform(scrollYProgress, [0, 0.15], ["rgba(255,255,255,0.3)", "rgba(255, 49, 49, 0.2)"]);
+  const shadowColor = useTransform(scrollYProgress, [0, 0.15], ["rgba(255,255,255,0.3)", `${pColor}33`]);
   const textShadow = useMotionTemplate`${textShadowX}px ${textShadowY}px 40px ${shadowColor}`;
 
   useEffect(() => {
@@ -168,10 +170,16 @@ export default function Home() {
           className="fixed inset-0 z-0 pointer-events-none bg-cover bg-center"
         />
       )}
-      {/* Portrait Header Force Red Style */}
+      {/* Dynamic Theme Styles */}
       <style jsx global>{`
+        :root {
+          --primary-red: ${pColor};
+          --color-primary-red: ${pColor};
+          --shadow-red: ${pColor}22;
+          --color-shadow-red: ${pColor}22;
+        }
         @media (max-width: 768px) {
-          html, body { background-color: #ff3131 !important; }
+          html, body { background-color: ${pColor} !important; }
         }
       `}</style>
 
@@ -200,11 +208,11 @@ export default function Home() {
       </AnimatePresence>
 
       <div className="fixed bottom-8 right-8 md:bottom-12 md:right-16 z-[100] flex flex-col gap-4">
-        <motion.button onClick={() => setIsNotifOpen(!isNotifOpen)} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="bg-white text-primary-red w-12 h-12 md:w-14 md:h-14 rounded-full shadow-2xl flex items-center justify-center relative">
+        <motion.button onClick={() => setIsNotifOpen(!isNotifOpen)} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="bg-white text-[var(--primary-red)] w-12 h-12 md:w-14 md:h-14 rounded-full shadow-2xl flex items-center justify-center relative">
           <Bell size={24} />
           {unreadCount > 0 && <span className="absolute -top-1 -right-1 bg-black text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white">{unreadCount}</span>}
         </motion.button>
-        <motion.button onClick={() => setIsContactOpen(true)} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="bg-primary-red text-white w-14 h-14 md:w-16 md:h-16 rounded-full shadow-2xl flex items-center justify-center group overflow-hidden">
+        <motion.button onClick={() => setIsContactOpen(true)} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="bg-[var(--primary-red)] text-white w-14 h-14 md:w-16 md:h-16 rounded-full shadow-2xl flex items-center justify-center group overflow-hidden">
           <motion.div animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 2 }}><Zap size={24} fill="currentColor" /></motion.div>
         </motion.button>
       </div>
@@ -241,13 +249,13 @@ export default function Home() {
                 </div>
               ) : (
                 <form onSubmit={handleContactSubmit} className="space-y-6">
-                  <h3 className="font-serif text-4xl italic text-primary-red">Me contacter</h3>
+                  <h3 className="font-serif text-4xl italic text-[var(--primary-red)]">Me contacter</h3>
                   <div className="grid grid-cols-1 gap-4">
-                    <input type="text" value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Nom & Prénom" className="w-full bg-transparent border-b border-text-black/10 py-3 outline-none focus:border-primary-red" required />
-                    <input type="text" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="Objet" className="w-full bg-transparent border-b border-text-black/10 py-3 outline-none focus:border-primary-red" required />
-                    <input type="text" value={formContact} onChange={(e) => setFormContact(e.target.value)} placeholder="Email / Tél" className="w-full bg-transparent border-b border-text-black/10 py-3 outline-none focus:border-primary-red" />
+                    <input type="text" value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Nom & Prénom" className="w-full bg-transparent border-b border-text-black/10 py-3 outline-none focus:border-[var(--primary-red)]" required />
+                    <input type="text" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="Objet" className="w-full bg-transparent border-b border-text-black/10 py-3 outline-none focus:border-[var(--primary-red)]" required />
+                    <input type="text" value={formContact} onChange={(e) => setFormContact(e.target.value)} placeholder="Email / Tél" className="w-full bg-transparent border-b border-text-black/10 py-3 outline-none focus:border-[var(--primary-red)]" />
                   </div>
-                  <textarea value={formContent} onChange={(e) => setFormContent(e.target.value)} placeholder="Message..." rows={5} className="w-full bg-text-black/5 p-4 rounded-sm outline-none focus:border-primary-red resize-none" required />
+                  <textarea value={formContent} onChange={(e) => setFormContent(e.target.value)} placeholder="Message..." rows={5} className="w-full bg-text-black/5 p-4 rounded-sm outline-none focus:border-[var(--primary-red)] resize-none" required />
                   <button type="submit" disabled={isSubmitting} className="w-full bg-text-black text-white py-4 rounded-sm font-bold text-xs tracking-widest uppercase flex items-center justify-center gap-3"> {isSubmitting ? "Envoi..." : <>ENVOYER <Send size={14} /></>} </button>
                 </form>
               )}

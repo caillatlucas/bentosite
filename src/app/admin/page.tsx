@@ -76,6 +76,7 @@ export default function AdminDashboard() {
   const [musicEnabled, setMusicEnabled] = useState(false);
   const [musicUrl, setMusicUrl] = useState("");
   const [musicCover, setMusicCover] = useState("");
+  const [primaryColor, setPrimaryColor] = useState("#ff3131");
 
   const [socials, setSocials] = useState<SocialConfig>({
     email: "contact@lucascaillat.fr",
@@ -131,6 +132,7 @@ export default function AdminDashboard() {
         setMusicEnabled(global.musicEnabled || false);
         setMusicUrl(global.musicUrl || "");
         setMusicCover(global.musicCover || "");
+        setPrimaryColor(global.primaryColor || "#ff3131");
       }
       const soc = sData.find(s => s.key === 'socials')?.value;
       if (soc) setSocials(soc);
@@ -151,7 +153,8 @@ export default function AdminDashboard() {
       textEffectImage,
       musicEnabled, 
       musicUrl, 
-      musicCover 
+      musicCover,
+      primaryColor
     };
     const { error } = await supabase.from('settings').upsert({ key: 'global', value: s });
     if (error) {
@@ -378,9 +381,16 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-2 gap-6"> <input type="text" value={musicUrl} onChange={(e) => setMusicUrl(e.target.value)} placeholder="URL YouTube Music" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" /> <input type="text" value={musicCover} onChange={(e) => setMusicCover(e.target.value)} placeholder="URL Pochette" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" /> </div>
                 <div className="flex items-center gap-3"> <span className="text-[9px] font-bold uppercase tracking-widest opacity-40">Musique Active</span> <button onClick={() => setMusicEnabled(!musicEnabled)} className={`w-12 h-6 rounded-full transition-colors relative ${ musicEnabled ? 'bg-primary-red' : 'bg-text-black/10' }`}> <motion.div animate={{ x: musicEnabled ? 24 : 4 }} className="w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm" /> </button> </div>
                 <div className="grid grid-cols-2 gap-6"> <input type="text" value={heroTitleMain} onChange={(e) => setHeroTitleMain(e.target.value)} placeholder="Titre Principal" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none font-serif text-xl" /> <input type="text" value={heroTitleSub} onChange={(e) => setHeroTitleSub(e.target.value)} placeholder="Titre Secondaire" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none font-serif italic text-xl" /> </div>
-                <div className="space-y-4">
-                  <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Image d'effet de texte (Remplace le rouge)</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Image d'effet de texte (Remplace la couleur)</label>
                   <input type="text" value={textEffectImage} onChange={(e) => setTextEffectImage(e.target.value)} placeholder="URL Image (ex: grain, gradient...)" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" />
+                </div>
+
+                <div className="space-y-4">
+                  <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Couleur Principale</label>
+                  <div className="flex items-center gap-4">
+                    <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="w-12 h-12 rounded-sm border-none cursor-pointer bg-transparent" />
+                    <input type="text" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="flex-1 bg-transparent border-b border-text-black/20 py-2 outline-none text-sm font-mono uppercase" />
+                  </div>
                 </div>
                 
                 <h3 className="font-serif text-2xl border-b border-text-black/10 pb-4 pt-4">Titres des Sections</h3>
