@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
 import { 
   FaLinkedin, 
   FaGithub, 
@@ -28,15 +27,8 @@ const defaultSocials: SocialConfig = {
   instagram: { url: "https://instagram.com/lucascaillat", enabled: false },
 };
 
-export default function Socials() {
-  const [socials, setSocials] = useState<SocialConfig>(defaultSocials);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("portfolio_socials");
-    if (saved) {
-      setSocials(JSON.parse(saved));
-    }
-  }, []);
+export default function Socials({ config }: { config?: SocialConfig | null }) {
+  const socials = config || defaultSocials;
 
   const socialItems = [
     { id: "linkedin", icon: FaLinkedin, label: "LinkedIn", data: socials.linkedin },
@@ -45,7 +37,7 @@ export default function Socials() {
     { id: "instagram", icon: FaInstagram, label: "Instagram", data: socials.instagram },
   ];
 
-  const enabledItems = socialItems.filter(item => item.data.enabled);
+  const enabledItems = socialItems.filter(item => item.data?.enabled);
 
   if (enabledItems.length === 0) return null;
 

@@ -2,7 +2,7 @@
 
 import { motion, useMotionValue, useSpring, useTransform, useScroll, useMotionTemplate, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
-import { ArrowUpRight, Zap, X, Send, User, MessageSquare, CheckCircle2, Mail, Music, Volume2, VolumeX, Copy, Check, Bell } from "lucide-react";
+import { ArrowUpRight, Zap, X, Send, User, MessageSquare, CheckCircle2, Mail, Music, Volume2, VolumeX, Copy, Check, Bell, Play } from "lucide-react";
 import Projects from "@/components/Projects";
 import Socials from "@/components/Socials";
 import Link from "next/link";
@@ -29,6 +29,7 @@ export default function Home() {
     musicUrl: "", 
     musicCover: "" 
   });
+  const [socialsConfig, setSocialsConfig] = useState<any>(null);
   const [galleryMedia, setGalleryMedia] = useState<MediaItem[]>([]);
   const [selectedImage, setSelectedImage] = useState<MediaItem | null>(null);
   const [isContactOpen, setIsContactOpen] = useState(false);
@@ -89,8 +90,16 @@ export default function Home() {
     checkReplies();
 
     const msgChannel = supabase.channel('msg-realtime').on('postgres_changes', { event: '*', table: 'messages', schema: 'public' }, () => { checkReplies(); }).subscribe();
+    const settingsChannel = supabase.channel('settings-realtime').on('postgres_changes', { event: '*', table: 'settings', schema: 'public' }, () => { fetchData(); }).subscribe();
+    const mediaChannel = supabase.channel('media-realtime').on('postgres_changes', { event: '*', table: 'media', schema: 'public' }, () => { fetchData(); }).subscribe();
+    
     window.addEventListener("mousemove", handleMouseMove);
-    return () => { window.removeEventListener("mousemove", handleMouseMove); supabase.removeChannel(msgChannel); };
+    return () => { 
+      window.removeEventListener("mousemove", handleMouseMove); 
+      supabase.removeChannel(msgChannel);
+      supabase.removeChannel(settingsChannel);
+      supabase.removeChannel(mediaChannel);
+    };
   }, [mouseX, mouseY]);
 
   const fetchData = async () => {
@@ -99,7 +108,10 @@ export default function Home() {
       const global = sData.find(s => s.key === 'global')?.value;
       const soc = sData.find(s => s.key === 'socials')?.value;
       if (global) setSettings(prev => ({ ...prev, ...global }));
-      if (soc) setSettings(prev => ({ ...prev, email: soc.email }));
+      if (soc) {
+        setSocialsConfig(soc);
+        setSettings(prev => ({ ...prev, email: soc.email }));
+      }
     }
     const { data: mData } = await supabase.from('media').select('*').order('created_at', { ascending: false });
     if (mData) setGalleryMedia(mData);
@@ -329,8 +341,8 @@ export default function Home() {
                     <Image src={displayUrl} alt={item.name} fill className="object-cover transition-transform duration-700 group-hover:scale-105" unoptimized />
                     {ytId && (
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-12 h-12 md:w-16 md:h-16 bg-primary-red/90 text-white rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
-                          <Zap size={24} fill="currentColor" />
+                        <div className="w-12 h-12 md:w-16 md:h-16 bg-white/20 backdrop-blur-md text-white rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 group-hover:bg-primary-red transition-all duration-500 border border-white/30">
+                          <Play size={24} fill="currentColor" className="ml-1" />
                         </div>
                       </div>
                     )}
@@ -349,7 +361,7 @@ export default function Home() {
               <AnimatePresence> {copied && <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: -10 }} exit={{ opacity: 0, y: 0 }} className="absolute -top-12 left-0 bg-text-black text-white px-4 py-2 rounded-sm text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 shadow-xl"><Check size={12} className="text-green-500" /> Email Copié !</motion.div>} </AnimatePresence>
             </div>
           </div>
-          <Socials />
+          <Socials config={socialsConfig} />
         </footer>
       </div>
     </motion.main>
