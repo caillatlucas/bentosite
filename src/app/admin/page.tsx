@@ -257,7 +257,7 @@ export default function AdminDashboard() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const projectData = { 
+    const projectData: any = { 
       title: formTitle, 
       category: formCategory || null, 
       date: formDate, 
@@ -265,12 +265,32 @@ export default function AdminDashboard() {
       status: formStatus, 
       link_type: formLinkType, 
       url: formUrl, 
-      content: formContent,
-      gallery: formGallery
+      content: formContent
     };
-    if (editingProject) await supabase.from('projects').update(projectData).eq('id', editingProject.id);
-    else await supabase.from('projects').insert(projectData);
-    setIsModalOpen(false); fetchData();
+    
+    // Only add gallery if it's not empty to avoid schema issues if the column doesn't exist yet
+    if (formGallery && formGallery.length > 0) {
+      projectData.gallery = formGallery;
+    }
+
+    let error;
+    if (editingProject) {
+      const { error: err } = await supabase.from('projects').update(projectData).eq('id', editingProject.id);
+      error = err;
+    } else {
+      const { error: err } = await supabase.from('projects').insert(projectData);
+      error = err;
+    }
+
+    if (error) {
+      console.error("Erreur Supabase:", error);
+      alert("Erreur lors de l'enregistrement : " + error.message + "\nAssurez-vous que la colonne 'gallery' existe dans votre table 'projects' sur Supabase.");
+    } else {
+      setIsModalOpen(false); 
+      fetchData();
+      setUploadSuccess(true);
+      setTimeout(() => setUploadSuccess(false), 3000);
+    }
   };
 
   const tabs = [
