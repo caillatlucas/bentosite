@@ -2,7 +2,7 @@
 
 import { motion, useMotionValue, useSpring, useTransform, useScroll, useMotionTemplate, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
-import { ArrowUpRight, Zap, X, Send, User, MessageSquare, CheckCircle2, Mail, Music, Volume2, VolumeX, Copy, Check, Bell, Play, Upload } from "lucide-react";
+import { ArrowUpRight, Zap, X, Send, User, MessageSquare, CheckCircle2, Mail, Music, Volume2, VolumeX, Copy, Check, Bell, Play, Upload, Maximize2, Minimize2 } from "lucide-react";
 import Projects from "@/components/Projects";
 import Socials from "@/components/Socials";
 import Link from "next/link";
@@ -48,6 +48,7 @@ export default function Home() {
   
   // Notification System
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [isInboxExpanded, setIsInboxExpanded] = useState(false);
   const [replies, setReplies] = useState<Message[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -355,9 +356,33 @@ export default function Home() {
 
       <AnimatePresence>
         {isNotifOpen && (
-          <motion.div initial={{ opacity: 0, y: 20, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 20, scale: 0.9 }} className="fixed bottom-32 right-8 md:bottom-44 md:right-16 z-[150] w-72 md:w-96 bg-white shadow-2xl rounded-sm border border-text-black/10 overflow-hidden">
-            <div className="bg-text-black p-4 flex justify-between items-center"> <h4 className="text-white font-serif italic">Réponses</h4> <button onClick={() => setIsNotifOpen(false)}><X size={16} className="text-white/50" /></button> </div>
-            <div className="p-4 max-h-[400px] overflow-y-auto space-y-4">
+          <motion.div 
+            initial={{ opacity: 0, y: 20, scale: 0.9 }} 
+            animate={{ 
+              opacity: 1, 
+              y: 0, 
+              scale: 1,
+              width: isInboxExpanded ? '90vw' : undefined,
+              height: isInboxExpanded ? '85vh' : undefined,
+              maxWidth: isInboxExpanded ? '1200px' : undefined,
+              bottom: isInboxExpanded ? '5vh' : undefined,
+              right: isInboxExpanded ? '5vw' : undefined,
+              left: isInboxExpanded ? '5vw' : undefined,
+              margin: isInboxExpanded ? 'auto' : undefined
+            }} 
+            exit={{ opacity: 0, y: 20, scale: 0.9 }} 
+            className={`fixed z-[200] bg-white shadow-2xl rounded-sm border border-text-black/10 overflow-hidden flex flex-col ${isInboxExpanded ? '' : 'bottom-32 right-8 md:bottom-44 md:right-16 w-72 md:w-96'}`}
+          >
+            <div className="bg-text-black p-4 flex justify-between items-center shrink-0"> 
+              <h4 className="text-white font-serif italic">Réponses</h4> 
+              <div className="flex items-center gap-3">
+                <button onClick={() => setIsInboxExpanded(!isInboxExpanded)} className="text-white/50 hover:text-white transition-colors">
+                  {isInboxExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+                </button>
+                <button onClick={() => setIsNotifOpen(false)}><X size={16} className="text-white/50" /></button> 
+              </div>
+            </div>
+            <div className={`p-4 overflow-y-auto space-y-4 flex-1 ${isInboxExpanded ? '' : 'max-h-[400px]'}`}>
               {replies.length === 0 ? <p className="text-xs text-text-black/40 text-center py-8">Aucune réponse pour le moment.</p> : (
                 replies.map(r => (
                   <div key={r.id} className="bg-text-black/[0.02] border border-text-black/5 rounded-sm p-4 relative group" onClick={() => { if(r.reply) localStorage.setItem(`read_reply_${r.id}`, "true"); checkReplies(); }}>
