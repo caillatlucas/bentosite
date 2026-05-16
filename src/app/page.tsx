@@ -14,7 +14,22 @@ import dynamic from 'next/dynamic';
 const StatueBackground = dynamic(() => import('@/components/StatueBackground'), { ssr: false });
 
 interface MediaItem { id: string; url: string; name: string; }
-interface Message { id: string; name: string; title: string; content: string; contact?: string; date: string; reply?: string; order_id?: string; attachments?: string[]; agreed_to_pay?: boolean; replies?: { text: string; date: string; from: string }[]; user_id?: string; user_email?: string; }
+interface Message { 
+  id: string; 
+  name: string; 
+  title: string; 
+  content: string; 
+  contact?: string; 
+  date: string; 
+  reply?: string; 
+  order_id?: string; 
+  attachments?: string[]; 
+  agreed_to_pay?: boolean; 
+  replies?: { text: string; date: string; from: string }[]; 
+  user_id?: string; 
+  user_email?: string;
+  profiles?: { avatar_url?: string; full_name?: string };
+}
 interface Product { id: string; name: string; price: number; description: string; images: string[]; link?: string; link_text?: string; purchase_message?: string; }
 
 export default function Home() {
@@ -56,7 +71,7 @@ export default function Home() {
   const [isInboxExpanded, setIsInboxExpanded] = useState(false);
   const [profileImage, setProfileImage] = useState("");
   const [show3DBackground, setShow3DBackground] = useState(false);
-  const [replies, setReplies] = useState<any[]>([]);
+  const [replies, setReplies] = useState<Message[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [user, setUser] = useState<any>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -166,7 +181,7 @@ export default function Home() {
       if (global) {
         setProfileImage(global.profileImage || "");
         if (global.sectionsConfig) {
-          global.sectionsConfig = global.sectionsConfig.map((s: any) => {
+          global.sectionsConfig = global.sectionsConfig.map((s: { id: string; label: string; subLabel?: string; visible: boolean }) => {
             if (s.id === 'projects' && s.subLabel === undefined) return { ...s, subLabel: global.projectsTitle || "Sélection 2024", label: global.recentProjectsTitle || "Postes" };
             if (s.id === 'gallery' && s.subLabel === undefined) return { ...s, subLabel: "Galerie Photo/Vidéo", label: global.galleryTitle || s.label };
             if (s.id === 'shop' && s.subLabel === undefined) return { ...s, subLabel: "Nos Produits" };
@@ -639,7 +654,7 @@ export default function Home() {
             </div>
             <div className={`p-4 overflow-y-auto space-y-4 flex-1 ${isInboxExpanded ? '' : 'max-h-[400px]'}`}>
               {replies.length === 0 ? <p className="text-xs text-white/40 text-center py-8">Aucune réponse pour le moment.</p> : (
-                replies.map(r => (
+                replies.map((r: Message) => (
                   <div key={r.id} className="bg-white/5 border border-white/10 rounded-2xl p-6 relative group hover:bg-white/10 transition-all cursor-pointer" onClick={() => { if(r.reply) localStorage.setItem(`read_reply_${r.id}`, "true"); checkReplies(); }}>
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex items-center gap-3">
@@ -654,7 +669,7 @@ export default function Home() {
                     </div>
                     <div className="space-y-4 mb-4">
                       {r.replies && r.replies.length > 0 ? (
-                        r.replies.map((rep, idx) => (
+                        r.replies.map((rep: { text: string; date: string; from: string }, idx: number) => (
                           <div key={idx} className={`${rep.from === 'Lucas' ? 'bg-white/5 border-l-2 border-primary-red pl-4 py-2 rounded-r-lg' : ''}`}>
                             <p className="text-[9px] font-bold uppercase text-white/30 mb-1">{rep.from} • {rep.date}</p>
                             <p className="text-sm font-medium text-white/90">{rep.text}</p>

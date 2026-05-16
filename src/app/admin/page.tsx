@@ -228,7 +228,7 @@ export default function AdminDashboard() {
         setPrimaryColor(global.primaryColor || "#ff3131");
         setShow3DBackground(global.show3DBackground ?? false);
         if (global.sectionsConfig) {
-          const migratedSections = global.sectionsConfig.map((s: any) => {
+          const migratedSections = global.sectionsConfig.map((s: { id: string; label: string; subLabel?: string; visible: boolean }) => {
             if (s.id === 'projects' && s.subLabel === undefined) return { ...s, subLabel: global.projectsTitle || "Sélection 2024", label: global.recentProjectsTitle || "Postes" };
             if (s.id === 'gallery' && s.subLabel === undefined) return { ...s, subLabel: "Galerie Photo/Vidéo", label: global.galleryTitle || s.label };
             if (s.id === 'shop' && s.subLabel === undefined) return { ...s, subLabel: "Nos Produits" };
