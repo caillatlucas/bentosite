@@ -71,19 +71,20 @@ export default function StatueBackground({ color }: { color: string }) {
 
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ background: 'transparent' }}>
-      <Canvas 
-        shadows={false} 
-        camera={{ position: [0, 0, 5], fov: 45 }}
-        style={{ pointerEvents: 'none' }}
-      >
-        <AmbientLight intensity={0.8} />
+      <div className="hidden md:block w-full h-full">
+        <Canvas 
+          shadows={false} 
+          camera={{ position: [0, 0, 5], fov: 45 }}
+          style={{ pointerEvents: 'none' }}
+        >
+          <AmbientLight intensity={0.8} />
         <PointLight position={[10, 10, 10]} intensity={1} />
         <DirectionalLight position={[-5, 5, 5]} intensity={1.5} />
-        
         <React.Suspense fallback={null}>
           <Statue color={color} />
         </React.Suspense>
-      </Canvas>
+        </Canvas>
+      </div>
 
       {/* Thicker Manga Dot (Halftone) Overlay */}
       <div 
