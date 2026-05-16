@@ -186,12 +186,13 @@ export default function AdminDashboard() {
   const fetchData = async () => {
     const { data: pData } = await supabase.from('projects').select('*').order('created_at', { ascending: false });
     if (pData) setProjects(pData);
-    const { data: mData } = await supabase.from('media').select('*').order('created_at', { ascending: false });
-    if (mData) setMediaItems(mData);
+    
     const { data: msgData } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
     if (msgData) setMessages(msgData);
+    
     const { data: prodData } = await supabase.from('products').select('*').order('created_at', { ascending: false });
     if (prodData) setProducts(prodData);
+
     const { data: sData } = await supabase.from('settings').select('*');
     if (sData) {
       const global = sData.find(s => s.key === 'global')?.value;
@@ -213,7 +214,25 @@ export default function AdminDashboard() {
         if (global.sectionsConfig) setSectionsConfig(global.sectionsConfig);
       }
       const soc = sData.find(s => s.key === 'socials')?.value;
-      if (soc) setSocials(soc);
+      if (soc) {
+        setSocials(soc);
+      }
+    }
+
+    const { data: mData } = await supabase.from('media').select('*');
+    if (mData) {
+      const global = (await supabase.from('settings').select('*').eq('key', 'global').single()).data?.value;
+      if (global?.mediaOrder) {
+        mData.sort((a, b) => {
+          const idxA = global.mediaOrder.indexOf(a.id);
+          const idxB = global.mediaOrder.indexOf(b.id);
+          if (idxA === -1 && idxB === -1) return 0;
+          if (idxA === -1) return 1;
+          if (idxB === -1) return -1;
+          return idxA - idxB;
+        });
+      }
+      setMediaItems(mData);
     }
   };
 
@@ -233,7 +252,8 @@ export default function AdminDashboard() {
       musicUrl, 
       musicCover,
       primaryColor,
-      sectionsConfig
+      sectionsConfig,
+      mediaOrder: mediaItems.map(m => m.id)
     };
     const { error } = await supabase.from('settings').upsert({ key: 'global', value: s });
     if (error) {
@@ -427,6 +447,21 @@ export default function AdminDashboard() {
     setSectionsConfig(newSections);
   };
 
+  const moveMediaItem = async (idx: number, direction: 'left' | 'right') => {
+    const newMedia = [...mediaItems];
+    const targetIdx = direction === 'left' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= newMedia.length) return;
+    [newMedia[idx], newMedia[targetIdx]] = [newMedia[targetIdx], newMedia[idx]];
+    setMediaItems(newMedia);
+    
+    // Auto-save order to global settings
+    const { data: sData } = await supabase.from('settings').select('*').eq('key', 'global').single();
+    if (sData) {
+      const newValue = { ...sData.value, mediaOrder: newMedia.map(m => m.id) };
+      await supabase.from('settings').upsert({ key: 'global', value: newValue });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const projectData: any = { 
@@ -560,6 +595,14 @@ export default function AdminDashboard() {
                         </div>
                       )}
                       <div className="absolute inset-0 bg-soft-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        <div className="flex flex-col gap-1 mr-2">
+                          <button onClick={() => moveMediaItem(mediaItems.indexOf(item), 'left')} className="p-1.5 bg-white/20 hover:bg-white/40 rounded-sm text-white transition-colors">
+                            <ArrowLeft size={14} />
+                          </button>
+                          <button onClick={() => moveMediaItem(mediaItems.indexOf(item), 'right')} className="p-1.5 bg-white/20 hover:bg-white/40 rounded-sm text-white transition-colors">
+                            <ArrowLeft size={14} className="rotate-180" />
+                          </button>
+                        </div>
                         <button onClick={() => deleteMedia(item.id)} className="p-2 bg-red-600 text-white rounded-sm"><Trash2 size={14} /></button>
                       </div>
                       {ytId && <div className="absolute bottom-2 left-2 bg-text-black/80 text-white text-[8px] px-1.5 py-0.5 rounded-xs uppercase tracking-widest font-bold">Vidéo</div>}

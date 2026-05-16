@@ -62,6 +62,7 @@ export default function Home() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [orderAgreed, setOrderAgreed] = useState(false);
+  const [galleryIndex, setGalleryIndex] = useState(0);
 
   const [isMuted, setIsMuted] = useState(true);
   const mouseX = useMotionValue(0);
@@ -129,8 +130,21 @@ export default function Home() {
         setSettings(prev => ({ ...prev, email: soc.email }));
       }
     }
-    const { data: mData } = await supabase.from('media').select('*').order('created_at', { ascending: false });
-    if (mData) setGalleryMedia(mData);
+    const { data: mData } = await supabase.from('media').select('*');
+    if (mData) {
+      const global = (await supabase.from('settings').select('*').eq('key', 'global').single()).data?.value;
+      if (global?.mediaOrder) {
+        mData.sort((a, b) => {
+          const idxA = global.mediaOrder.indexOf(a.id);
+          const idxB = global.mediaOrder.indexOf(b.id);
+          if (idxA === -1 && idxB === -1) return 0;
+          if (idxA === -1) return 1;
+          if (idxB === -1) return -1;
+          return idxA - idxB;
+        });
+      }
+      setGalleryMedia(mData);
+    }
     const { data: pData } = await supabase.from('products').select('*').order('created_at', { ascending: false });
     if (pData) setProducts(pData);
   };
@@ -590,32 +604,88 @@ export default function Home() {
             </section>
           );
 
-          if (section.id === 'gallery' && galleryMedia.length > 0) return (
-            <section key="gallery">
-              <div className="flex justify-between items-end mb-12 md:mb-16 border-b border-text-black/10 pb-6"> 
-                <h2 className="font-serif text-3xl md:text-5xl lg:text-6xl text-soft-black">{settings.galleryTitle}</h2> 
-                <span className="text-text-black/50 text-[10px] md:text-sm tracking-widest uppercase hidden md:block">Galerie Photo/Vidéo</span> 
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-4 md:h-[800px]">
-                {galleryMedia.slice(0, 5).map((item, i) => {
-                  const ytId = getYoutubeId(item.url);
-                  const displayUrl = ytId ? getYoutubeThumbnail(ytId) : item.url;
-                  return (
-                    <motion.div key={item.id} initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} onClick={() => setSelectedImage(item)} className={`relative overflow-hidden rounded-sm bg-text-black/5 group cursor-zoom-in aspect-square md:aspect-auto ${i === 0 ? "md:col-span-2 md:row-span-2" : i === 1 ? "md:col-span-2 md:row-span-1" : "md:col-span-1 md:row-span-1"}`}>
-                      <Image src={displayUrl} alt={item.name} fill className="object-cover transition-transform duration-700 group-hover:scale-105" unoptimized />
-                      {ytId && (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="w-12 h-12 md:w-16 md:h-16 bg-white/20 backdrop-blur-md text-white rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 group-hover:bg-primary-red transition-all duration-500 border border-white/30">
-                            <Play size={24} fill="currentColor" className="ml-1" />
-                          </div>
+          if (section.id === 'gallery' && galleryMedia.length > 0) {
+            const itemsPerPage = 5;
+            const totalPages = Math.ceil(galleryMedia.length / itemsPerPage);
+            const currentItems = galleryMedia.slice(galleryIndex * itemsPerPage, (galleryIndex + 1) * itemsPerPage);
+
+            return (
+              <section key="gallery" className="relative">
+                <div className="flex justify-between items-end mb-12 md:mb-16 border-b border-text-black/10 pb-6"> 
+                  <div className="space-y-2">
+                    <h2 className="font-serif text-3xl md:text-5xl lg:text-6xl text-soft-black">{settings.galleryTitle}</h2> 
+                    <div className="flex items-center gap-4">
+                      <span className="text-text-black/50 text-[10px] md:text-sm tracking-widest uppercase">Galerie Photo/Vidéo</span>
+                      {totalPages > 1 && (
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => setGalleryIndex(prev => (prev - 1 + totalPages) % totalPages)}
+                            className="w-8 h-8 rounded-full border border-text-black/10 flex items-center justify-center hover:bg-primary-red hover:text-white transition-all"
+                          >
+                            <ArrowUpRight size={14} style={{ transform: 'rotate(-135deg)' }} />
+                          </button>
+                          <span className="text-[10px] font-bold opacity-30">{galleryIndex + 1} / {totalPages}</span>
+                          <button 
+                            onClick={() => setGalleryIndex(prev => (prev + 1) % totalPages)}
+                            className="w-8 h-8 rounded-full border border-text-black/10 flex items-center justify-center hover:bg-primary-red hover:text-white transition-all"
+                          >
+                            <ArrowUpRight size={14} style={{ transform: 'rotate(45deg)' }} />
+                          </button>
                         </div>
                       )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="relative overflow-hidden">
+                  <AnimatePresence mode="wait">
+                    <motion.div 
+                      key={galleryIndex}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.5, ease: "anticipate" }}
+                      className="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-4 md:h-[800px]"
+                    >
+                      {currentItems.map((item, i) => {
+                        const ytId = getYoutubeId(item.url);
+                        const displayUrl = ytId ? getYoutubeThumbnail(ytId) : item.url;
+                        
+                        // Bento layout patterns
+                        let gridClass = "md:col-span-1 md:row-span-1";
+                        if (i === 0) gridClass = "md:col-span-2 md:row-span-2";
+                        else if (i === 1) gridClass = "md:col-span-2 md:row-span-1";
+
+                        return (
+                          <motion.div 
+                            key={item.id} 
+                            initial={{ opacity: 0, scale: 0.9 }} 
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: i * 0.05 }} 
+                            onClick={() => setSelectedImage(item)} 
+                            className={`relative overflow-hidden rounded-sm bg-text-black/5 group cursor-zoom-in aspect-square md:aspect-auto ${gridClass}`}
+                          >
+                            <Image src={displayUrl} alt={item.name} fill className="object-cover transition-transform duration-700 group-hover:scale-105" unoptimized />
+                            {ytId && (
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="w-12 h-12 md:w-16 md:h-16 bg-white/20 backdrop-blur-md text-white rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 group-hover:bg-primary-red transition-all duration-500 border border-white/30">
+                                  <Play size={24} fill="currentColor" className="ml-1" />
+                                </div>
+                              </div>
+                            )}
+                          </motion.div>
+                        );
+                      })}
+                      {/* Fill empty slots if currentItems.length < 5 to keep the layout consistent if needed */}
+                      {currentItems.length < 5 && Array.from({ length: 5 - currentItems.length }).map((_, i) => (
+                         <div key={`empty-${i}`} className="hidden md:block bg-text-black/[0.02] border border-dashed border-text-black/5 rounded-sm" />
+                      ))}
                     </motion.div>
-                  );
-                })}
-              </div>
-            </section>
-          );
+                  </AnimatePresence>
+                </div>
+              </section>
+            );
+          }
 
           if (section.id === 'bento') return (
             <section key="bento" className="relative z-10">
