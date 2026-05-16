@@ -19,13 +19,14 @@ export default function LoginPage() {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        /* Temporairement désactivé pour reset
+        // If already at aal2, go to admin
         const { data: mfaData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
         if (mfaData?.currentLevel === 'aal2') {
           router.push("/admin");
           return;
         }
 
+        // If at aal1 but MFA is enrolled, trigger challenge
         const { data: factors } = await supabase.auth.mfa.listFactors();
         const totpFactor = factors?.all.find(f => f.factor_type === 'totp' && f.status === 'verified');
         if (totpFactor) {
@@ -34,8 +35,6 @@ export default function LoginPage() {
         } else {
           router.push("/admin");
         }
-        */
-        router.push("/admin");
       }
     };
     checkUser();
@@ -56,7 +55,6 @@ export default function LoginPage() {
     }
 
     if (data.session) {
-      /* Temporairement désactivé pour reset
       const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors();
       if (factorsError) {
         setError(factorsError.message);
@@ -77,8 +75,6 @@ export default function LoginPage() {
       } else {
         router.push("/admin");
       }
-      */
-      router.push("/admin");
     }
   };
 
