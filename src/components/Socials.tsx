@@ -44,7 +44,7 @@ const defaultSocials: SocialConfig = {
   customLinks: []
 };
 
-export default function Socials({ config }: { config?: SocialConfig | null }) {
+export default function Socials({ config, color }: { config?: SocialConfig | null, color?: any }) {
   const socials = config || defaultSocials;
 
   const socialItems = [
@@ -83,7 +83,10 @@ export default function Socials({ config }: { config?: SocialConfig | null }) {
           className="group relative"
           title={item.label}
         >
-          <item.icon className="text-2xl text-white/40 group-hover:text-primary-red transition-all duration-300 transform group-hover:-translate-y-1" />
+          <item.icon 
+            className="text-2xl transition-all duration-300 transform group-hover:-translate-y-1 group-hover:!text-primary-red" 
+            style={{ color: color || 'rgba(255,255,255,0.4)' }}
+          />
           <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[8px] font-bold tracking-[0.2em] uppercase opacity-0 group-hover:opacity-40 transition-all duration-300">
             {item.label}
           </span>

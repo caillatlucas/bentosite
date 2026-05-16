@@ -144,6 +144,8 @@ export default function AdminDashboard() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         router.push("/admin/login");
+      } else if (session.user.email !== 'caillatlucas2304@gmail.com') {
+        router.push("/");
       } else {
         fetchData();
       }

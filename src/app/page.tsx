@@ -137,6 +137,12 @@ export default function Home() {
     };
   }, [mouseX, mouseY]);
 
+  useEffect(() => {
+    if (user?.email && !formContact) {
+      setFormContact(user.email);
+    }
+  }, [user, formContact]);
+
   const fetchData = async () => {
     const { data: sData } = await supabase.from('settings').select('*');
     if (sData) {
@@ -244,8 +250,8 @@ export default function Home() {
       attachments: formAttachments,
       agreed_to_pay: orderAgreed,
       date: new Date().toLocaleString("fr-FR"),
-      user_id: user?.id || null,
-      user_email: user?.email || null
+      // user_id/user_email removed to avoid "column not found" errors. 
+      // Add these to your Supabase table 'messages' (text type) to restore full inbox functionality.
     };
     
     try {
@@ -382,7 +388,7 @@ export default function Home() {
         </motion.button>
         
         <div className="flex gap-4">
-          {user?.email === 'lucas.caillat.pro@gmail.com' && (
+          {user?.email === 'caillatlucas2304@gmail.com' && (
             <Link href="/admin">
               <motion.div
                 style={{ color: textColor, borderColor: textColor }}
@@ -551,7 +557,7 @@ export default function Home() {
               </div>
             </div>
             <div className={`p-4 overflow-y-auto space-y-4 flex-1 ${isInboxExpanded ? '' : 'max-h-[400px]'}`}>
-              {replies.length === 0 ? <p className="text-xs text-text-black/40 text-center py-8">Aucune réponse pour le moment.</p> : (
+              {replies.length === 0 ? <p className="text-xs text-white/40 text-center py-8">Aucune réponse pour le moment.</p> : (
                 replies.map(r => (
                   <div key={r.id} className="bg-white/5 border border-white/10 rounded-2xl p-6 relative group hover:bg-white/10 transition-all cursor-pointer" onClick={() => { if(r.reply) localStorage.setItem(`read_reply_${r.id}`, "true"); checkReplies(); }}>
                     <div className="flex justify-between items-start mb-4">
@@ -666,9 +672,6 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }} className="fixed top-8 right-8 md:top-12 md:right-16 z-50">
-        <Link href="/admin" className="transition-colors"> <motion.span style={{ color: adminBtnColor }} className="flex items-center gap-1 text-[10px] md:text-sm uppercase tracking-widest font-bold">Admin <ArrowUpRight size={14} /></motion.span> </Link>
-      </motion.div>
 
       <section className="flex-1 flex flex-col justify-center min-h-[85vh] relative z-10 mt-24 md:mt-0 max-w-[1600px] mx-auto w-full">
         <div className="relative" style={{ perspective: 1000 }}>
@@ -853,7 +856,7 @@ export default function Home() {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="md:col-span-2 aspect-square md:aspect-video bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-12 flex flex-col justify-between group overflow-hidden relative shadow-2xl hover:bg-white/20 transition-all">
                   <div className="relative z-10"> <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--primary-red)] mb-4">Ma Bio</p> <h3 className="font-serif text-3xl md:text-5xl leading-tight mb-6 text-white">{settings.bio || "Exploration créative et solutions techniques."}</h3> </div>
-                  <Socials config={socialsConfig} />
+                  <Socials config={socialsConfig} color={textColor} />
                 </div>
                 <div className="aspect-square bg-[var(--primary-red)]/90 backdrop-blur-md border border-white/20 rounded-2xl p-10 flex flex-col justify-between text-white relative overflow-hidden group shadow-2xl hover:bg-[var(--primary-red)] transition-all">
                   <motion.div initial={{ scale: 1 }} whileHover={{ scale: 1.1 }} className="absolute -right-8 -bottom-8 opacity-20"><Zap size={200} fill="white" /></motion.div>
@@ -882,7 +885,7 @@ export default function Home() {
               <AnimatePresence> {copied && <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: -10 }} exit={{ opacity: 0, y: 0 }} className="absolute -top-12 left-0 bg-text-black text-white px-4 py-2 rounded-sm text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 shadow-xl"><Check size={12} className="text-green-500" /> Email Copié !</motion.div>} </AnimatePresence>
             </div>
           </div>
-          <Socials config={socialsConfig} />
+          <Socials config={socialsConfig} color={textColor} />
         </footer>
       </div>
     </motion.main>
