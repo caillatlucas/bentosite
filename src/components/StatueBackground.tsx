@@ -6,45 +6,28 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { useGLTF, PerspectiveCamera } from '@react-three/drei';
 import * as THREE from 'three';
 
-// Define custom R3F elements for total compatibility
+// Define custom R3F elements
 const AmbientLight = 'ambientLight' as any;
 const PointLight = 'pointLight' as any;
 const DirectionalLight = 'directionalLight' as any;
 const ScenePrimitive = 'primitive' as any;
-const Mesh = 'mesh' as any;
-const BoxGeometry = 'boxGeometry' as any;
-const MeshStandardMaterial = 'meshStandardMaterial' as any;
-
-function DebugCube() {
-  const ref = useRef<THREE.Mesh>(null);
-  useFrame((state) => {
-    if (ref.current) {
-      ref.current.rotation.x = ref.current.rotation.y += 0.01;
-    }
-  });
-  return (
-    <Mesh ref={ref} position={[-2, 0, 0]}>
-      <BoxGeometry args={[0.5, 0.5, 0.5]} />
-      <MeshStandardMaterial color="red" />
-    </Mesh>
-  );
-}
 
 function Statue({ color }: { color: string }) {
   const mesh = useRef<THREE.Group>(null);
-  // Using relative path
   const { scene } = useGLTF('models/model.glb');
   
   useMemo(() => {
+    // Create a Toon Material for Manga look
+    const toonMaterial = new THREE.MeshToonMaterial({
+      color: color,
+      gradientMap: null, // Three.js will provide default 3-tone gradient
+      emissive: color,
+      emissiveIntensity: 0.1,
+    });
+
     scene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
-        child.material = new THREE.MeshStandardMaterial({
-          color: color,
-          roughness: 0.1,
-          metalness: 0.5,
-          emissive: color,
-          emissiveIntensity: 0.2,
-        });
+        child.material = toonMaterial;
       }
     });
   }, [scene, color]);
@@ -52,9 +35,10 @@ function Statue({ color }: { color: string }) {
   useFrame((state) => {
     const t = state.clock.getElapsedTime();
     if (mesh.current) {
-      mesh.current.rotation.y = t * 0.2;
+      mesh.current.rotation.y = t * 0.15;
       const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
-      mesh.current.rotation.y += scrollY * 0.002;
+      mesh.current.rotation.y += scrollY * 0.0015;
+      mesh.current.position.y = Math.sin(t * 0.5) * 0.1 - 1.2;
     }
   });
 
@@ -62,30 +46,43 @@ function Statue({ color }: { color: string }) {
     <ScenePrimitive 
       ref={mesh} 
       object={scene} 
-      scale={2.5} 
-      position={[0, -1, 0]} 
+      scale={2.8} 
+      position={[0, -1.2, 0]} 
     />
   );
 }
 
 export default function StatueBackground({ color }: { color: string }) {
   return (
-    <div className="fixed inset-0 pointer-events-none" style={{ background: 'transparent' }}>
+    <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ background: 'transparent' }}>
       <Canvas 
         shadows={false} 
         camera={{ position: [0, 0, 5], fov: 45 }}
         style={{ pointerEvents: 'none' }}
       >
-        <AmbientLight intensity={1} />
-        <PointLight position={[10, 10, 10]} intensity={1.5} />
-        <DirectionalLight position={[-10, 5, 10]} intensity={1} />
+        <AmbientLight intensity={0.8} />
+        <PointLight position={[10, 10, 10]} intensity={1} />
+        <DirectionalLight position={[-5, 5, 5]} intensity={1.5} />
         
         <React.Suspense fallback={null}>
           <Statue color={color} />
-          {/* Debugging element */}
-          <DebugCube />
         </React.Suspense>
       </Canvas>
+
+      {/* Manga Dot (Halftone) Overlay */}
+      <div 
+        className="absolute inset-0 pointer-events-none opacity-[0.15]" 
+        style={{
+          backgroundImage: `radial-gradient(circle, currentColor 1px, transparent 1px)`,
+          backgroundSize: '4px 4px',
+          color: color === '#ffffff' ? '#000000' : color,
+          maskImage: 'radial-gradient(ellipse at center, black, transparent 80%)',
+          WebkitMaskImage: 'radial-gradient(ellipse at center, black, transparent 80%)',
+        }}
+      />
+      
+      {/* Light Inner Shadow for depth */}
+      <div className="absolute inset-0 shadow-[inner_0_0_100px_rgba(0,0,0,0.1)] pointer-events-none" />
     </div>
   );
 }
