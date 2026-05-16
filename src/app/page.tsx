@@ -49,7 +49,9 @@ export default function Home() {
   
   // Notification System
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [isInboxExpanded, setIsInboxExpanded] = useState(false);
+  const [profileImage, setProfileImage] = useState("");
   const [replies, setReplies] = useState<Message[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [user, setUser] = useState<any>(null);
@@ -150,6 +152,7 @@ export default function Home() {
       const soc = sData.find(s => s.key === 'socials')?.value;
       
       if (global) {
+        setProfileImage(global.profileImage || "");
         if (global.sectionsConfig) {
           global.sectionsConfig = global.sectionsConfig.map((s: any) => {
             if (s.id === 'projects' && s.subLabel === undefined) return { ...s, subLabel: global.projectsTitle || "Sélection 2024", label: global.recentProjectsTitle || "Postes" };
@@ -375,7 +378,7 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      <div className="fixed bottom-8 right-8 md:bottom-12 md:right-16 z-[100] flex flex-col items-end gap-4">
+      <div className="fixed bottom-8 right-8 md:bottom-12 md:right-16 z-[300] flex flex-col items-end gap-4">
         <motion.button 
           onClick={() => setIsNotifOpen(!isNotifOpen)} 
           style={{ color: textColor, borderColor: textColor }}
@@ -402,14 +405,22 @@ export default function Home() {
           )}
           
           <motion.button 
-            onClick={() => user ? handleLogout() : setIsAuthModalOpen(true)} 
+            onClick={() => user ? setIsAccountOpen(!isAccountOpen) : setIsAuthModalOpen(true)} 
             style={{ color: textColor, borderColor: textColor }}
             whileHover={{ scale: 1.05 }} 
             whileTap={{ scale: 0.95 }} 
-            className="bg-white/10 backdrop-blur-xl border text-white w-12 h-12 md:w-14 md:h-14 rounded-full shadow-2xl flex items-center justify-center relative transition-colors"
+            className="bg-white/10 backdrop-blur-xl border text-white w-12 h-12 md:w-14 md:h-14 rounded-full shadow-2xl flex items-center justify-center relative transition-colors overflow-hidden"
           >
-            {user ? <LogOut size={24} /> : <User size={24} />}
-            {user && <span className="absolute -top-1 -right-1 bg-green-500 w-3 h-3 rounded-full border-2 border-[#0a0a0a]"></span>}
+            {user ? (
+              profileImage ? (
+                <Image src={profileImage} alt="Profile" fill className="object-cover" unoptimized />
+              ) : (
+                <User size={24} />
+              )
+            ) : (
+              <User size={24} />
+            )}
+            {user && <span className="absolute -top-1 -right-1 bg-green-500 w-3 h-3 rounded-full border-2 border-[#0a0a0a] z-10"></span>}
           </motion.button>
         </div>
 
@@ -627,6 +638,62 @@ export default function Home() {
                   </div>
                 ))
               )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isAccountOpen && user && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20, scale: 0.9 }} 
+            animate={{ opacity: 1, y: 0, scale: 1 }} 
+            exit={{ opacity: 0, y: 20, scale: 0.9 }} 
+            className="fixed bottom-32 right-8 md:bottom-44 md:right-16 z-[300] bg-[#0a0a0a]/90 backdrop-blur-2xl shadow-2xl rounded-3xl border border-white/20 w-72 md:w-80 overflow-hidden flex flex-col"
+          >
+            <div className="bg-white/5 backdrop-blur-md p-6 border-b border-white/10 flex justify-between items-center">
+              <h4 className="text-white font-serif italic text-lg">Mon Compte</h4>
+              <button onClick={() => setIsAccountOpen(false)}><X size={16} className="text-white/50" /></button>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 overflow-hidden relative flex items-center justify-center">
+                  {profileImage ? <Image src={profileImage} alt="Profile" fill className="object-cover" unoptimized /> : <User size={20} className="text-white/40" />}
+                </div>
+                <div className="overflow-hidden">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-primary-red truncate">Connecté en tant que</p>
+                  <p className="text-xs text-white/60 truncate">{user.email}</p>
+                </div>
+              </div>
+
+              {user.email === 'caillatlucas2304@gmail.com' && (
+                <div className="space-y-4 pt-4 border-t border-white/5">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-white/30">Photo de profil</p>
+                  <div className="space-y-2">
+                    <input 
+                      type="text" 
+                      placeholder="URL de l'image..." 
+                      value={profileImage}
+                      onChange={async (e) => {
+                        const newUrl = e.target.value;
+                        setProfileImage(newUrl);
+                        const { data: globalData } = await supabase.from('settings').select('*').eq('key', 'global').single();
+                        const globalValue = globalData?.value || {};
+                        await supabase.from('settings').upsert({ key: 'global', value: { ...globalValue, profileImage: newUrl } });
+                      }}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-[10px] outline-none focus:border-primary-red transition-all text-white"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <button 
+                onClick={handleLogout}
+                className="w-full bg-white/5 border border-white/10 text-white/60 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-primary-red hover:text-white transition-all flex items-center justify-center gap-2"
+              >
+                <LogOut size={14} /> Se déconnecter
+              </button>
             </div>
           </motion.div>
         )}

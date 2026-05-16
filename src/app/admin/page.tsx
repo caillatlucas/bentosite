@@ -84,7 +84,8 @@ export default function AdminDashboard() {
   // Settings State
   const [profileName, setProfileName] = useState("Lucas Caillat");
   const [profileProfession, setProfileProfession] = useState("Freelance Informatique");
-  const [profileBio, setProfileBio] = useState("");
+   const [profileBio, setProfileBio] = useState("");
+  const [profileImage, setProfileImage] = useState("");
   const [heroTitleMain, setHeroTitleMain] = useState("CAILLAT");
   const [heroTitleSub, setHeroTitleSub] = useState("Lucas");
   const [textEffectImage, setTextEffectImage] = useState("");
@@ -224,9 +225,10 @@ export default function AdminDashboard() {
           });
         }
         
-        setProfileName(global.name || "Lucas Caillat");
-        setProfileProfession(global.profession || "Freelance Informatique");
-        setProfileBio(global.bio || "");
+        setProfileName(global.profileName || "Lucas Caillat");
+        setProfileProfession(global.profileProfession || "Freelance Informatique");
+        setProfileBio(global.profileBio || "");
+        setProfileImage(global.profileImage || "");
         setHeroTitleMain(global.heroTitleMain || "CAILLAT");
         setHeroTitleSub(global.heroTitleSub || "Lucas");
         setTextEffectImage(global.textEffectImage || "");
@@ -296,9 +298,10 @@ export default function AdminDashboard() {
 
   const handleSaveSettings = async () => {
     const s = { 
-      name: profileName, 
-      profession: profileProfession, 
-      bio: profileBio, 
+      profileName,
+      profileProfession,
+      profileBio,
+      profileImage,
       heroTitleMain, 
       heroTitleSub, 
       textEffectImage,
@@ -924,9 +927,32 @@ export default function AdminDashboard() {
 
 
                 <h3 className="font-serif text-2xl border-b border-text-black/10 pb-4 pt-4">Profil</h3>
-                <div className="grid grid-cols-2 gap-6"> <input type="text" value={profileName} onChange={(e) => setProfileName(e.target.value)} placeholder="Nom" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none" /> <input type="text" value={profileProfession} onChange={(e) => setProfileProfession(e.target.value)} placeholder="Profession" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none" /> </div>
-                <textarea value={profileBio} onChange={(e) => setProfileBio(e.target.value)} rows={3} placeholder="Bio" className="w-full bg-transparent border border-text-black/10 p-4 outline-none resize-none" />
-                <button onClick={handleSaveSettings} className="bg-text-black text-white px-10 py-4 font-bold text-xs tracking-widest uppercase">Enregistrer les réglages</button>
+                <div className="grid grid-cols-2 gap-6 items-end">
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Photo de profil (URL)</label>
+                    <div className="flex gap-4 items-center">
+                      <div className="w-12 h-12 rounded-full bg-text-black/5 border border-text-black/10 overflow-hidden shrink-0 relative flex items-center justify-center">
+                        {profileImage ? <Image src={profileImage} alt="Preview" fill className="object-cover" unoptimized /> : <User size={20} className="opacity-20" />}
+                      </div>
+                      <input type="text" value={profileImage} onChange={(e) => setProfileImage(e.target.value)} placeholder="URL de l'image" className="flex-1 bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Nom</label>
+                      <input type="text" value={profileName} onChange={(e) => setProfileName(e.target.value)} placeholder="Nom" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Profession</label>
+                      <input type="text" value={profileProfession} onChange={(e) => setProfileProfession(e.target.value)} placeholder="Profession" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" />
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Bio</label>
+                  <textarea value={profileBio} onChange={(e) => setProfileBio(e.target.value)} rows={3} placeholder="Bio" className="w-full bg-transparent border border-text-black/10 p-4 outline-none resize-none text-sm" />
+                </div>
+                <button onClick={handleSaveSettings} className="bg-text-black text-white px-10 py-4 font-bold text-xs tracking-widest uppercase hover:bg-primary-red transition-colors">Enregistrer les réglages</button>
 
                 <h3 className="font-serif text-2xl border-b border-text-black/10 pb-4 pt-4">Sécurité (A2F)</h3>
                 <div className="space-y-6">
