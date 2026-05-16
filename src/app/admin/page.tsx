@@ -152,15 +152,15 @@ export default function AdminDashboard() {
         return;
       }
 
-      // Check MFA status
+      /* Temporairement désactivé pour reset
       const { data: mfaData, error: mfaError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
       if (mfaError) {
         console.error("Erreur check MFA:", mfaError);
       } else if (mfaData.nextLevel === 'aal2' && mfaData.currentLevel !== 'aal2') {
-        // MFA is enrolled but not verified for this session
         router.push("/admin/login");
         return;
       }
+      */
 
       fetchData();
     };
