@@ -74,7 +74,7 @@ export default function Socials({ config }: { config?: SocialConfig | null }) {
       {enabledItems.map((item, index) => (
         <motion.a
           key={item.id}
-          href={item.data.url}
+          href={item.data!.url}
           target="_blank"
           rel="noopener noreferrer"
           initial={{ opacity: 0, y: 10 }}

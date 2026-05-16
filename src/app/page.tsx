@@ -2,7 +2,7 @@
 
 import { motion, useMotionValue, useSpring, useTransform, useScroll, useMotionTemplate, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
-import { ArrowUpRight, Zap, X, Send, User, MessageSquare, CheckCircle2, Mail, Music, Volume2, VolumeX, Copy, Check, Bell, Play, Upload, Maximize2, Minimize2 } from "lucide-react";
+import { ArrowUpRight, Zap, X, Send, User, MessageSquare, CheckCircle2, Mail, Music, Volume2, VolumeX, Copy, Check, Bell, Play, Upload, Maximize2, Minimize2, Settings, LogOut } from "lucide-react";
 import Projects from "@/components/Projects";
 import Socials from "@/components/Socials";
 import Link from "next/link";
@@ -276,6 +276,43 @@ export default function Home() {
       setIsSubmitting(false);
     }
   };
+
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsAuthLoading(true);
+    setAuthError("");
+
+    try {
+      if (isSignUp) {
+        const { error } = await supabase.auth.signUp({
+          email: authEmail,
+          password: authPassword,
+        });
+        if (error) throw error;
+        alert("Inscription réussie ! Vous pouvez maintenant vous connecter.");
+        setIsSignUp(false);
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: authEmail,
+          password: authPassword,
+        });
+        if (error) throw error;
+        setIsAuthModalOpen(false);
+        setAuthEmail("");
+        setAuthPassword("");
+      }
+    } catch (error: any) {
+      setAuthError(error.message);
+    } finally {
+      setIsAuthLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+  };
+
 
   if (!isClient) return null;
   const musicId = settings.musicUrl ? getYoutubeId(settings.musicUrl) : null;
