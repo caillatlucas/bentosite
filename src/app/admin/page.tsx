@@ -93,6 +93,7 @@ export default function AdminDashboard() {
   const [musicCover, setMusicCover] = useState("");
   const [primaryColor, setPrimaryColor] = useState("#ff3131");
   const [show3DBackground, setShow3DBackground] = useState(false);
+  const [musicRotationEnabled, setMusicRotationEnabled] = useState(true);
   const [sectionsConfig, setSectionsConfig] = useState([
     { id: 'projects', label: 'Projets', subLabel: 'Sélection 2024', visible: true },
     { id: 'shop', label: 'Boutique', subLabel: 'Nos Produits', visible: true },
@@ -227,6 +228,7 @@ export default function AdminDashboard() {
         setMusicCover(global.musicCover || "");
         setPrimaryColor(global.primaryColor || "#ff3131");
         setShow3DBackground(global.show3DBackground ?? false);
+        setMusicRotationEnabled(global.musicRotationEnabled ?? true);
         if (global.sectionsConfig) {
           const migratedSections = global.sectionsConfig.map((s: { id: string; label: string; subLabel?: string; visible: boolean }) => {
             if (s.id === 'projects' && s.subLabel === undefined) return { ...s, subLabel: global.projectsTitle || "Sélection 2024", label: global.recentProjectsTitle || "Postes" };
@@ -284,7 +286,7 @@ export default function AdminDashboard() {
   };
 
   const handleSaveSettings = async () => {
-    const s = { profileName, profileProfession, profileBio, profileImage, heroTitleMain, heroTitleSub, textEffectImage, musicEnabled, musicUrl, musicCover, primaryColor, show3DBackground, sectionsConfig, mediaOrder: mediaItems.map(m => m.id) };
+    const s = { profileName, profileProfession, profileBio, profileImage, heroTitleMain, heroTitleSub, textEffectImage, musicEnabled, musicUrl, musicCover, primaryColor, show3DBackground, musicRotationEnabled, sectionsConfig, mediaOrder: mediaItems.map(m => m.id) };
     const { error } = await supabase.from('settings').upsert({ key: 'global', value: s });
     if (error) {
       console.error(error);
@@ -679,6 +681,13 @@ export default function AdminDashboard() {
                   <span className="text-[9px] font-bold uppercase tracking-widest opacity-40">Modèle 3D Arrière-plan</span>
                   <button onClick={() => setShow3DBackground(!show3DBackground)} className={`w-12 h-6 rounded-full transition-colors relative ${ show3DBackground ? "bg-primary-red" : "bg-text-black/10" }`}>
                     <motion.div animate={{ x: show3DBackground ? 24 : 4 }} className="w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm" />
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span className="text-[9px] font-bold uppercase tracking-widest opacity-40">Rotation Image Lecteur</span>
+                  <button onClick={() => setMusicRotationEnabled(!musicRotationEnabled)} className={`w-12 h-6 rounded-full transition-colors relative ${ musicRotationEnabled ? "bg-primary-red" : "bg-text-black/10" }`}>
+                    <motion.div animate={{ x: musicRotationEnabled ? 24 : 4 }} className="w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm" />
                   </button>
                 </div>
 

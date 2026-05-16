@@ -44,8 +44,8 @@ function Statue({ color }: { color: string }) {
     <ScenePrimitive 
       ref={mesh} 
       object={scene} 
-      scale={2.2} 
-      position={[2, -1, 0]} 
+      scale={2.4} 
+      position={[0, -1.2, 0]} 
     />
   );
 }

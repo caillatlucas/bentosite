@@ -48,7 +48,8 @@ export default function Home() {
     musicEnabled: false, 
     musicUrl: "", 
     musicCover: "",
-    primaryColor: "#ff3131",
+    show3DBackground: false,
+    musicRotationEnabled: true,
     sectionsConfig: [
       { id: 'projects', label: 'Postes', subLabel: 'Sélection 2024', visible: true },
       { id: 'shop', label: 'Boutique', subLabel: 'Nos Produits', visible: true },
@@ -388,6 +389,9 @@ export default function Home() {
           className="fixed inset-0 z-0 pointer-events-none bg-cover bg-center"
         />
       )}
+
+      {/* Global Background Color Layer */}
+      <div className="fixed inset-0 z-[-2] bg-background" />
 
       {show3DBackground && <StatueBackground color={statueColor} />}
       {/* Dynamic Theme Styles */}
@@ -841,7 +845,9 @@ export default function Home() {
           {settings.musicEnabled && musicId && (
             <motion.div style={{ rotateX, rotateY, transformStyle: "preserve-3d" }} className="absolute -top-24 right-0 md:-top-16 md:-right-12 z-30 scale-90 md:scale-100 origin-right">
               <div className="bg-white/10 backdrop-blur-md border border-white/20 p-2 md:p-3 rounded-2xl flex items-center gap-3 md:gap-4 shadow-2xl group hover:bg-white/20 transition-all">
-                <div className="relative w-10 h-10 md:w-16 md:h-16 overflow-hidden rounded-xl shadow-lg animate-spin-slow flex-shrink-0"> {settings.musicCover ? <Image src={settings.musicCover} alt="Cover" fill className="object-cover" unoptimized /> : <div className="w-full h-full bg-primary-red flex items-center justify-center"><Music size={20} className="text-white" /></div>} </div>
+              <div className={`relative w-10 h-10 md:w-16 md:h-16 overflow-hidden rounded-xl shadow-lg flex-shrink-0 ${settings.musicRotationEnabled ? "animate-spin-slow" : ""}`}> 
+                {settings.musicCover ? <Image src={settings.musicCover} alt="Cover" fill className="object-cover" unoptimized /> : <div className="w-full h-full bg-primary-red flex items-center justify-center"><Music size={20} className="text-white" /></div>} 
+              </div>
                 <div className="pr-2 md:pr-4">
                   <div className="flex items-center gap-1.5 mb-0.5 md:mb-1"> <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> <p className="text-[8px] md:text-[9px] font-bold uppercase tracking-[0.2em] text-white/60">Live</p> </div>
                   <button onClick={() => setIsMuted(!isMuted)} className="text-white hover:text-primary-red transition-colors flex items-center gap-2"> {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />} <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest">{isMuted ? "Unmute" : "Mute"}</span> </button>
