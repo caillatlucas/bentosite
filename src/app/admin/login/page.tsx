@@ -26,12 +26,12 @@ export default function LoginPage() {
           return;
         }
 
-        // If at aal1 but MFA is enrolled, trigger challenge
+        // If at aal1 but MFA is enrolled, prepare for verification
         const { data: factors } = await supabase.auth.mfa.listFactors();
         const totpFactor = factors?.all.find(f => f.factor_type === 'totp' && f.status === 'verified');
         if (totpFactor) {
-          const { data: challenge, error } = await supabase.auth.mfa.challenge({ factorId: totpFactor.id });
-          if (!error) setMfaChallenge(challenge);
+          // Store only the factor ID, challengeAndVerify will handle the rest
+          setMfaChallenge({ factor_id: totpFactor.id });
         } else {
           router.push("/admin");
         }
@@ -64,14 +64,7 @@ export default function LoginPage() {
       const totpFactor = factors.all.find(f => f.factor_type === 'totp' && f.status === 'verified');
       
       if (totpFactor) {
-        const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({
-          factorId: totpFactor.id
-        });
-        if (challengeError) {
-          setError(challengeError.message);
-        } else {
-          setMfaChallenge(challenge);
-        }
+        setMfaChallenge({ factor_id: totpFactor.id });
       } else {
         router.push("/admin");
       }
@@ -82,10 +75,13 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     
-    console.log("Attempting MFA verification with factor:", mfaChallenge.factor_id || mfaChallenge.id);
+    if (!mfaChallenge?.factor_id) {
+      setError("Erreur : Facteur de sécurité introuvable");
+      return;
+    }
 
     const { error: verifyError } = await supabase.auth.mfa.challengeAndVerify({
-      factorId: mfaChallenge.factor_id || mfaChallenge.id,
+      factorId: mfaChallenge.factor_id,
       code: totpCode.replace(/\s/g, '')
     });
 
