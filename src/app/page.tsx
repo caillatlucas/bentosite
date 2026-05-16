@@ -256,9 +256,6 @@ export default function Home() {
         setUnreadCount(unread);
       }
     } catch (err) {
-      console.warn("Erreur lors de la récupération des messages:", err);
-    }
-  };
     }
   };
 
