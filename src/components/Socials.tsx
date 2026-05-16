@@ -8,7 +8,9 @@ import {
   FaInstagram,
   FaYoutube,
   FaTiktok,
-  FaGlobe
+  FaGlobe,
+  FaDiscord,
+  FaPhone
 } from "react-icons/fa";
 
 interface SocialLink {
@@ -23,6 +25,8 @@ interface SocialConfig {
   instagram: SocialLink;
   youtube: SocialLink;
   tiktok: SocialLink;
+  discord: SocialLink;
+  phone: SocialLink;
   customLinks: { name: string; url: string; enabled: boolean }[];
 }
 
@@ -33,6 +37,8 @@ const defaultSocials: SocialConfig = {
   instagram: { url: "https://instagram.com/lucascaillat", enabled: false },
   youtube: { url: "", enabled: false },
   tiktok: { url: "", enabled: false },
+  discord: { url: "", enabled: false },
+  phone: { url: "", enabled: false },
   customLinks: []
 };
 
@@ -46,6 +52,8 @@ export default function Socials({ config }: { config?: SocialConfig | null }) {
     { id: "instagram", icon: FaInstagram, label: "Instagram", data: socials.instagram },
     { id: "youtube", icon: FaYoutube, label: "YouTube", data: socials.youtube },
     { id: "tiktok", icon: FaTiktok, label: "TikTok", data: socials.tiktok },
+    { id: "discord", icon: FaDiscord, label: "Discord", data: socials.discord },
+    { id: "phone", icon: FaPhone, label: "Téléphone", data: socials.phone ? { ...socials.phone, url: socials.phone.url.startsWith('tel:') ? socials.phone.url : `tel:${socials.phone.url}` } : null },
   ];
 
   const customItems = (socials.customLinks || []).map(link => ({
@@ -73,7 +81,7 @@ export default function Socials({ config }: { config?: SocialConfig | null }) {
           className="group relative"
           title={item.label}
         >
-          <item.icon className="text-2xl text-text-black/40 group-hover:text-primary-red transition-all duration-300 transform group-hover:-translate-y-1" />
+          <item.icon className="text-2xl text-white/40 group-hover:text-primary-red transition-all duration-300 transform group-hover:-translate-y-1" />
           <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[8px] font-bold tracking-[0.2em] uppercase opacity-0 group-hover:opacity-40 transition-all duration-300">
             {item.label}
           </span>

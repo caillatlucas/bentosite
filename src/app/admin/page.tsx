@@ -113,6 +113,8 @@ export default function AdminDashboard() {
     instagram: { url: "https://instagram.com/lucascaillat", enabled: false },
     youtube: { url: "", enabled: false },
     tiktok: { url: "", enabled: false },
+    discord: { url: "", enabled: false },
+    phone: { url: "", enabled: false },
     customLinks: []
   });
 
@@ -135,6 +137,7 @@ export default function AdminDashboard() {
   const [prodImagesText, setProdImagesText] = useState("");
   const [prodLink, setProdLink] = useState("");
   const [prodLinkText, setProdLinkText] = useState("");
+  const [prodPurchaseMsg, setProdPurchaseMsg] = useState("");
 
   // MFA State
   const [mfaFactors, setMfaFactors] = useState<any[]>([]);
@@ -180,19 +183,37 @@ export default function AdminDashboard() {
   const getYoutubeThumbnail = (id: string) => `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
 
   const fetchData = async () => {
-    const { data: pData } = await supabase.from('projects').select('*').order('created_at', { ascending: false });
-    if (pData) setProjects(pData);
-    
+    const { data: pData } = await supabase.from('projects').select('*');
+    const { data: prodData } = await supabase.from('products').select('*');
     const { data: msgData } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
-    if (msgData) setMessages(msgData);
-    
-    const { data: prodData } = await supabase.from('products').select('*').order('created_at', { ascending: false });
-    if (prodData) setProducts(prodData);
-
     const { data: sData } = await supabase.from('settings').select('*');
+    
+    if (msgData) setMessages(msgData);
+
     if (sData) {
       const global = sData.find(s => s.key === 'global')?.value;
       if (global) {
+        if (pData && global.projectOrder) {
+          pData.sort((a, b) => {
+            const idxA = global.projectOrder.indexOf(a.id);
+            const idxB = global.projectOrder.indexOf(b.id);
+            if (idxA === -1 && idxB === -1) return 0;
+            if (idxA === -1) return 1;
+            if (idxB === -1) return -1;
+            return idxA - idxB;
+          });
+        }
+        if (prodData && global.productOrder) {
+          prodData.sort((a, b) => {
+            const idxA = global.productOrder.indexOf(a.id);
+            const idxB = global.productOrder.indexOf(b.id);
+            if (idxA === -1 && idxB === -1) return 0;
+            if (idxA === -1) return 1;
+            if (idxB === -1) return -1;
+            return idxA - idxB;
+          });
+        }
+        
         setProfileName(global.name || "Lucas Caillat");
         setProfileProfession(global.profession || "Freelance Informatique");
         setProfileBio(global.bio || "");
@@ -205,24 +226,26 @@ export default function AdminDashboard() {
         setPrimaryColor(global.primaryColor || "#ff3131");
         if (global.sectionsConfig) {
           const migratedSections = global.sectionsConfig.map((s: any) => {
-            if (s.id === 'projects' && s.subLabel === undefined) return { ...s, subLabel: global.projectsTitle || "Sélection 2024", label: global.recentProjectsTitle || s.label };
+            if (s.id === 'projects' && s.subLabel === undefined) return { ...s, subLabel: global.projectsTitle || "Sélection 2024", label: global.recentProjectsTitle || "Postes" };
             if (s.id === 'gallery' && s.subLabel === undefined) return { ...s, subLabel: "Galerie Photo/Vidéo", label: global.galleryTitle || s.label };
             if (s.id === 'shop' && s.subLabel === undefined) return { ...s, subLabel: "Nos Produits" };
             if (s.id === 'bento' && s.subLabel === undefined) return { ...s, subLabel: "Bento Grid", label: global.bentoGridTitle || s.label };
+            if (s.id === 'projects' && s.label === 'Projets') return { ...s, label: 'Postes' };
             return s;
           });
           setSectionsConfig(migratedSections);
         }
       }
       const soc = sData.find(s => s.key === 'socials')?.value;
-      if (soc) {
-        setSocials(soc);
-      }
+      if (soc) setSocials(soc);
     }
+    
+    if (pData) setProjects(pData);
+    if (prodData) setProducts(prodData);
 
     const { data: mData } = await supabase.from('media').select('*');
     if (mData) {
-      const global = (await supabase.from('settings').select('*').eq('key', 'global').single()).data?.value;
+      const global = sData?.find(s => s.key === 'global')?.value;
       if (global?.mediaOrder) {
         mData.sort((a, b) => {
           const idxA = global.mediaOrder.indexOf(a.id);
@@ -235,6 +258,29 @@ export default function AdminDashboard() {
       }
       setMediaItems(mData);
     }
+  };
+
+  const moveItem = async (type: 'projects' | 'products' | 'media', index: number, direction: 'up' | 'down') => {
+    const items = type === 'projects' ? [...projects] : type === 'products' ? [...products] : [...mediaItems];
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= items.length) return;
+
+    const [removed] = items.splice(index, 1);
+    items.splice(newIndex, 0, removed);
+
+    if (type === 'projects') setProjects(items as Project[]);
+    else if (type === 'products') setProducts(items as Product[]);
+    else setMediaItems(items as MediaItem[]);
+
+    const orderKey = type === 'projects' ? 'projectOrder' : type === 'products' ? 'productOrder' : 'mediaOrder';
+    const { data: globalData } = await supabase.from('settings').select('*').eq('key', 'global').single();
+    const globalValue = globalData?.value || {};
+    
+    const { error } = await supabase.from('settings').upsert({
+      key: 'global',
+      value: { ...globalValue, [orderKey]: items.map(i => i.id) }
+    });
+    if (error) console.error("Error saving order:", error);
   };
 
   const handleSaveSettings = async () => {
@@ -383,15 +429,29 @@ export default function AdminDashboard() {
   const handleSubmitProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     const finalImages = prodImagesText.split('\n').map(img => img.trim()).filter(img => img !== "");
-    const pData = { name: prodName, price: prodPrice, description: prodDesc, images: finalImages, link: prodLink, link_text: prodLinkText };
+    const pData = { 
+      name: prodName, 
+      price: prodPrice, 
+      description: prodDesc, 
+      images: finalImages, 
+      link: prodLink, 
+      link_text: prodLinkText,
+      purchase_message: prodPurchaseMsg 
+    };
     
     let error;
     if (editingProduct) {
       const { error: err } = await supabase.from('products').update(pData).eq('id', editingProduct.id);
       error = err;
     } else {
-      const { error: err } = await supabase.from('products').insert(pData);
+      const { data: newProd, error: err } = await supabase.from('products').insert(pData).select().single();
       error = err;
+      if (newProd) {
+        const { data: globalData } = await supabase.from('settings').select('*').eq('key', 'global').single();
+        const globalValue = globalData?.value || {};
+        const newOrder = [...(globalValue.productOrder || []), newProd.id];
+        await supabase.from('settings').upsert({ key: 'global', value: { ...globalValue, productOrder: newOrder } });
+      }
     }
 
     if (error) {
@@ -482,8 +542,14 @@ export default function AdminDashboard() {
       const { error: err } = await supabase.from('projects').update(projectData).eq('id', editingProject.id);
       error = err;
     } else {
-      const { error: err } = await supabase.from('projects').insert(projectData);
+      const { data: newProj, error: err } = await supabase.from('projects').insert(projectData).select().single();
       error = err;
+      if (newProj) {
+        const { data: globalData } = await supabase.from('settings').select('*').eq('key', 'global').single();
+        const globalValue = globalData?.value || {};
+        const newOrder = [...(globalValue.projectOrder || []), newProj.id];
+        await supabase.from('settings').upsert({ key: 'global', value: { ...globalValue, projectOrder: newOrder } });
+      }
     }
 
     if (error) {
@@ -498,7 +564,7 @@ export default function AdminDashboard() {
   };
 
   const tabs = [
-    { id: "pages", label: "Projets", icon: FileText },
+    { id: "pages", label: "Postes", icon: FileText },
     { id: "media", label: "Médias", icon: ImageIcon },
     { id: "shop", label: "Boutique", icon: Zap },
     { id: "messages", label: "Messages", icon: MessageSquare },
@@ -507,43 +573,43 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-background text-text-black font-sans flex flex-col md:flex-row">
-      <aside className="w-full md:w-72 border-b md:border-b-0 md:border-r border-text-black/10 p-8 flex flex-col justify-between bg-white/30 backdrop-blur-sm">
+    <div className="min-h-screen bg-[#0a0a0a] text-white font-sans flex flex-col md:flex-row">
+      <aside className="w-full md:w-72 border-b md:border-b-0 md:border-r border-white/10 p-8 flex flex-col justify-between bg-white/5 backdrop-blur-xl">
         <div>
           <Link href="/" className="inline-block mb-12 group">
             <motion.h1 className="font-serif text-3xl tracking-tighter text-primary-red group-hover:scale-105 transition-transform">
               CAILLAT
-              <span className="block text-xs font-sans tracking-[0.2em] text-text-black opacity-40 mt-1 uppercase">Console Admin</span>
+              <span className="block text-xs font-sans tracking-[0.2em] text-white/40 mt-1 uppercase">Console Admin</span>
             </motion.h1>
           </Link>
           <nav className="space-y-3">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
-                <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`w-full flex items-center gap-4 px-5 py-4 rounded-sm transition-all duration-300 ${activeTab === tab.id ? "bg-text-black text-background shadow-lg translate-x-2" : "text-text-black hover:bg-text-black/5 hover:translate-x-1"}`}>
+                <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 ${activeTab === tab.id ? "bg-primary-red text-white shadow-2xl shadow-primary-red/20 translate-x-2" : "text-white/60 hover:bg-white/5 hover:text-white hover:translate-x-1"}`}>
                   <Icon size={20} strokeWidth={1.5} />
                   <span className="font-medium tracking-wide flex-1 text-left">{tab.label}</span>
-                  {tab.id === "messages" && messages.length > 0 && <span className="bg-primary-red text-white text-[10px] px-2 py-0.5 rounded-full">{messages.length}</span>}
+                  {tab.id === "messages" && messages.length > 0 && <span className="bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-full">{messages.length}</span>}
                 </button>
               );
             })}
           </nav>
         </div>
-        <button onClick={handleLogout} className="flex items-center gap-3 text-text-black/50 hover:text-primary-red transition-all p-4">
+        <button onClick={handleLogout} className="flex items-center gap-3 text-white/30 hover:text-primary-red transition-all p-4">
           <LogOut size={20} /> <span className="text-sm font-medium">Déconnexion</span>
         </button>
       </aside>
 
-      <main className="flex-1 p-6 md:p-16 overflow-y-auto relative">
+      <main className="flex-1 p-6 md:p-16 overflow-y-auto relative bg-[#0a0a0a]">
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-16 gap-6">
-          <h2 className="font-serif text-5xl text-soft-black italic">{tabs.find((t) => t.id === activeTab)?.label}</h2>
+          <h2 className="font-serif text-5xl text-white italic">{tabs.find((t) => t.id === activeTab)?.label}</h2>
           {activeTab === "pages" && (
-            <button onClick={() => { setEditingProject(null); setFormTitle(""); setFormCategory(""); setFormDate(""); setFormImage(""); setFormContent(""); setFormGallery([]); setIsModalOpen(true); }} className="bg-primary-red text-white px-8 py-3.5 rounded-sm hover:bg-red-600 transition-all flex items-center gap-2 text-sm font-bold shadow-xl shadow-shadow-red/20">
-              <Plus size={18} /> NOUVEAU PROJET
+            <button onClick={() => { setEditingProject(null); setFormTitle(""); setFormCategory(""); setFormDate(""); setFormImage(""); setFormContent(""); setFormGallery([]); setIsModalOpen(true); }} className="bg-primary-red text-white px-8 py-3.5 rounded-2xl hover:bg-red-600 transition-all flex items-center gap-2 text-sm font-bold shadow-2xl shadow-primary-red/30">
+              <Plus size={18} /> NOUVEAU POSTE
             </button>
           )}
           {activeTab === "shop" && (
-            <button onClick={() => { setEditingProduct(null); setProdName(""); setProdPrice(0); setProdDesc(""); setProdImages([]); setProdImagesText(""); setProdLink(""); setProdLinkText(""); setIsProductModalOpen(true); }} className="bg-primary-red text-white px-8 py-3.5 rounded-sm hover:bg-red-600 transition-all flex items-center gap-2 text-sm font-bold shadow-xl shadow-shadow-red/20">
+            <button onClick={() => { setEditingProduct(null); setProdName(""); setProdPrice(0); setProdDesc(""); setProdImages([]); setProdImagesText(""); setProdLink(""); setProdLinkText(""); setProdPurchaseMsg(""); setIsProductModalOpen(true); }} className="bg-primary-red text-white px-8 py-3.5 rounded-2xl hover:bg-red-600 transition-all flex items-center gap-2 text-sm font-bold shadow-2xl shadow-primary-red/30">
               <Plus size={18} /> NOUVEAU PRODUIT
             </button>
           )}
@@ -552,16 +618,22 @@ export default function AdminDashboard() {
         <AnimatePresence mode="wait">
           {activeTab === "pages" && (
             <motion.div key="pages" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
-              {projects.map((project) => (
-                <div key={project.id} className="grid grid-cols-12 gap-4 items-center px-8 py-6 bg-white/60 border border-text-black/5 rounded-sm hover:border-primary-red/20 transition-all group">
-                  <div className="col-span-6 md:col-span-4 flex items-center gap-6">
-                    <div className="relative w-16 h-16 rounded-sm overflow-hidden"><Image src={project.image} alt={project.title} fill className="object-cover" unoptimized /></div>
-                    <span className="font-serif text-xl">{project.title}</span>
+              {projects.map((project, idx) => (
+                <div key={project.id} className="flex items-center gap-6 px-8 py-6 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl hover:bg-white/10 transition-all group shadow-xl">
+                  <div className="flex flex-col gap-1">
+                    <button onClick={() => moveItem('projects', idx, 'up')} className="opacity-30 hover:opacity-100 text-white"><ArrowLeft size={14} className="rotate-90" /></button>
+                    <button onClick={() => moveItem('projects', idx, 'down')} className="opacity-30 hover:opacity-100 text-white"><ArrowLeft size={14} className="-rotate-90" /></button>
                   </div>
-                  <div className="col-span-4 hidden md:block text-[10px] font-bold text-text-black/40 tracking-widest uppercase truncate">{project.date}</div>
-                  <div className="col-span-2 text-right flex justify-end gap-4">
-                    <button onClick={() => { setEditingProject(project); setFormTitle(project.title); setFormCategory(project.category || ""); setFormDate(project.date); setFormImage(project.image); setFormStatus(project.status); setFormLinkType(project.link_type); setFormUrl(project.url); setFormContent(project.content); setFormGallery(project.gallery || []); setIsModalOpen(true); }} className="p-2 text-text-black/30 hover:text-primary-red"><Edit2 size={16} /></button>
-                    <button onClick={() => deleteProject(project.id)} className="p-2 text-text-black/30 hover:text-red-600"><Trash2 size={16} /></button>
+                  <div className="flex-1 flex items-center gap-6">
+                    <div className="relative w-16 h-16 rounded-xl overflow-hidden shadow-lg border border-white/10"><Image src={project.image} alt={project.title} fill className="object-cover" unoptimized /></div>
+                    <div className="flex flex-col">
+                      <span className="font-serif text-xl text-white">{project.title}</span>
+                      <span className="text-[9px] font-bold text-white/40 tracking-[0.2em] uppercase">{project.date}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => { setEditingProject(project); setFormTitle(project.title); setFormCategory(project.category || ""); setFormDate(project.date); setFormImage(project.image); setFormStatus(project.status); setFormLinkType(project.link_type); setFormUrl(project.url); setFormContent(project.content); setFormGallery(project.gallery || []); setIsModalOpen(true); }} className="p-3 bg-white/5 hover:bg-white/10 rounded-xl text-white/50 hover:text-primary-red transition-all"><Edit2 size={18} /></button>
+                    <button onClick={() => deleteProject(project.id)} className="p-3 bg-white/5 hover:bg-white/10 rounded-xl text-white/50 hover:text-red-500 transition-all"><Trash2 size={18} /></button>
                   </div>
                 </div>
               ))}
@@ -622,7 +694,9 @@ export default function AdminDashboard() {
                     { id: 'twitter', label: 'Twitter (X)', icon: FaTwitter }, 
                     { id: 'instagram', label: 'Instagram', icon: FaInstagram },
                     { id: 'youtube', label: 'YouTube', icon: FaYoutube },
-                    { id: 'tiktok', label: 'TikTok', icon: FaTiktok }
+                    { id: 'tiktok', label: 'TikTok', icon: FaTiktok },
+                    { id: 'discord', label: 'Discord', icon: FaDiscord },
+                    { id: 'phone', label: 'Téléphone', icon: FaPhone }
                   ].map((platform) => (
                     <div key={platform.id} className="flex items-center gap-8">
                       <div className="w-12 h-12 bg-text-black/5 rounded-sm flex items-center justify-center"><platform.icon size={20} /></div>
@@ -666,28 +740,28 @@ export default function AdminDashboard() {
           )}
 
           {activeTab === "messages" && (
-            <motion.div key="messages" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
+            <motion.div key="messages" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-8">
               {messages.map((msg) => (
-                <div key={msg.id} className="bg-white/60 border border-text-black/5 rounded-sm p-8 space-y-6 relative group">
-                  <button onClick={() => deleteMessage(msg.id)} className="absolute top-6 right-6 text-text-black/20 hover:text-red-600"><Trash2 size={18} /></button>
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <h3 className="font-serif text-2xl text-soft-black">{msg.title}</h3>
-                    {msg.order_id && <span className="bg-primary-red/10 text-primary-red px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest rounded-xs">Commande: {msg.order_id}</span>}
-                    {msg.agreed_to_pay && <span className="bg-green-600/10 text-green-600 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest rounded-xs flex items-center gap-1"><Check size={10} /> S'est engagé à payer</span>}
+                <div key={msg.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 space-y-8 relative group shadow-2xl">
+                  <button onClick={() => deleteMessage(msg.id)} className="absolute top-8 right-8 text-white/20 hover:text-red-500 transition-colors"><Trash2 size={20} /></button>
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <h3 className="font-serif text-3xl text-white">{msg.title}</h3>
+                    {msg.order_id && <span className="bg-primary-red/20 text-primary-red px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border border-primary-red/20 shadow-lg shadow-primary-red/10">Commande: {msg.order_id}</span>}
+                    {msg.agreed_to_pay && <span className="bg-green-500/20 text-green-400 px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border border-green-500/20 flex items-center gap-2"><Check size={12} /> Engagement de paiement</span>}
                   </div>
-                  <p className="text-sm leading-relaxed text-text-black/70">{msg.content}</p>
+                  <p className="text-base leading-relaxed text-white/70 bg-white/5 p-6 rounded-2xl border border-white/5">{msg.content}</p>
                   
                   {msg.attachments && msg.attachments.length > 0 && (
-                    <div className="flex gap-4 pt-2">
+                    <div className="flex gap-4 pt-2 overflow-x-auto pb-4">
                       {msg.attachments.map((url, i) => (
-                        <div key={i} className="relative w-24 h-24 rounded-sm overflow-hidden border border-text-black/10 group/img">
+                        <div key={i} className="relative w-32 h-32 rounded-2xl overflow-hidden border border-white/10 group/img shrink-0 shadow-xl">
                           <Image src={url} alt="attachment" fill className="object-cover" unoptimized />
-                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
-                            <button onClick={() => setSelectedAttachment(url)} className="p-1.5 bg-white/20 hover:bg-white/40 rounded-full text-white transition-colors" title="Ouvrir">
-                              <ExternalLink size={14} />
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 backdrop-blur-sm">
+                            <button onClick={() => setSelectedAttachment(url)} className="p-2 bg-white/20 hover:bg-white/40 rounded-full text-white transition-all transform scale-90 group-hover/img:scale-100" title="Ouvrir">
+                              <ExternalLink size={18} />
                             </button>
-                            <a href={url} download={`attachment-${msg.id}-${i}`} className="p-1.5 bg-white/20 hover:bg-white/40 rounded-full text-white transition-colors" title="Télécharger">
-                              <Download size={14} />
+                            <a href={url} download={`attachment-${msg.id}-${i}`} className="p-2 bg-white/20 hover:bg-white/40 rounded-full text-white transition-all transform scale-90 group-hover/img:scale-100" title="Télécharger">
+                              <Download size={18} />
                             </a>
                           </div>
                         </div>
@@ -695,29 +769,38 @@ export default function AdminDashboard() {
                     </div>
                   )}
 
-                  <div className="text-[10px] font-bold uppercase tracking-widest opacity-40">Par {msg.name} le {msg.date} • {msg.contact}</div>
+                  <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-white/30">
+                    <span className="w-1.5 h-1.5 bg-primary-red rounded-full"></span>
+                    Par {msg.name} {msg.user_email && <span className="text-primary-red">({msg.user_email})</span>} • {msg.date} • {msg.contact}
+                  </div>
                   
-                  <div className="mt-8 pt-8 border-t border-text-black/10 space-y-6">
+                  <div className="mt-8 pt-8 border-t border-white/10 space-y-8">
                     {msg.replies && msg.replies.length > 0 && (
                       <div className="space-y-4">
                         {msg.replies.map((r, idx) => (
-                          <div key={idx} className="bg-primary-red/5 p-4 rounded-sm border-l-2 border-primary-red">
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-primary-red mb-2">Ma Réponse ({r.date}) :</p>
-                            <p className="text-sm italic">{r.text}</p>
+                          <div key={idx} className="bg-white/5 p-6 rounded-2xl border-l-4 border-primary-red relative shadow-xl">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-primary-red mb-3 flex items-center gap-2">
+                              <span className="w-1.5 h-1.5 bg-primary-red rounded-full animate-pulse"></span>
+                              Lucas ({r.date})
+                            </p>
+                            <p className="text-sm italic text-white/80 leading-relaxed">{r.text}</p>
                           </div>
                         ))}
                       </div>
                     )}
                     
-                    <div className="flex gap-4">
-                      <input 
-                        type="text" 
-                        placeholder="Écrire une autre réponse..." 
-                        value={replyText[msg.id] || ""}
-                        onChange={(e) => setReplyText({ ...replyText, [msg.id]: e.target.value })}
-                        className="flex-1 bg-transparent border-b border-text-black/10 py-2 text-sm outline-none focus:border-primary-red"
-                      />
-                      <button onClick={() => handleReply(msg.id)} className="bg-text-black text-white px-6 py-2 text-xs font-bold rounded-sm flex items-center gap-2"> <Send size={14} /> RÉPONDRE </button>
+                    <div className="flex gap-4 items-end">
+                      <div className="flex-1 space-y-2">
+                        <label className="text-[9px] font-bold uppercase tracking-widest text-white/30 ml-1">Répondre</label>
+                        <textarea 
+                          placeholder="Votre réponse..." 
+                          value={replyText[msg.id] || ""}
+                          onChange={(e) => setReplyText({ ...replyText, [msg.id]: e.target.value })}
+                          rows={2}
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm text-white outline-none focus:border-primary-red transition-all resize-none"
+                        />
+                      </div>
+                      <button onClick={() => handleReply(msg.id)} className="bg-primary-red text-white px-8 py-4 text-xs font-bold rounded-2xl flex items-center gap-2 hover:bg-red-600 transition-all shadow-xl shadow-primary-red/20 h-[52px]"> <Send size={16} /> RÉPONDRE </button>
                     </div>
                   </div>
                 </div>
@@ -727,19 +810,23 @@ export default function AdminDashboard() {
 
           {activeTab === "shop" && (
             <motion.div key="shop" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
-              {products.length === 0 ? <p className="text-center py-20 opacity-30 italic">Aucun produit en vente.</p> : (
+              {products.length === 0 ? <p className="text-center py-20 text-white/30 italic">Aucun produit en vente.</p> : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {products.map((product) => (
-                    <div key={product.id} className="bg-white/60 border border-text-black/5 rounded-sm overflow-hidden group">
+                  {products.map((product, idx) => (
+                    <div key={product.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden group shadow-2xl transition-all hover:bg-white/10">
                       <div className="relative aspect-square">
                         <Image src={product.images[0] || ""} alt={product.name} fill className="object-cover" unoptimized />
-                        <div className="absolute top-4 right-4 bg-text-black text-white px-3 py-1 text-xs font-bold">{product.price}€</div>
+                        <div className="absolute top-4 right-4 bg-primary-red text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-lg">{product.price}€</div>
+                        <div className="absolute top-4 left-4 flex flex-col gap-2">
+                          <button onClick={() => moveItem('products', idx, 'up')} className="p-2 bg-black/40 backdrop-blur-md rounded-full text-white/50 hover:text-white transition-all"><ArrowLeft size={14} className="rotate-90" /></button>
+                          <button onClick={() => moveItem('products', idx, 'down')} className="p-2 bg-black/40 backdrop-blur-md rounded-full text-white/50 hover:text-white transition-all"><ArrowLeft size={14} className="-rotate-90" /></button>
+                        </div>
                       </div>
-                      <div className="p-6 space-y-4">
-                        <h3 className="font-serif text-xl">{product.name}</h3>
-                        <div className="flex justify-between items-center pt-4 border-t border-text-black/5">
-                          <button onClick={() => { setEditingProduct(product); setProdName(product.name); setProdPrice(product.price); setProdDesc(product.description); setProdImages(product.images); setProdImagesText(product.images.join('\n')); setProdLink(product.link || ""); setProdLinkText(product.link_text || ""); setIsProductModalOpen(true); }} className="text-[10px] font-bold uppercase tracking-widest hover:text-primary-red transition-colors flex items-center gap-2"><Edit2 size={14} /> Modifier</button>
-                          <button onClick={() => deleteProduct(product.id)} className="text-[10px] font-bold uppercase tracking-widest text-red-600 hover:text-red-700 transition-colors flex items-center gap-2"><Trash2 size={14} /> Supprimer</button>
+                      <div className="p-6 space-y-6">
+                        <h3 className="font-serif text-2xl text-white">{product.name}</h3>
+                        <div className="flex justify-between items-center pt-6 border-t border-white/10">
+                          <button onClick={() => { setEditingProduct(product); setProdName(product.name); setProdPrice(product.price); setProdDesc(product.description); setProdImages(product.images); setProdImagesText(product.images.join('\n')); setProdLink(product.link || ""); setProdLinkText(product.link_text || ""); setProdPurchaseMsg(product.purchase_message || ""); setIsProductModalOpen(true); }} className="text-[10px] font-bold uppercase tracking-widest text-white/60 hover:text-primary-red transition-colors flex items-center gap-2"><Edit2 size={14} /> Modifier</button>
+                          <button onClick={() => deleteProduct(product.id)} className="text-[10px] font-bold uppercase tracking-widest text-red-400 hover:text-red-500 transition-colors flex items-center gap-2"><Trash2 size={14} /> Supprimer</button>
                         </div>
                       </div>
                     </div>
@@ -887,56 +974,54 @@ export default function AdminDashboard() {
         <AnimatePresence>
           {isProductModalOpen && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsProductModalOpen(false)} className="absolute inset-0 bg-soft-black/60 backdrop-blur-md" />
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-2xl bg-background border border-text-black/10 rounded-sm shadow-2xl p-8 max-h-[90vh] overflow-y-auto">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsProductModalOpen(false)} className="absolute inset-0 bg-black/60 backdrop-blur-xl" />
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-2xl bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl p-8 max-h-[90vh] overflow-y-auto text-white">
                 <form onSubmit={handleSubmitProduct} className="space-y-6">
-                  <div className="flex justify-between items-center border-b border-text-black/10 pb-6">
-                    <h3 className="font-serif text-3xl italic">{editingProduct ? "Modifier" : "Nouveau"} Produit</h3>
-                    <button type="button" onClick={() => setIsProductModalOpen(false)} className="p-2 hover:bg-text-black/5 rounded-full transition-colors"><CloseIcon size={24} /></button>
+                  <div className="flex justify-between items-center border-b border-white/10 pb-6">
+                    <h3 className="font-serif text-3xl italic text-primary-red">{editingProduct ? "Modifier" : "Nouveau"} Produit</h3>
+                    <button type="button" onClick={() => setIsProductModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors text-white/50 hover:text-white"><X size={24} /></button>
                   </div>
 
                   <div className="grid grid-cols-1 gap-6">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Nom du produit</label>
-                        <input type="text" value={prodName} onChange={(e) => setProdName(e.target.value)} className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" required />
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Nom du produit</label>
+                        <input type="text" value={prodName} onChange={(e) => setProdName(e.target.value)} className="w-full bg-white/5 border-b border-white/20 py-2 outline-none text-sm focus:border-primary-red transition-all" required />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Prix (€)</label>
-                        <input type="number" value={prodPrice} onChange={(e) => setProdPrice(Number(e.target.value))} className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" required />
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Prix (€)</label>
+                        <input type="number" value={prodPrice} onChange={(e) => setProdPrice(Number(e.target.value))} className="w-full bg-white/5 border-b border-white/20 py-2 outline-none text-sm focus:border-primary-red transition-all" required />
                       </div>
                     </div>
                     
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Images (Une URL par ligne)</label>
-                      <textarea value={prodImagesText} onChange={(e) => setProdImagesText(e.target.value)} rows={3} className="w-full bg-transparent border border-text-black/10 p-3 outline-none text-sm" placeholder="https://..." />
-                      <div className="flex gap-2 overflow-x-auto py-2">
-                        {prodImagesText.split('\n').filter(img => img.trim()).map((img, i) => (
-                          <div key={i} className="relative w-16 h-16 rounded-xs overflow-hidden border border-text-black/10 flex-shrink-0">
-                            <Image src={img.trim()} alt="preview" fill className="object-cover" unoptimized />
-                          </div>
-                        ))}
-                      </div>
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Images (Une URL par ligne)</label>
+                      <textarea value={prodImagesText} onChange={(e) => setProdImagesText(e.target.value)} rows={3} className="w-full bg-white/5 border border-white/10 p-3 rounded-xl outline-none text-sm focus:border-primary-red transition-all" placeholder="https://..." />
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Description</label>
-                      <textarea value={prodDesc} onChange={(e) => setProdDesc(e.target.value)} rows={5} className="w-full bg-transparent border border-text-black/10 p-4 outline-none resize-none text-sm" placeholder="Description du produit..." />
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Description</label>
+                      <textarea value={prodDesc} onChange={(e) => setProdDesc(e.target.value)} rows={4} className="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none resize-none text-sm focus:border-primary-red transition-all" placeholder="Description du produit..." />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Message d'achat par défaut (Optionnel)</label>
+                      <textarea value={prodPurchaseMsg} onChange={(e) => setProdPurchaseMsg(e.target.value)} rows={3} className="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none resize-none text-sm focus:border-primary-red transition-all" placeholder="Ex: Bonjour Lucas, je souhaite commander ce produit..." />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 pt-2">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Lien Blog / Projet (Optionnel)</label>
-                        <input type="text" value={prodLink} onChange={(e) => setProdLink(e.target.value)} className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" placeholder="https://..." />
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Lien Blog / Poste (Optionnel)</label>
+                        <input type="text" value={prodLink} onChange={(e) => setProdLink(e.target.value)} className="w-full bg-white/5 border-b border-white/20 py-2 outline-none text-sm focus:border-primary-red transition-all" placeholder="https://..." />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Texte du bouton</label>
-                        <input type="text" value={prodLinkText} onChange={(e) => setProdLinkText(e.target.value)} className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" placeholder="En savoir plus" />
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Texte du bouton</label>
+                        <input type="text" value={prodLinkText} onChange={(e) => setProdLinkText(e.target.value)} className="w-full bg-white/5 border-b border-white/20 py-2 outline-none text-sm focus:border-primary-red transition-all" placeholder="En savoir plus" />
                       </div>
                     </div>
                   </div>
 
-                  <button type="submit" className="w-full bg-text-black text-white py-4 font-bold text-xs tracking-widest uppercase hover:bg-soft-black transition-all">Enregistrer le Produit</button>
+                  <button type="submit" className="w-full bg-primary-red text-white py-4 rounded-2xl font-bold text-xs tracking-widest uppercase hover:bg-red-600 transition-all shadow-2xl shadow-primary-red/30">Enregistrer le Produit</button>
                 </form>
               </motion.div>
             </div>
@@ -944,96 +1029,96 @@ export default function AdminDashboard() {
 
           {isModalOpen && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsModalOpen(false)} className="absolute inset-0 bg-soft-black/60 backdrop-blur-md" />
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-5xl bg-background border border-text-black/10 rounded-sm shadow-2xl p-8 max-h-[90vh] overflow-y-auto">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsModalOpen(false)} className="absolute inset-0 bg-black/60 backdrop-blur-xl" />
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-5xl bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl p-10 max-h-[90vh] overflow-y-auto text-white">
                 <form onSubmit={handleSubmit} className="space-y-8">
-                  <div className="flex justify-between items-center border-b border-text-black/10 pb-6">
-                    <h3 className="font-serif text-3xl italic">{editingProject ? "Modifier" : "Nouveau"} Projet</h3>
-                    <button type="button" onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-text-black/5 rounded-full transition-colors"><CloseIcon size={24} /></button>
+                  <div className="flex justify-between items-center border-b border-white/10 pb-6">
+                    <h3 className="font-serif text-4xl italic text-primary-red">{editingProject ? "Modifier" : "Nouveau"} Poste</h3>
+                    <button type="button" onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors text-white/50 hover:text-white"><X size={24} /></button>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-6">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Titre du projet</label>
-                        <input type="text" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none font-serif text-xl" required />
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Titre du poste</label>
+                        <input type="text" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} className="w-full bg-white/5 border-b border-white/20 py-2 outline-none font-serif text-2xl focus:border-primary-red transition-all" required />
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-2 gap-6">
                         <div className="space-y-2">
-                          <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Catégorie</label>
-                          <input type="text" value={formCategory} onChange={(e) => setFormCategory(e.target.value)} className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" />
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Catégorie</label>
+                          <input type="text" value={formCategory} onChange={(e) => setFormCategory(e.target.value)} className="w-full bg-white/5 border-b border-white/20 py-2 outline-none text-sm focus:border-primary-red transition-all" />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Date / Année</label>
-                          <input type="text" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" />
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Date / Année</label>
+                          <input type="text" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full bg-white/5 border-b border-white/20 py-2 outline-none text-sm focus:border-primary-red transition-all" />
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Image Principale (URL)</label>
-                        <input type="text" value={formImage} onChange={(e) => setFormImage(e.target.value)} className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" required />
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Image Principale (URL)</label>
+                        <input type="text" value={formImage} onChange={(e) => setFormImage(e.target.value)} className="w-full bg-white/5 border-b border-white/20 py-2 outline-none text-sm focus:border-primary-red transition-all" required />
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-2 gap-6">
                         <div className="space-y-2">
-                          <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Lien</label>
-                          <select value={formLinkType} onChange={(e:any) => setFormLinkType(e.target.value)} className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm">
-                            <option value="internal">Interne</option>
-                            <option value="external">Externe</option>
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Type de lien</label>
+                          <select value={formLinkType} onChange={(e:any) => setFormLinkType(e.target.value)} className="w-full bg-white/5 border-b border-white/20 py-2 outline-none text-sm focus:border-primary-red transition-all">
+                            <option value="internal">Interne (Blog)</option>
+                            <option value="external">Externe (Lien direct)</option>
                           </select>
                         </div>
                         <div className="space-y-2">
-                          <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">URL / Slug</label>
-                          <input type="text" value={formUrl} onChange={(e) => setFormUrl(e.target.value)} className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" />
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">URL / Slug</label>
+                          <input type="text" value={formUrl} onChange={(e) => setFormUrl(e.target.value)} className="w-full bg-white/5 border-b border-white/20 py-2 outline-none text-sm focus:border-primary-red transition-all" />
                         </div>
                       </div>
                     </div>
 
                     <div className="space-y-6">
                       <div className="flex justify-between items-center mb-2">
-                        <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Carrousel Media (Galerie)</label>
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Carrousel Media (Galerie)</label>
                         <div className="flex gap-2">
-                          <button type="button" onClick={() => addGalleryItem('image')} className="text-[9px] font-bold text-primary-red uppercase border border-primary-red/20 px-2 py-1 rounded-xs">+ Image</button>
-                          <button type="button" onClick={() => addGalleryItem('video')} className="text-[9px] font-bold text-primary-red uppercase border border-primary-red/20 px-2 py-1 rounded-xs">+ Vidéo YT</button>
+                          <button type="button" onClick={() => addGalleryItem('image')} className="text-[9px] font-bold text-primary-red uppercase border border-primary-red/20 px-3 py-1.5 rounded-xl hover:bg-primary-red/5 transition-all">+ Image</button>
+                          <button type="button" onClick={() => addGalleryItem('video')} className="text-[9px] font-bold text-primary-red uppercase border border-primary-red/20 px-3 py-1.5 rounded-xl hover:bg-primary-red/5 transition-all">+ Vidéo YT</button>
                         </div>
                       </div>
                       
-                      <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                      <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
                         {formGallery.map((item, idx) => (
-                          <div key={idx} className="flex items-center gap-4 bg-text-black/5 p-3 rounded-sm group">
-                            <div className="relative w-12 h-12 rounded-xs overflow-hidden flex-shrink-0">
+                          <div key={idx} className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5 group transition-all hover:bg-white/10 shadow-lg">
+                            <div className="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 shadow-md border border-white/10">
                               <Image src={item.type === 'video' ? `https://img.youtube.com/vi/${getYoutubeId(item.url)}/default.jpg` : item.url} alt="Gallery" fill className="object-cover" unoptimized />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-[9px] font-bold uppercase opacity-30 mb-1">{item.type === 'video' ? 'YouTube' : 'Image'}</p>
-                              <p className="text-[10px] truncate opacity-60">{item.url}</p>
+                              <p className="text-[9px] font-bold uppercase text-primary-red/60 mb-1">{item.type === 'video' ? 'YouTube' : 'Image'}</p>
+                              <p className="text-[10px] truncate text-white/40">{item.url}</p>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <button type="button" onClick={() => moveGalleryItem(idx, 'up')} className="p-1 hover:text-primary-red opacity-0 group-hover:opacity-100 transition-opacity"><ArrowLeft size={12} className="rotate-90" /></button>
-                              <button type="button" onClick={() => moveGalleryItem(idx, 'down')} className="p-1 hover:text-primary-red opacity-0 group-hover:opacity-100 transition-opacity"><ArrowLeft size={12} className="-rotate-90" /></button>
-                              <button type="button" onClick={() => removeGalleryItem(idx)} className="p-1 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={12} /></button>
+                            <div className="flex items-center gap-2">
+                              <button type="button" onClick={() => moveGalleryItem(idx, 'up')} className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-white/30 hover:text-white transition-all"><ArrowLeft size={14} className="rotate-90" /></button>
+                              <button type="button" onClick={() => moveGalleryItem(idx, 'down')} className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-white/30 hover:text-white transition-all"><ArrowLeft size={14} className="-rotate-90" /></button>
+                              <button type="button" onClick={() => removeGalleryItem(idx)} className="p-2 bg-white/5 hover:bg-red-500/10 rounded-lg text-white/30 hover:text-red-500 transition-all"><Trash2 size={14} /></button>
                             </div>
                           </div>
                         ))}
-                        {formGallery.length === 0 && <p className="text-center py-8 text-xs opacity-20 italic">Aucun média dans la galerie</p>}
+                        {formGallery.length === 0 && <p className="text-center py-12 text-xs text-white/20 italic font-serif">Aucun média dans la galerie</p>}
                       </div>
                     </div>
                   </div>
 
                   <div className="space-y-4 pt-4">
                     <div className="flex justify-between items-center">
-                      <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Description (Contenu HTML)</label>
-                      <button type="button" onClick={() => setIsPreviewMode(!isPreviewMode)} className="text-[10px] font-bold uppercase tracking-widest text-primary-red underline">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Description (Markdown / Texte riche)</label>
+                      <button type="button" onClick={() => setIsPreviewMode(!isPreviewMode)} className="text-[10px] font-bold uppercase tracking-widest text-primary-red hover:underline transition-all">
                         {isPreviewMode ? "Éditeur" : "Prévisualisation"}
                       </button>
                     </div>
                     {isPreviewMode ? (
-                      <div className="w-full bg-text-black/5 p-4 rounded-sm min-h-[200px] prose prose-sm max-w-none prose-invert text-text-black" dangerouslySetInnerHTML={{ __html: formContent }} />
+                      <div className="w-full bg-white/5 border border-white/10 p-8 rounded-3xl min-h-[250px] prose prose-invert max-w-none text-white/80 leading-relaxed shadow-xl" dangerouslySetInnerHTML={{ __html: formContent }} />
                     ) : (
-                      <textarea value={formContent} onChange={(e) => setFormContent(e.target.value)} rows={10} className="w-full bg-text-black/5 p-4 rounded-sm outline-none focus:border-primary-red resize-none text-sm" placeholder="Contenu du projet..." required />
+                      <textarea value={formContent} onChange={(e) => setFormContent(e.target.value)} rows={10} className="w-full bg-white/5 border border-white/10 p-6 rounded-3xl outline-none focus:border-primary-red transition-all resize-none text-sm text-white/80 leading-relaxed shadow-inner" placeholder="Contenu du poste..." required />
                     )}
                   </div>
 
-                  <button type="submit" className="w-full bg-text-black text-white py-5 rounded-sm font-bold text-xs tracking-widest uppercase hover:bg-soft-black transition-all shadow-xl">
-                    ENREGISTRER LE PROJET
+                  <button type="submit" className="w-full bg-primary-red text-white py-5 rounded-2xl font-bold text-xs tracking-widest uppercase hover:bg-red-600 transition-all shadow-2xl shadow-primary-red/30">
+                    ENREGISTRER LE POSTE
                   </button>
                 </form>
               </motion.div>
@@ -1042,12 +1127,12 @@ export default function AdminDashboard() {
         </AnimatePresence>
         {uploadSuccess && (
           <motion.div 
-            initial={{ opacity: 0, y: 50 }} 
-            animate={{ opacity: 1, y: 0 }} 
-            exit={{ opacity: 0 }} 
-            className="fixed bottom-12 right-12 bg-green-600 text-white px-8 py-3 rounded-sm font-bold text-xs tracking-widest shadow-2xl uppercase"
+            initial={{ opacity: 0, x: 50 }} 
+            animate={{ opacity: 1, x: 0 }} 
+            exit={{ opacity: 0, x: 50 }} 
+            className="fixed bottom-12 right-12 bg-primary-red text-white px-8 py-4 rounded-2xl font-bold text-xs tracking-widest shadow-2xl uppercase flex items-center gap-3 border border-white/20 backdrop-blur-xl"
           >
-            Synchronisé !
+            <Check size={18} /> Synchronisé !
           </motion.div>
         )}
         {selectedAttachment && (

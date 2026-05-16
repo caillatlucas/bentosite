@@ -10,8 +10,8 @@ import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 
 interface MediaItem { id: string; url: string; name: string; }
-interface Message { id: string; name: string; title: string; content: string; contact?: string; date: string; reply?: string; order_id?: string; attachments?: string[]; agreed_to_pay?: boolean; replies?: { text: string; date: string; from: string }[]; }
-interface Product { id: string; name: string; price: number; description: string; images: string[]; link?: string; link_text?: string; }
+interface Message { id: string; name: string; title: string; content: string; contact?: string; date: string; reply?: string; order_id?: string; attachments?: string[]; agreed_to_pay?: boolean; replies?: { text: string; date: string; from: string }[]; user_id?: string; user_email?: string; }
+interface Product { id: string; name: string; price: number; description: string; images: string[]; link?: string; link_text?: string; purchase_message?: string; }
 
 export default function Home() {
   const [isClient, setIsClient] = useState(false);
@@ -31,7 +31,7 @@ export default function Home() {
     musicCover: "",
     primaryColor: "#ff3131",
     sectionsConfig: [
-      { id: 'projects', label: 'Projets', subLabel: 'Sélection 2024', visible: true },
+      { id: 'projects', label: 'Postes', subLabel: 'Sélection 2024', visible: true },
       { id: 'shop', label: 'Boutique', subLabel: 'Nos Produits', visible: true },
       { id: 'gallery', label: 'Galerie', subLabel: 'Galerie Photo/Vidéo', visible: true },
       { id: 'bento', label: 'À propos', subLabel: 'Bento Grid', visible: true }
@@ -51,6 +51,13 @@ export default function Home() {
   const [isInboxExpanded, setIsInboxExpanded] = useState(false);
   const [replies, setReplies] = useState<Message[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [user, setUser] = useState<any>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [authError, setAuthError] = useState("");
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
 
   // Form State
   const [formName, setFormName] = useState("");
@@ -111,11 +118,21 @@ export default function Home() {
     const mediaChannel = supabase.channel('media-realtime').on('postgres_changes', { event: '*', table: 'media', schema: 'public' }, () => { fetchData(); }).subscribe();
     
     window.addEventListener("mousemove", handleMouseMove);
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
     return () => { 
       window.removeEventListener("mousemove", handleMouseMove); 
       supabase.removeChannel(msgChannel);
       supabase.removeChannel(settingsChannel);
       supabase.removeChannel(mediaChannel);
+      subscription.unsubscribe();
     };
   }, [mouseX, mouseY]);
 
@@ -128,10 +145,11 @@ export default function Home() {
       if (global) {
         if (global.sectionsConfig) {
           global.sectionsConfig = global.sectionsConfig.map((s: any) => {
-            if (s.id === 'projects' && s.subLabel === undefined) return { ...s, subLabel: global.projectsTitle || "Sélection 2024", label: global.recentProjectsTitle || s.label };
+            if (s.id === 'projects' && s.subLabel === undefined) return { ...s, subLabel: global.projectsTitle || "Sélection 2024", label: global.recentProjectsTitle || "Postes" };
             if (s.id === 'gallery' && s.subLabel === undefined) return { ...s, subLabel: "Galerie Photo/Vidéo", label: global.galleryTitle || s.label };
             if (s.id === 'shop' && s.subLabel === undefined) return { ...s, subLabel: "Nos Produits" };
             if (s.id === 'bento' && s.subLabel === undefined) return { ...s, subLabel: "Bento Grid", label: global.bentoGridTitle || s.label };
+            if (s.id === 'projects' && s.label === 'Projets') return { ...s, label: 'Postes' };
             return s;
           });
         }
@@ -176,7 +194,7 @@ export default function Home() {
 
   const handleReplyToMessage = (msg: Message) => {
     setFormName(msg.name);
-    setFormTitle(`Re: ${msg.title}`);
+    setFormTitle(`re: ${msg.title}`);
     setFormContact(msg.contact || "");
     setFormOrderId(msg.order_id || "");
     setIsContactOpen(true);
@@ -184,10 +202,14 @@ export default function Home() {
   };
 
   const handleBuyProduct = (product: Product) => {
+    if (!user) {
+      setIsAuthModalOpen(true);
+      return;
+    }
     const randomId = Math.random().toString(36).substring(2, 8).toUpperCase();
     setFormTitle(`Achat: ${product.name}`);
     setFormOrderId(randomId);
-    setFormContent(`Bonjour, je souhaite commander le produit "${product.name}" (${product.price}€).\n\nL'album est : [Titre de l'album]\nL'artiste est : [Nom de l'artiste]`);
+    setFormContent(product.purchase_message || `Bonjour, je souhaite commander le produit "${product.name}" (${product.price}€).`);
     setIsContactOpen(true);
   };
 
@@ -220,7 +242,9 @@ export default function Home() {
       order_id: formOrderId || null,
       attachments: formAttachments,
       agreed_to_pay: orderAgreed,
-      date: new Date().toLocaleString("fr-FR") 
+      date: new Date().toLocaleString("fr-FR"),
+      user_id: user?.id || null,
+      user_email: user?.email || null
     };
     
     try {
@@ -308,14 +332,87 @@ export default function Home() {
       </AnimatePresence>
 
       <div className="fixed bottom-8 right-8 md:bottom-12 md:right-16 z-[100] flex flex-col gap-4">
-        <motion.button onClick={() => setIsNotifOpen(!isNotifOpen)} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="bg-white text-[var(--primary-red)] w-12 h-12 md:w-14 md:h-14 rounded-full shadow-2xl flex items-center justify-center relative">
+        <motion.button onClick={() => setIsNotifOpen(!isNotifOpen)} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="bg-white/10 backdrop-blur-xl border border-white/20 text-white w-12 h-12 md:w-14 md:h-14 rounded-full shadow-2xl flex items-center justify-center relative">
           <Bell size={24} />
-          {unreadCount > 0 && <span className="absolute -top-1 -right-1 bg-black text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white">{unreadCount}</span>}
+          {unreadCount > 0 && <span className="absolute -top-1 -right-1 bg-primary-red text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white/10">{unreadCount}</span>}
         </motion.button>
-        <motion.button onClick={() => setIsContactOpen(true)} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="bg-[var(--primary-red)] text-white w-14 h-14 md:w-16 md:h-16 rounded-full shadow-2xl flex items-center justify-center group overflow-hidden">
+        
+        <div className="relative group/auth">
+          <motion.button 
+            onClick={() => user ? null : setIsAuthModalOpen(true)} 
+            whileHover={{ scale: 1.05 }} 
+            whileTap={{ scale: 0.95 }} 
+            className={`w-12 h-12 md:w-14 md:h-14 rounded-full shadow-2xl flex items-center justify-center relative transition-all ${user ? 'bg-primary-red text-white' : 'bg-white/10 backdrop-blur-xl border border-white/20 text-white/40'}`}
+          >
+            <User size={24} />
+            {user && <span className="absolute -top-1 -right-1 bg-green-500 w-3 h-3 rounded-full border-2 border-[#0a0a0a]"></span>}
+          </motion.button>
+          
+          {user && (
+            <div className="absolute bottom-full right-0 mb-4 opacity-0 group-hover/auth:opacity-100 pointer-events-none group-hover/auth:pointer-events-auto transition-all translate-y-2 group-hover/auth:translate-y-0">
+              <div className="bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/10 p-4 rounded-3xl shadow-2xl min-w-[200px] space-y-3">
+                <div className="px-2 py-1">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-white/30">Compte</p>
+                  <p className="text-xs font-medium text-white truncate">{user.email}</p>
+                </div>
+                <div className="h-[1px] bg-white/10 mx-2"></div>
+                {user.email === 'lucas.caillat.pro@gmail.com' && (
+                  <Link href="/admin" className="flex items-center gap-3 px-3 py-2 text-xs font-bold uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/5 rounded-xl transition-all">
+                    <Settings size={14} /> Panel Admin
+                  </Link>
+                )}
+                <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2 text-xs font-bold uppercase tracking-widest text-red-400 hover:text-red-500 hover:bg-red-500/5 rounded-xl transition-all">
+                  <LogOut size={14} /> Déconnexion
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <motion.button onClick={() => setIsContactOpen(true)} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="bg-primary-red text-white w-14 h-14 md:w-16 md:h-16 rounded-full shadow-2xl flex items-center justify-center group overflow-hidden">
           <motion.div animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 2 }}><Zap size={24} fill="currentColor" /></motion.div>
         </motion.button>
       </div>
+
+      <AnimatePresence>
+        {isAuthModalOpen && (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-6">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsAuthModalOpen(false)} className="absolute inset-0 bg-black/60 backdrop-blur-xl" />
+            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-md bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl p-10 text-white">
+              <form onSubmit={handleAuth} className="space-y-8">
+                <div className="space-y-2 text-center">
+                  <h3 className="font-serif text-4xl italic text-primary-red">{isSignUp ? "Créer un compte" : "Connexion"}</h3>
+                  <p className="text-xs text-white/40 uppercase tracking-widest">{isSignUp ? "Rejoignez l'aventure" : "Bon retour parmi nous"}</p>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/30 ml-1">Email</label>
+                    <input type="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all" placeholder="votre@email.com" required />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/30 ml-1">Mot de passe</label>
+                    <input type="password" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all" placeholder="••••••••" required />
+                  </div>
+                </div>
+
+                {authError && <p className="text-red-500 text-[10px] font-bold uppercase text-center tracking-widest">{authError}</p>}
+
+                <button type="submit" disabled={isAuthLoading} className="w-full bg-primary-red text-white py-5 rounded-2xl font-bold text-xs tracking-widest uppercase hover:bg-red-600 transition-all shadow-2xl shadow-primary-red/30 flex items-center justify-center gap-3">
+                  {isAuthLoading ? "Chargement..." : (isSignUp ? "S'INSCRIRE" : "SE CONNECTER")}
+                </button>
+
+                <p className="text-center text-[10px] text-white/40 uppercase tracking-widest">
+                  {isSignUp ? "Déjà un compte ?" : "Pas encore de compte ?"} 
+                  <button type="button" onClick={() => setIsSignUp(!isSignUp)} className="ml-2 text-primary-red hover:underline font-bold">
+                    {isSignUp ? "SE CONNECTER" : "S'INSCRIRE"}
+                  </button>
+                </p>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {selectedProduct && (
@@ -368,12 +465,12 @@ export default function Home() {
                     )}
                   </div>
 
-                  <div className="pt-8 space-y-6">
+                   <div className="pt-8 space-y-6">
                     <button 
-                      onClick={() => { handleBuyProduct(selectedProduct); setSelectedProduct(null); }} 
+                      onClick={() => { handleBuyProduct(selectedProduct); if (user) setSelectedProduct(null); }} 
                       className="w-full bg-primary-red text-white py-6 rounded-2xl font-bold text-xs tracking-widest uppercase hover:bg-primary-red/80 transition-all shadow-2xl shadow-primary-red/30 flex items-center justify-center gap-4 group"
                     >
-                      COMMANDER MAINTENANT <Zap size={18} fill="currentColor" className="group-hover:scale-125 transition-transform" />
+                      {user ? "COMMANDER MAINTENANT" : "SE CONNECTER POUR COMMANDER"} <Zap size={18} fill="currentColor" className="group-hover:scale-125 transition-transform" />
                     </button>
                     <p className="text-[9px] text-center text-white/30 uppercase tracking-widest">Paiement en cash sur place</p>
                   </div>
@@ -616,9 +713,9 @@ export default function Home() {
                     <div className="p-8 pt-4 space-y-4">
                       <div className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 bg-primary-red rounded-full"></span>
-                        <h3 className="font-serif text-2xl text-white">{product.name}</h3>
+                        <h3 className="font-serif text-2xl text-soft-black">{product.name}</h3>
                       </div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 group-hover:text-primary-red transition-colors">Voir les détails</p>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-soft-black/40 group-hover:text-primary-red transition-colors">Voir les détails</p>
                     </div>
                   </motion.div>
                 ))}

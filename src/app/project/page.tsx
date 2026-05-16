@@ -46,35 +46,37 @@ function ProjectContent() {
   const hasExternalLink = project.link_type === "external" && project.url;
 
   return (
-    <main className="min-h-screen bg-background text-text-black pb-32">
-      <section className="relative h-[60vh] overflow-hidden">
+    <main className="min-h-screen bg-[#0a0a0a] text-white pb-32">
+      <section className="relative h-[65vh] overflow-hidden">
         <Image 
           src={project.image} 
           alt={project.title} 
           fill 
-          className="object-cover opacity-60" 
+          className="object-cover opacity-40 blur-[2px] scale-105" 
           priority
           unoptimized
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0a0a0a]/50 to-[#0a0a0a]" />
         
         <div className="absolute inset-0 flex flex-col justify-end px-6 md:px-16 pb-12 max-w-[1600px] mx-auto w-full">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
+            className="space-y-6"
           >
-            <Link href="/" className="inline-flex items-center gap-2 text-text-black/50 hover:text-primary-red mb-8 transition-colors uppercase tracking-widest text-xs font-bold">
-              <ArrowLeft size={16} /> Retour au portfolio
+            <Link href="/" className="inline-flex items-center gap-3 text-white/50 hover:text-primary-red mb-8 transition-all uppercase tracking-[0.2em] text-[10px] font-bold group">
+              <div className="p-2 bg-white/5 rounded-full group-hover:bg-primary-red/10 transition-all"><ArrowLeft size={14} /></div> Retour au portfolio
             </Link>
-            <h1 className="font-serif text-6xl md:text-8xl lg:text-[120px] leading-tight tracking-tighter mb-4">
+            <h1 className="font-serif text-6xl md:text-8xl lg:text-[140px] leading-[0.9] tracking-tighter mb-4 text-white drop-shadow-2xl">
               {project.title}
             </h1>
-            {project.category && (
-              <p className="text-xl md:text-3xl text-primary-red font-light italic">
+            <div className="flex items-center gap-4">
+              <span className="w-3 h-3 bg-primary-red rounded-full animate-pulse"></span>
+              <p className="text-xl md:text-3xl text-white/60 font-light italic font-serif">
                 {project.category}
               </p>
-            )}
+            </div>
           </motion.div>
         </div>
       </section>
@@ -139,26 +141,26 @@ function ProjectContent() {
           transition={{ delay: 0.6 }}
           className="lg:col-span-4 space-y-12"
         >
-          <div className="bg-white/40 border border-text-black/10 p-10 rounded-sm">
-            <h4 className="font-serif text-2xl mb-8 border-b border-text-black/10 pb-4 italic">Détails</h4>
-            <div className="space-y-6">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-primary-red/10 flex items-center justify-center rounded-sm text-primary-red">
-                  <Calendar size={18} />
+          <div className="bg-white/5 backdrop-blur-2xl border border-white/10 p-12 rounded-3xl shadow-2xl">
+            <h4 className="font-serif text-3xl mb-10 border-b border-white/10 pb-6 italic text-white">Détails</h4>
+            <div className="space-y-8">
+              <div className="flex items-center gap-6">
+                <div className="w-12 h-12 bg-white/5 flex items-center justify-center rounded-2xl text-primary-red border border-white/5">
+                  <Calendar size={20} />
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest opacity-40 font-bold">Date</p>
-                  <p className="font-medium">{project.date || "Mai 2024"}</p>
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-white/30 font-bold">Date de publication</p>
+                  <p className="font-medium text-lg text-white/80">{project.date || "Mai 2024"}</p>
                 </div>
               </div>
               {project.category && (
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-primary-red/10 flex items-center justify-center rounded-sm text-primary-red">
-                    <Tag size={18} />
+                <div className="flex items-center gap-6">
+                  <div className="w-12 h-12 bg-white/5 flex items-center justify-center rounded-2xl text-primary-red border border-white/5">
+                    <Tag size={20} />
                   </div>
                   <div>
-                    <p className="text-[10px] uppercase tracking-widest opacity-40 font-bold">Expertise</p>
-                    <p className="font-medium">{project.category}</p>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/30 font-bold">Catégorie</p>
+                    <p className="font-medium text-lg text-white/80">{project.category}</p>
                   </div>
                 </div>
               )}
@@ -170,7 +172,7 @@ function ProjectContent() {
                    href={project.url} 
                    target="_blank" 
                    rel="noopener noreferrer"
-                   className="block w-full text-center bg-text-black text-white py-4 rounded-sm hover:bg-soft-black transition-all font-bold text-xs tracking-widest uppercase"
+                   className="block w-full text-center bg-primary-red text-white py-5 rounded-2xl hover:bg-red-600 transition-all font-bold text-xs tracking-widest uppercase shadow-2xl shadow-primary-red/30"
                  >
                     Voir le site live
                  </a>
