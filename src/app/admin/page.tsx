@@ -556,7 +556,7 @@ export default function AdminDashboard() {
           {activeTab === "pages" && (
             <motion.div key="pages" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
               {projects.map((project, idx) => (
-                <div key={project.id} className="flex items-center gap-6 px-8 py-6 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl hover:bg-white/10 transition-all group shadow-xl">
+                <div key={project.id} className="flex items-center gap-6 px-8 py-6 bg-black/20 backdrop-blur-md border border-white/10 rounded-2xl hover:bg-black/30 transition-all group shadow-xl">
                   <div className="flex flex-col gap-1">
                     <button onClick={() => moveItem('projects', idx, 'up')} className="opacity-30 hover:opacity-100 text-white"><ArrowLeft size={14} className="rotate-90" /></button>
                     <button onClick={() => moveItem('projects', idx, 'down')} className="opacity-30 hover:opacity-100 text-white"><ArrowLeft size={14} className="-rotate-90" /></button>
@@ -632,7 +632,7 @@ export default function AdminDashboard() {
           {activeTab === "messages" && (
             <motion.div key="messages" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-8">
               {messages.map((msg) => (
-                <div key={msg.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 space-y-8 relative group shadow-2xl">
+                <div key={msg.id} className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-3xl p-8 space-y-8 relative group shadow-2xl">
                   <button onClick={() => deleteMessage(msg.id)} className="absolute top-8 right-8 text-white/20 hover:text-red-500 transition-colors"><Trash2 size={20} /></button>
                   <div className="flex items-start gap-6">
                     <div className="w-16 h-16 rounded-full bg-white/10 border border-white/10 overflow-hidden relative shrink-0">
@@ -671,7 +671,7 @@ export default function AdminDashboard() {
               {products.length === 0 ? <p className="text-center py-20 text-white/30 italic">Aucun produit en vente.</p> : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {products.map((product, idx) => (
-                    <div key={product.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden group shadow-2xl transition-all hover:bg-white/10">
+                    <div key={product.id} className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden group shadow-2xl transition-all hover:bg-black/30">
                       <div className="relative aspect-square">
                         <Image src={product.images[0] || ""} alt={product.name} fill className="object-cover" unoptimized />
                         <div className="absolute top-4 right-4 bg-primary-red text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-lg">{product.price}€</div>

@@ -195,6 +195,7 @@ export default function Home() {
         }
         setOwnerImage(global.profileImage || "");
         setShow3DBackground(global.show3DBackground ?? false);
+        setSettings(prev => ({ ...prev, ...global }));
       }
       
       if (soc) {
@@ -942,7 +943,7 @@ export default function Home() {
                     whileInView={{ opacity: 1, y: 0 }} 
                     viewport={{ once: true }} 
                     onClick={() => { setSelectedProduct(product); setActiveProdImg(0); }}
-                    className="group bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl overflow-hidden shadow-2xl cursor-pointer hover:bg-white/20 transition-all duration-500"
+                    className="group bg-black/20 backdrop-blur-md border border-white/20 rounded-2xl overflow-hidden shadow-2xl cursor-pointer hover:bg-black/30 transition-all duration-500"
                   >
                     <div className="relative aspect-square overflow-hidden m-4 rounded-xl">
                       <Image src={product.images[0] || ""} alt={product.name} fill className="object-cover group-hover:scale-105 transition-transform duration-700" unoptimized />
@@ -1020,7 +1021,7 @@ export default function Home() {
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: i * 0.05 }} 
                             onClick={() => setSelectedImage(item)} 
-                            className={`relative overflow-hidden rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 group cursor-zoom-in aspect-square md:aspect-auto shadow-2xl hover:bg-white/20 transition-all ${gridClass}`}
+                            className={`relative overflow-hidden rounded-2xl bg-black/20 backdrop-blur-md border border-white/20 group cursor-zoom-in aspect-square md:aspect-auto shadow-2xl hover:bg-black/30 transition-all ${gridClass}`}
                           >
                             <Image src={displayUrl} alt={item.name} fill className="object-cover transition-transform duration-700 group-hover:scale-105 opacity-90 group-hover:opacity-100" unoptimized />
                             {ytId && (
@@ -1051,7 +1052,7 @@ export default function Home() {
                 <p className="text-xl md:text-2xl text-[var(--primary-red)] font-light italic">{section.subLabel}</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="md:col-span-2 aspect-square md:aspect-video bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-12 flex flex-col justify-between group overflow-hidden relative shadow-2xl hover:bg-white/20 transition-all">
+                <div className="md:col-span-2 aspect-square md:aspect-video bg-black/20 backdrop-blur-md border border-white/20 rounded-2xl p-12 flex flex-col justify-between group overflow-hidden relative shadow-2xl hover:bg-black/30 transition-all">
                   <div className="relative z-10"> <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--primary-red)] mb-4">Ma Bio</p> <h3 className="font-serif text-3xl md:text-5xl leading-tight mb-6 text-white">{settings.bio || "Exploration créative et solutions techniques."}</h3> </div>
                   <Socials config={socialsConfig} color={textColor} />
                 </div>
@@ -1060,7 +1061,7 @@ export default function Home() {
                   <p className="text-[10px] font-bold uppercase tracking-[0.2em] relative z-10">Disponibilité</p>
                   <h3 className="font-serif text-4xl italic relative z-10">Ouvert aux projets freelance</h3>
                 </div>
-                <div className="aspect-square bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-10 flex flex-col justify-between text-white relative overflow-hidden group shadow-2xl hover:bg-white/20 transition-all">
+                <div className="aspect-square bg-black/20 backdrop-blur-md border border-white/20 rounded-2xl p-10 flex flex-col justify-between text-white relative overflow-hidden group shadow-2xl hover:bg-black/30 transition-all">
                   <p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-40">Contact</p>
                   <div className="space-y-4 relative z-10">
                     <p className="font-serif text-2xl truncate">{settings.email || "hello@lucascaillat.fr"}</p>
