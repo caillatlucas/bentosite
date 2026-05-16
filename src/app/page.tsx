@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useMotionValue, useSpring, useTransform, useScroll, useMotionTemplate, AnimatePresence } from "framer-motion";
+import { motion, useMotionValue, useSpring, useTransform, useScroll, useMotionTemplate, AnimatePresence, useMotionValueEvent } from "framer-motion";
 import { useEffect, useState } from "react";
 import { ArrowUpRight, ArrowLeft, Zap, X, Send, User, MessageSquare, CheckCircle2, Mail, Music, Volume2, VolumeX, Copy, Check, Bell, Play, Upload, Maximize2, Minimize2, Settings, LogOut } from "lucide-react";
 import Projects from "@/components/Projects";
@@ -109,6 +109,12 @@ export default function Home() {
   const textShadowY = useTransform(smoothY, [-0.5, 0.5], [20, -20]);
   const shadowColor = useTransform(scrollYProgress, [0, 0.15], ["rgba(255,255,255,0.3)", `${pColor}33`]);
   const textShadow = useMotionTemplate`${textShadowX}px ${textShadowY}px 40px ${shadowColor}`;
+  
+  const [statueColor, setStatueColor] = useState("#ffffff");
+  useMotionValueEvent(scrollYProgress, "change", (latest) => {
+    // White at the top (on primary color background), pColor when scrolled (on gray background)
+    setStatueColor(latest < 0.05 ? "#ffffff" : pColor);
+  });
 
   useEffect(() => {
     setIsClient(true);
@@ -367,7 +373,7 @@ export default function Home() {
         />
       )}
 
-      {show3DBackground && <StatueBackground color={backgroundColor === '#ffffff' ? pColor : '#ffffff'} />}
+      {show3DBackground && <StatueBackground color={statueColor} />}
       {/* Dynamic Theme Styles */}
       <style jsx global>{`
         :root {
