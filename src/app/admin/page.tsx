@@ -91,7 +91,6 @@ export default function AdminDashboard() {
   const [profileName, setProfileName] = useState("Lucas Caillat");
   const [profileProfession, setProfileProfession] = useState("Freelance Informatique");
   const [profileBio, setProfileBio] = useState("");
-  const [profileBio, setProfileBio] = useState("");
   const [heroTitleMain, setHeroTitleMain] = useState("CAILLAT");
   const [heroTitleSub, setHeroTitleSub] = useState("Lucas");
   const [textEffectImage, setTextEffectImage] = useState("");
