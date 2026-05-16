@@ -34,8 +34,10 @@ function Statue({ color }: { color: string }) {
     }
   });
 
+  const ScenePrimitive = 'primitive' as any;
+
   return (
-    <primitive 
+    <ScenePrimitive 
       ref={mesh} 
       object={scene} 
       scale={2.2} 
