@@ -95,6 +95,7 @@ export default function Home() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [orderAgreed, setOrderAgreed] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
+  const [isCompressing, setIsCompressing] = useState(false);
 
   const [isMuted, setIsMuted] = useState(true);
   const mouseX = useMotionValue(0);
@@ -300,6 +301,7 @@ export default function Home() {
     const file = e.target.files?.[0];
     if (!file) return;
     
+    setIsCompressing(true);
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new window.Image();
@@ -324,10 +326,15 @@ export default function Home() {
           ctx.drawImage(img, 0, 0, width, height);
           const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
           setFormAttachments(prev => [...prev, compressedBase64]);
+          setIsCompressing(false);
+        } else {
+          setIsCompressing(false);
         }
       };
+      img.onerror = () => setIsCompressing(false);
       img.src = event.target?.result as string;
     };
+    reader.onerror = () => setIsCompressing(false);
     reader.readAsDataURL(file);
   };
 
@@ -896,7 +903,9 @@ export default function Home() {
                     </div>
                   )}
 
-                  <button type="submit" disabled={isSubmitting} className="w-full bg-text-black text-white py-4 rounded-sm font-bold text-xs tracking-widest uppercase flex items-center justify-center gap-3"> {isSubmitting ? "Envoi..." : <>ENVOYER <Send size={14} /></>} </button>
+                  <button type="submit" disabled={isSubmitting || isCompressing} className={`w-full bg-text-black text-white py-4 rounded-sm font-bold text-xs tracking-widest uppercase flex items-center justify-center gap-3 ${(isSubmitting || isCompressing) ? 'opacity-50 cursor-not-allowed' : ''}`}> 
+                    {(isSubmitting || isCompressing) ? (isCompressing ? "COMPRESSION..." : "ENVOI...") : <>ENVOYER <Send size={14} /></>} 
+                  </button>
                 </form>
               )}
             </motion.div>

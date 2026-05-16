@@ -661,7 +661,19 @@ export default function AdminDashboard() {
                         {(msg as any).contact && <span className="bg-green-500/20 text-green-400 px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border border-green-500/20 flex items-center gap-2"><Phone size={12} /> {(msg as any).contact}</span>}
                       </div>
                       <h4 className="text-xl font-medium text-white/90">{msg.title}</h4>
-                      <p className="text-base leading-relaxed text-white/70 bg-white/5 p-6 rounded-2xl border border-white/5">{msg.content}</p>
+                      <p className="text-base leading-relaxed text-white/70 bg-white/5 p-6 rounded-2xl border border-white/5 whitespace-pre-wrap">{msg.content}</p>
+                      {msg.attachments && msg.attachments.length > 0 && (
+                        <div className="flex flex-wrap gap-3 pt-2">
+                          {msg.attachments.map((att, aidx) => (
+                            <a key={aidx} href={att} target="_blank" rel="noreferrer" className="relative w-24 h-24 rounded-xl overflow-hidden border border-white/10 group cursor-pointer block shadow-lg">
+                              <Image src={att} alt="Attachment" fill className="object-cover group-hover:scale-105 transition-transform" unoptimized />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <ExternalLink size={20} className="text-white drop-shadow-md" />
+                              </div>
+                            </a>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="space-y-4">
