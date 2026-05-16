@@ -221,33 +221,44 @@ export default function Home() {
   };
 
   const fetchUserProfile = async (userId: string) => {
-    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
-    if (data) {
-      setProfileImage(data.avatar_url || "");
+    try {
+      const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
+      if (error) throw error;
+      if (data) setProfileImage(data.avatar_url || "");
+    } catch (err) {
+      console.warn("Profil non trouvé ou table inexistante:", err);
     }
   };
 
   const checkReplies = async () => {
-    const myMsgIdsRaw = localStorage.getItem("my_sent_messages");
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    let query = supabase.from('messages').select('*, profiles(avatar_url, full_name)');
-    
-    if (session?.user) {
-      query = query.or(`user_id.eq.${session.user.id},user_email.eq.${session.user.email}`);
-    } else if (myMsgIdsRaw) {
-      const myMsgIds = JSON.parse(myMsgIdsRaw);
-      query = query.in('id', myMsgIds);
-    } else {
-      return;
-    }
+    try {
+      const myMsgIdsRaw = localStorage.getItem("my_sent_messages");
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // Essayer d'abord sans jointure pour éviter le crash 400/406
+      let query = supabase.from('messages').select('*');
+      
+      if (session?.user) {
+        query = query.or(`user_id.eq.${session.user.id},user_email.eq.${session.user.email}`);
+      } else if (myMsgIdsRaw) {
+        const myMsgIds = JSON.parse(myMsgIdsRaw);
+        query = query.in('id', myMsgIds);
+      } else {
+        return;
+      }
 
-    const { data } = await query.order('created_at', { ascending: false });
-    
-    if (data) {
-      setReplies(data);
-      const unread = data.filter(m => m.reply && !localStorage.getItem(`read_reply_${m.id}`)).length;
-      setUnreadCount(unread);
+      const { data, error } = await query.order('created_at', { ascending: false });
+      if (error) throw error;
+      
+      if (data) {
+        setReplies(data);
+        const unread = data.filter((m: Message) => m.reply && !localStorage.getItem(`read_reply_${m.id}`)).length;
+        setUnreadCount(unread);
+      }
+    } catch (err) {
+      console.warn("Erreur lors de la récupération des messages:", err);
+    }
+  };
     }
   };
 
@@ -392,7 +403,10 @@ export default function Home() {
       )}
 
       {/* Global Background Color Layer */}
-      <div className="fixed inset-0 z-[-2] bg-background" />
+      <motion.div 
+        className="fixed inset-0 z-[-10]" 
+        style={{ backgroundColor }}
+      />
 
       {show3DBackground && <StatueBackground color={statueColor} />}
       {/* Dynamic Theme Styles */}
