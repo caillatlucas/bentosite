@@ -766,13 +766,13 @@ export default function Home() {
 
       <div className="max-w-[1600px] mx-auto w-full space-y-32 md:space-y-48">
         {(settings.sectionsConfig || []).filter(s => s.visible).map((section) => {
-          if (section.id === 'projects') return <Projects key="projects" config={settings} label={section.label} subLabel={section.subLabel} />;
+          if (section.id === 'projects') return <Projects key="projects" config={settings} label={section.label} subLabel={section.subLabel} textColor={textColor} secondaryTextColor={secondaryTextColor} />;
           
           if (section.id === 'shop' && products.length > 0) return (
             <section key="shop" className="relative z-10">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-4 pt-4">
-                <h2 className="font-serif text-6xl md:text-8xl tracking-tighter leading-tight italic pb-2">{section.label}</h2>
-                <p className="text-xl md:text-2xl text-[var(--primary-red)] font-light italic mb-4 md:mb-8">{section.subLabel}</p>
+                <motion.h2 style={{ color: textColor }} className="font-serif text-6xl md:text-8xl tracking-tighter leading-tight italic pb-2">{section.label}</motion.h2>
+                <motion.p style={{ color: secondaryTextColor }} className="text-xl md:text-2xl font-light italic mb-4 md:mb-8">{section.subLabel}</motion.p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {products.map((product) => (
@@ -791,9 +791,9 @@ export default function Home() {
                     <div className="p-8 pt-4 space-y-4">
                       <div className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 bg-primary-red rounded-full"></span>
-                        <h3 className="font-serif text-2xl text-white leading-tight">{product.name}</h3>
+                        <motion.h3 style={{ color: textColor }} className="font-serif text-2xl leading-tight">{product.name}</motion.h3>
                       </div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 group-hover:text-primary-red transition-colors">Voir les détails</p>
+                      <motion.p style={{ color: secondaryTextColor }} className="text-[10px] font-bold uppercase tracking-widest group-hover:text-primary-red transition-colors">Voir les détails</motion.p>
                     </div>
                   </motion.div>
                 ))}
@@ -810,9 +810,9 @@ export default function Home() {
               <section key="gallery" className="relative">
                 <div className="flex justify-between items-end mb-12 md:mb-16 border-b border-text-black/10 pb-6"> 
                   <div className="space-y-2">
-                    <h2 className="font-serif text-3xl md:text-5xl lg:text-6xl text-soft-black">{section.label}</h2> 
+                    <motion.h2 style={{ color: textColor }} className="font-serif text-3xl md:text-5xl lg:text-6xl">{section.label}</motion.h2> 
                     <div className="flex items-center gap-4">
-                      <span className="text-text-black/50 text-[10px] md:text-sm tracking-widest uppercase">{section.subLabel}</span>
+                      <motion.span style={{ color: secondaryTextColor }} className="text-[10px] md:text-sm tracking-widest uppercase">{section.subLabel}</motion.span>
                       {totalPages > 1 && (
                         <div className="flex items-center gap-2">
                           <button 

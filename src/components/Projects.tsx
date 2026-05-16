@@ -58,8 +58,8 @@ export default function Projects({ config, label, subLabel }: ProjectsProps) {
   return (
     <section>
       <div className="flex justify-between items-end mb-12 md:mb-16 border-b border-text-black/10 pb-6">
-        <h2 className="font-serif text-3xl md:text-5xl lg:text-6xl text-soft-black">{label || config.recentProjectsTitle || "Projets Récents"}</h2>
-        <span className="text-text-black/50 text-[10px] md:text-sm tracking-widest uppercase hidden md:block">{subLabel || config.projectsTitle}</span>
+        <motion.h2 style={{ color: textColor }} className="font-serif text-3xl md:text-5xl lg:text-6xl">{label || config.recentProjectsTitle || "Projets Récents"}</motion.h2>
+        <motion.span style={{ color: secondaryTextColor }} className="text-[10px] md:text-sm tracking-widest uppercase hidden md:block">{subLabel || config.projectsTitle}</motion.span>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">
         {projects.map((project, index) => {
