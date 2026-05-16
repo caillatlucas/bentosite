@@ -321,36 +321,39 @@ export default function Home() {
         {selectedProduct && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-12">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedProduct(null)} className="absolute inset-0 bg-soft-black/80 backdrop-blur-xl" />
-            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-6xl bg-background border border-text-black/10 rounded-sm shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]">
+            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-6xl bg-white/10 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]">
               
               {/* Product Visuals */}
-              <div className="w-full h-80 md:h-auto md:w-3/5 relative bg-text-black/5 group shrink-0">
-                <Image src={selectedProduct.images[activeProdImg] || ""} alt={selectedProduct.name} fill className="object-contain p-8 md:p-12" unoptimized />
-                <button onClick={() => setSelectedProduct(null)} className="absolute top-6 left-6 z-10 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-md transition-all"><X size={24} /></button>
+              <div className="w-full h-80 md:h-auto md:w-3/5 relative bg-white/5 group shrink-0">
+                <Image src={selectedProduct.images[activeProdImg] || ""} alt={selectedProduct.name} fill className="object-contain p-8 md:p-12 drop-shadow-2xl" unoptimized />
+                <button onClick={() => setSelectedProduct(null)} className="absolute top-6 left-6 z-10 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-md transition-all shadow-xl"><X size={24} /></button>
                 
                 {selectedProduct.images.length > 1 && (
-                  <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-10 px-4 py-2 bg-black/20 backdrop-blur-md rounded-full">
+                  <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-10 px-6 py-3 bg-black/40 backdrop-blur-md rounded-full border border-white/10">
                     {selectedProduct.images.map((_, i) => (
-                      <button key={i} onClick={() => setActiveProdImg(i)} className={`w-2.5 h-2.5 rounded-full transition-all ${activeProdImg === i ? 'bg-primary-red scale-125' : 'bg-white/40 hover:bg-white/60'}`} />
+                      <button key={i} onClick={() => setActiveProdImg(i)} className={`w-3 h-3 rounded-full transition-all ${activeProdImg === i ? 'bg-primary-red scale-125' : 'bg-white/20 hover:bg-white/40'}`} />
                     ))}
                   </div>
                 )}
               </div>
 
               {/* Product Info */}
-              <div className="w-full md:w-2/5 p-8 md:p-16 flex flex-col justify-center bg-white overflow-y-auto">
+              <div className="w-full md:w-2/5 p-8 md:p-16 flex flex-col justify-center bg-black/40 backdrop-blur-3xl overflow-y-auto">
                 <div className="space-y-8">
-                  <div className="space-y-2">
-                    <p className="text-xs md:text-sm font-bold uppercase tracking-[0.2em] text-primary-red">Produit Premium</p>
-                    <h2 className="font-serif text-3xl md:text-5xl text-soft-black leading-tight">{selectedProduct.name}</h2>
-                    <p className="text-3xl font-serif italic text-soft-black/40">{selectedProduct.price}€</p>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <span className="w-2 h-2 bg-primary-red rounded-full animate-pulse"></span>
+                      <p className="text-xs md:text-sm font-bold uppercase tracking-[0.2em] text-white/60">Produit Premium</p>
+                    </div>
+                    <h2 className="font-serif text-4xl md:text-6xl text-white leading-tight">{selectedProduct.name}</h2>
+                    <p className="text-4xl font-serif italic text-primary-red">{selectedProduct.price}€</p>
                   </div>
 
                   <div className="h-[1px] w-20 bg-primary-red/30"></div>
 
-                  <div className="space-y-4">
-                    <h4 className="text-[10px] font-bold uppercase tracking-widest opacity-30">Description du produit</h4>
-                    <p className="text-sm md:text-base leading-relaxed text-soft-black/70 whitespace-pre-line">{selectedProduct.description}</p>
+                  <div className="space-y-6">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-white/30">Description du produit</h4>
+                    <p className="text-sm md:text-base leading-relaxed text-white/70 whitespace-pre-line">{selectedProduct.description}</p>
                     
                     {selectedProduct.link && (
                       <div className="pt-4">
@@ -365,14 +368,14 @@ export default function Home() {
                     )}
                   </div>
 
-                  <div className="pt-8 space-y-4">
+                  <div className="pt-8 space-y-6">
                     <button 
                       onClick={() => { handleBuyProduct(selectedProduct); setSelectedProduct(null); }} 
-                      className="w-full bg-text-black text-white py-5 rounded-sm font-bold text-xs tracking-widest uppercase hover:bg-primary-red transition-all shadow-xl shadow-primary-red/10 flex items-center justify-center gap-3"
+                      className="w-full bg-primary-red text-white py-6 rounded-2xl font-bold text-xs tracking-widest uppercase hover:bg-primary-red/80 transition-all shadow-2xl shadow-primary-red/30 flex items-center justify-center gap-4 group"
                     >
-                      COMMANDER MAINTENANT <Zap size={16} fill="currentColor" />
+                      COMMANDER MAINTENANT <Zap size={18} fill="currentColor" className="group-hover:scale-125 transition-transform" />
                     </button>
-                    <p className="text-[9px] text-center opacity-30 uppercase tracking-widest">Paiement en cash sur place</p>
+                    <p className="text-[9px] text-center text-white/30 uppercase tracking-widest">Paiement en cash sur place</p>
                   </div>
                 </div>
               </div>
@@ -398,10 +401,13 @@ export default function Home() {
               margin: isInboxExpanded ? 'auto' : undefined
             }} 
             exit={{ opacity: 0, y: 20, scale: 0.9 }} 
-            className={`fixed z-[200] bg-white shadow-2xl rounded-sm border border-text-black/10 overflow-hidden flex flex-col ${isInboxExpanded ? '' : 'bottom-32 right-8 md:bottom-44 md:right-16 w-72 md:w-96'}`}
+            className={`fixed z-[200] bg-white/10 backdrop-blur-2xl shadow-2xl rounded-3xl border border-white/20 overflow-hidden flex flex-col ${isInboxExpanded ? '' : 'bottom-32 right-8 md:bottom-44 md:right-16 w-72 md:w-96'}`}
           >
-            <div className="bg-text-black p-4 flex justify-between items-center shrink-0"> 
-              <h4 className="text-white font-serif italic">Réponses</h4> 
+            <div className="bg-white/5 backdrop-blur-md p-6 flex justify-between items-center shrink-0 border-b border-white/10"> 
+              <div className="flex items-center gap-3">
+                <span className="w-2 h-2 bg-primary-red rounded-full animate-pulse"></span>
+                <h4 className="text-white font-serif italic text-lg">Réponses</h4> 
+              </div>
               <div className="flex items-center gap-3">
                 <button onClick={() => setIsInboxExpanded(!isInboxExpanded)} className="text-white/50 hover:text-white transition-colors">
                   {isInboxExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
@@ -412,21 +418,21 @@ export default function Home() {
             <div className={`p-4 overflow-y-auto space-y-4 flex-1 ${isInboxExpanded ? '' : 'max-h-[400px]'}`}>
               {replies.length === 0 ? <p className="text-xs text-text-black/40 text-center py-8">Aucune réponse pour le moment.</p> : (
                 replies.map(r => (
-                  <div key={r.id} className="bg-text-black/[0.02] border border-text-black/5 rounded-sm p-4 relative group" onClick={() => { if(r.reply) localStorage.setItem(`read_reply_${r.id}`, "true"); checkReplies(); }}>
-                    <div className="flex justify-between items-start mb-2">
-                      <p className="text-[10px] font-bold uppercase tracking-widest opacity-40">{r.title}</p>
-                      {r.order_id && <span className="text-[9px] font-bold text-primary-red">Code: {r.order_id}</span>}
+                  <div key={r.id} className="bg-white/5 border border-white/10 rounded-2xl p-6 relative group hover:bg-white/10 transition-all cursor-pointer" onClick={() => { if(r.reply) localStorage.setItem(`read_reply_${r.id}`, "true"); checkReplies(); }}>
+                    <div className="flex justify-between items-start mb-4">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">{r.title}</p>
+                      {r.order_id && <span className="text-[10px] font-bold text-primary-red bg-primary-red/10 px-2 py-0.5 rounded-sm">Code: {r.order_id}</span>}
                     </div>
-                    <div className="space-y-3 mb-3">
+                    <div className="space-y-4 mb-4">
                       {r.replies && r.replies.length > 0 ? (
                         r.replies.map((rep, idx) => (
-                          <div key={idx} className={`${rep.from === 'Lucas' ? 'bg-text-black/5 border-l-2 border-primary-red pl-3 py-1' : ''}`}>
-                            <p className="text-[9px] font-bold uppercase opacity-30 mb-1">{rep.from} • {rep.date}</p>
-                            <p className="text-sm font-medium">{rep.text}</p>
+                          <div key={idx} className={`${rep.from === 'Lucas' ? 'bg-white/5 border-l-2 border-primary-red pl-4 py-2 rounded-r-lg' : ''}`}>
+                            <p className="text-[9px] font-bold uppercase text-white/30 mb-1">{rep.from} • {rep.date}</p>
+                            <p className="text-sm font-medium text-white/90">{rep.text}</p>
                           </div>
                         ))
                       ) : (
-                        <p className="text-sm font-medium">{r.reply || <span className="opacity-30 italic">En attente de réponse...</span>}</p>
+                        <p className="text-sm font-medium text-white/90">{r.reply || <span className="text-white/20 italic">En attente de réponse...</span>}</p>
                       )}
                     </div>
                     <div className="flex justify-between items-center">
@@ -451,8 +457,8 @@ export default function Home() {
       <AnimatePresence>
         {isContactOpen && (
           <div className="fixed inset-0 z-[150] flex items-center justify-center p-6">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsContactOpen(false)} className="absolute inset-0 bg-soft-black/60 backdrop-blur-md" />
-            <motion.div initial={{ opacity: 0, y: 50, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 50, scale: 0.9 }} className="relative w-full max-w-lg bg-background border border-text-black/10 rounded-sm shadow-2xl p-8 md:p-12 overflow-hidden">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsContactOpen(false)} className="absolute inset-0 bg-black/60 backdrop-blur-xl" />
+            <motion.div initial={{ opacity: 0, y: 50, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 50, scale: 0.9 }} className="relative w-full max-w-lg bg-white/10 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl p-8 md:p-12 overflow-hidden text-white">
               {showSuccess ? (
                 <div className="py-12 text-center space-y-6">
                   <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-20 h-20 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto"><CheckCircle2 size={40} /></motion.div>
@@ -472,14 +478,14 @@ export default function Home() {
                 <form onSubmit={handleContactSubmit} className="space-y-6">
                   <h3 className="font-serif text-4xl italic text-[var(--primary-red)]">Me contacter</h3>
                   <div className="grid grid-cols-2 gap-4">
-                    <input type="text" value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Nom & Prénom" className="w-full bg-transparent border-b border-text-black/10 py-3 outline-none focus:border-[var(--primary-red)]" required />
-                    <input type="text" value={formContact} onChange={(e) => setFormContact(e.target.value)} placeholder="Email / Tél" className="w-full bg-transparent border-b border-text-black/10 py-3 outline-none focus:border-[var(--primary-red)]" required />
+                    <input type="text" value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Nom & Prénom" className="w-full bg-white/5 border-b border-white/20 py-3 outline-none focus:border-primary-red transition-all" required />
+                    <input type="text" value={formContact} onChange={(e) => setFormContact(e.target.value)} placeholder="Email / Tél" className="w-full bg-white/5 border-b border-white/20 py-3 outline-none focus:border-primary-red transition-all" required />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <input type="text" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="Objet" className="w-full bg-transparent border-b border-text-black/10 py-3 outline-none focus:border-[var(--primary-red)]" required />
-                    <input type="text" value={formOrderId} onChange={(e) => setFormOrderId(e.target.value)} placeholder="ID Commande (Optionnel)" className="w-full bg-transparent border-b border-text-black/10 py-3 outline-none focus:border-[var(--primary-red)]" readOnly={formTitle.startsWith("Achat:")} />
+                    <input type="text" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="Objet" className="w-full bg-white/5 border-b border-white/20 py-3 outline-none focus:border-primary-red transition-all" required />
+                    <input type="text" value={formOrderId} onChange={(e) => setFormOrderId(e.target.value)} placeholder="ID Commande (Optionnel)" className="w-full bg-white/5 border-b border-white/20 py-3 outline-none focus:border-primary-red transition-all" readOnly={formTitle.startsWith("Achat:")} />
                   </div>
-                  <textarea value={formContent} onChange={(e) => setFormContent(e.target.value)} placeholder="Message..." rows={4} className="w-full bg-text-black/5 p-4 rounded-sm outline-none focus:border-[var(--primary-red)] resize-none" required />
+                  <textarea value={formContent} onChange={(e) => setFormContent(e.target.value)} placeholder="Message..." rows={4} className="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none focus:border-primary-red resize-none transition-all" required />
                   
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
@@ -601,15 +607,18 @@ export default function Home() {
                     whileInView={{ opacity: 1, y: 0 }} 
                     viewport={{ once: true }} 
                     onClick={() => { setSelectedProduct(product); setActiveProdImg(0); }}
-                    className="group bg-white/40 border border-text-black/5 rounded-sm overflow-hidden backdrop-blur-md cursor-pointer"
+                    className="group bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl overflow-hidden shadow-2xl cursor-pointer hover:bg-white/20 transition-all duration-500"
                   >
-                    <div className="relative aspect-square overflow-hidden">
+                    <div className="relative aspect-square overflow-hidden m-4 rounded-xl">
                       <Image src={product.images[0] || ""} alt={product.name} fill className="object-cover group-hover:scale-105 transition-transform duration-700" unoptimized />
-                      <div className="absolute top-6 right-6 bg-text-black text-white px-4 py-2 text-sm font-bold shadow-xl">{product.price}€</div>
+                      <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-md border border-white/30 text-white px-4 py-2 text-sm font-bold shadow-xl rounded-lg">{product.price}€</div>
                     </div>
-                    <div className="p-8 space-y-4">
-                      <h3 className="font-serif text-2xl">{product.name}</h3>
-                      <p className="text-[10px] font-bold uppercase tracking-widest opacity-40">Voir les détails</p>
+                    <div className="p-8 pt-4 space-y-4">
+                      <div className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 bg-primary-red rounded-full"></span>
+                        <h3 className="font-serif text-2xl text-white">{product.name}</h3>
+                      </div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 group-hover:text-primary-red transition-colors">Voir les détails</p>
                     </div>
                   </motion.div>
                 ))}
@@ -676,9 +685,9 @@ export default function Home() {
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: i * 0.05 }} 
                             onClick={() => setSelectedImage(item)} 
-                            className={`relative overflow-hidden rounded-sm bg-text-black/5 group cursor-zoom-in aspect-square md:aspect-auto ${gridClass}`}
+                            className={`relative overflow-hidden rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 group cursor-zoom-in aspect-square md:aspect-auto shadow-2xl hover:bg-white/20 transition-all ${gridClass}`}
                           >
-                            <Image src={displayUrl} alt={item.name} fill className="object-cover transition-transform duration-700 group-hover:scale-105" unoptimized />
+                            <Image src={displayUrl} alt={item.name} fill className="object-cover transition-transform duration-700 group-hover:scale-105 opacity-90 group-hover:opacity-100" unoptimized />
                             {ytId && (
                               <div className="absolute inset-0 flex items-center justify-center">
                                 <div className="w-12 h-12 md:w-16 md:h-16 bg-white/20 backdrop-blur-md text-white rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 group-hover:bg-primary-red transition-all duration-500 border border-white/30">
@@ -707,19 +716,19 @@ export default function Home() {
                 <p className="text-xl md:text-2xl text-[var(--primary-red)] font-light italic">{section.subLabel}</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="md:col-span-2 aspect-square md:aspect-video bg-white/40 backdrop-blur-md border border-text-black/5 rounded-sm p-12 flex flex-col justify-between group overflow-hidden relative">
-                  <div className="relative z-10"> <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--primary-red)] mb-4">Ma Bio</p> <h3 className="font-serif text-3xl md:text-5xl leading-tight mb-6">{settings.bio || "Exploration créative et solutions techniques."}</h3> </div>
+                <div className="md:col-span-2 aspect-square md:aspect-video bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-12 flex flex-col justify-between group overflow-hidden relative shadow-2xl hover:bg-white/20 transition-all">
+                  <div className="relative z-10"> <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--primary-red)] mb-4">Ma Bio</p> <h3 className="font-serif text-3xl md:text-5xl leading-tight mb-6 text-white">{settings.bio || "Exploration créative et solutions techniques."}</h3> </div>
                   <Socials config={socialsConfig} />
                 </div>
-                <div className="aspect-square bg-[var(--primary-red)] rounded-sm p-10 flex flex-col justify-between text-white relative overflow-hidden group">
+                <div className="aspect-square bg-[var(--primary-red)]/90 backdrop-blur-md border border-white/20 rounded-2xl p-10 flex flex-col justify-between text-white relative overflow-hidden group shadow-2xl hover:bg-[var(--primary-red)] transition-all">
                   <motion.div initial={{ scale: 1 }} whileHover={{ scale: 1.1 }} className="absolute -right-8 -bottom-8 opacity-20"><Zap size={200} fill="white" /></motion.div>
                   <p className="text-[10px] font-bold uppercase tracking-[0.2em] relative z-10">Disponibilité</p>
                   <h3 className="font-serif text-4xl italic relative z-10">Ouvert aux projets freelance</h3>
                 </div>
-                <div className="aspect-square bg-text-black rounded-sm p-10 flex flex-col justify-between text-white relative overflow-hidden group">
+                <div className="aspect-square bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-10 flex flex-col justify-between text-white relative overflow-hidden group shadow-2xl hover:bg-white/20 transition-all">
                   <p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-40">Contact</p>
                   <div className="space-y-4 relative z-10">
-                    <p className="font-serif text-2xl">{settings.email || "hello@lucascaillat.fr"}</p>
+                    <p className="font-serif text-2xl truncate">{settings.email || "hello@lucascaillat.fr"}</p>
                     <button onClick={copyEmail} className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 hover:text-primary-red transition-colors"> {copied ? <><Check size={14} /> Copié</> : <><Copy size={14} /> Copier l'email</>} </button>
                   </div>
                 </div>

@@ -78,7 +78,7 @@ export default function Projects({ config, label, subLabel }: ProjectsProps) {
               className="group relative cursor-pointer"
             >
               <Wrapper {...(wrapperProps as any)}>
-                <div className="relative aspect-[4/5] overflow-hidden rounded-sm bg-text-black/5 transition-transform duration-700 ease-out group-hover:scale-[1.02] shadow-sm group-hover:shadow-2xl group-hover:shadow-shadow-red">
+                <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 transition-all duration-700 ease-out group-hover:scale-[1.02] shadow-2xl group-hover:bg-white/20">
                   <Image
                     src={project.image}
                     alt={project.title}
@@ -86,19 +86,24 @@ export default function Projects({ config, label, subLabel }: ProjectsProps) {
                     className="object-cover transition-transform duration-1000 group-hover:scale-110 opacity-90 group-hover:opacity-100"
                     unoptimized
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-soft-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-500" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity duration-500" />
                   
                   {/* Content Overlay */}
-                  <div className="absolute bottom-0 left-0 w-full p-6 md:p-8 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                    {project.category && (
-                      <p className="text-white/70 text-[10px] md:text-sm tracking-widest uppercase mb-2">
-                        {project.category}
-                      </p>
-                    )}
-                    <h3 className="text-white font-serif text-2xl md:text-3xl flex justify-between items-center">
-                      {project.title}
-                      <ArrowUpRight className="opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-500 text-primary-red" />
-                    </h3>
+                  <div className="absolute bottom-0 left-0 w-full p-6 md:p-8 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+                    <div className="bg-white/10 backdrop-blur-lg border border-white/10 p-4 rounded-xl shadow-xl">
+                      {project.category && (
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="w-1 h-1 bg-primary-red rounded-full animate-pulse"></span>
+                          <p className="text-white/60 text-[10px] md:text-xs tracking-[0.2em] uppercase font-bold">
+                            {project.category}
+                          </p>
+                        </div>
+                      )}
+                      <h3 className="text-white font-serif text-2xl md:text-3xl flex justify-between items-center group-hover:text-primary-red transition-colors">
+                        {project.title}
+                        <ArrowUpRight size={20} className="opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-500" />
+                      </h3>
+                    </div>
                   </div>
                 </div>
               </Wrapper>
