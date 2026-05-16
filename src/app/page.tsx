@@ -48,6 +48,7 @@ export default function Home() {
     musicEnabled: false, 
     musicUrl: "", 
     musicCover: "",
+    primaryColor: "#ff3131",
     show3DBackground: false,
     musicRotationEnabled: true,
     sectionsConfig: [
