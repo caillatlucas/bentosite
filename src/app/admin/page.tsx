@@ -945,28 +945,31 @@ export default function AdminDashboard() {
                           </button>
                         </div>
                       ) : (
-                        <div className="bg-white border border-text-black/10 p-8 rounded-sm space-y-6">
+                        <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-2xl space-y-8">
                           <div className="flex flex-col md:flex-row gap-8 items-center">
-                            <div className="bg-white p-4 border border-text-black/5 rounded-sm">
+                            <div className="bg-white p-4 rounded-2xl shadow-2xl border border-white/10">
                               <QRCodeSVG value={mfaEnrollment.totp.uri} size={180} />
                             </div>
                             <div className="space-y-4 flex-1">
-                              <p className="text-sm font-bold uppercase tracking-widest">1. Scannez le QR Code</p>
-                              <p className="text-xs opacity-60">Ouvrez votre application d'authentification et scannez ce code. Si vous ne pouvez pas scanner, utilisez cette clé :</p>
-                              <code className="block bg-text-black/5 p-2 text-[10px] font-mono break-all">{mfaEnrollment.totp.secret}</code>
+                              <p className="text-sm font-bold uppercase tracking-widest text-primary-red">1. Scannez le QR Code</p>
+                              <p className="text-xs text-white/60 leading-relaxed">Ouvrez votre application d'authentification (Google Authenticator, Authy...) et scannez ce code. Si vous ne pouvez pas scanner, utilisez cette clé :</p>
+                              <div className="flex items-center gap-3 bg-black/40 p-3 rounded-xl border border-white/10">
+                                <code className="text-[11px] font-mono text-white/90 break-all select-all">{mfaEnrollment.totp.secret}</code>
+                              </div>
                             </div>
                           </div>
                           
-                          <div className="space-y-4 pt-4 border-t border-text-black/5">
-                            <p className="text-sm font-bold uppercase tracking-widest">2. Vérifiez le code</p>
-                            <div className="flex gap-4">
+                          <div className="space-y-6 pt-6 border-t border-white/10">
+                            <p className="text-sm font-bold uppercase tracking-widest text-primary-red">2. Vérifiez le code</p>
+                            <div className="flex gap-4 items-center">
                               <input 
                                 type="text" 
                                 value={mfaCode}
                                 onChange={(e) => setMfaCode(e.target.value)}
-                                placeholder="000000"
-                                className="flex-1 bg-transparent border-b border-text-black/20 py-2 outline-none text-center text-2xl tracking-[0.3em] font-serif"
+                                placeholder="000 000"
+                                className="flex-1 bg-white/5 border border-white/10 py-4 rounded-xl outline-none text-center text-3xl tracking-[0.2em] font-serif focus:border-primary-red transition-all text-white placeholder:text-white/10"
                                 maxLength={6}
+                                autoFocus
                               />
                               <button 
                                 type="button"
