@@ -18,7 +18,24 @@ export default function LoginPage() {
   useEffect(() => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) router.push("/admin");
+      if (session) {
+        // If already at aal2, go to admin
+        const { data: mfaData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+        if (mfaData?.currentLevel === 'aal2') {
+          router.push("/admin");
+          return;
+        }
+
+        // If at aal1 but MFA is enrolled, trigger challenge
+        const { data: factors } = await supabase.auth.mfa.listFactors();
+        const totpFactor = factors?.all.find(f => f.factor_type === 'totp' && f.status === 'verified');
+        if (totpFactor) {
+          const { data: challenge, error } = await supabase.auth.mfa.challenge({ factorId: totpFactor.id });
+          if (!error) setMfaChallenge(challenge);
+        } else {
+          router.push("/admin");
+        }
+      }
     };
     checkUser();
   }, [router]);
@@ -136,16 +153,16 @@ export default function LoginPage() {
               <p className="text-xs opacity-40 italic">Entrez le code à 6 chiffres de votre application d'authentification.</p>
             </div>
             <div>
-              <input 
-                type="text" 
-                value={totpCode}
-                onChange={(e) => setTotpCode(e.target.value)}
-                className="w-full bg-transparent border border-text-black/20 rounded-sm px-4 py-4 text-center text-3xl tracking-[0.5em] font-serif focus:outline-none focus:border-primary-red transition-colors"
-                placeholder="000000"
-                maxLength={6}
-                required
-                autoFocus
-              />
+                <input 
+                  type="text" 
+                  value={totpCode}
+                  onChange={(e) => setTotpCode(e.target.value.replace(/\s/g, ''))}
+                  className="w-full bg-transparent border border-text-black/20 rounded-sm px-4 py-4 text-center text-3xl tracking-[0.5em] font-serif focus:outline-none focus:border-primary-red transition-colors"
+                  placeholder="000000"
+                  maxLength={6}
+                  required
+                  autoFocus
+                />
             </div>
 
             {error && (
