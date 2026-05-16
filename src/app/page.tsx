@@ -250,8 +250,8 @@ export default function Home() {
       attachments: formAttachments,
       agreed_to_pay: orderAgreed,
       date: new Date().toLocaleString("fr-FR"),
-      // user_id/user_email removed to avoid "column not found" errors. 
-      // Add these to your Supabase table 'messages' (text type) to restore full inbox functionality.
+      user_id: user?.id || null,
+      user_email: user?.email || null
     };
     
     try {

@@ -744,6 +744,11 @@ export default function AdminDashboard() {
                   <div className="flex items-center gap-4 flex-wrap">
                     <h3 className="font-serif text-3xl text-white">{msg.title}</h3>
                     {msg.order_id && <span className="bg-primary-red/20 text-primary-red px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border border-primary-red/20 shadow-lg shadow-primary-red/10">Commande: {msg.order_id}</span>}
+                    {msg.user_email && (
+                      <span className="bg-blue-500/20 text-blue-400 px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border border-blue-500/20 flex items-center gap-2">
+                        <User size={12} /> {msg.user_email}
+                      </span>
+                    )}
                     {msg.agreed_to_pay && <span className="bg-green-500/20 text-green-400 px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border border-green-500/20 flex items-center gap-2"><Check size={12} /> Engagement de paiement</span>}
                   </div>
                   <p className="text-base leading-relaxed text-white/70 bg-white/5 p-6 rounded-2xl border border-white/5">{msg.content}</p>
