@@ -385,8 +385,7 @@ export default function Home() {
 
   return (
     <motion.main 
-      style={{ backgroundColor }}
-      className="min-h-screen relative flex flex-col pt-24 pb-24 md:pt-32 md:pb-32 px-6 md:px-16 w-full overflow-x-hidden"
+      className="min-h-screen relative flex flex-col pt-24 pb-24 md:pt-32 md:pb-32 px-6 md:px-16 w-full overflow-x-hidden bg-transparent"
     >
       {/* Background Texture Overlay */}
       {hasTextImg && (
@@ -405,7 +404,11 @@ export default function Home() {
         style={{ backgroundColor }}
       />
 
-      {show3DBackground && <StatueBackground color={statueColor} />}
+      {show3DBackground && (
+        <div className="fixed inset-0 z-[-5]">
+          <StatueBackground color={statueColor} />
+        </div>
+      )}
       {/* Dynamic Theme Styles */}
       <style jsx global>{`
         :root {

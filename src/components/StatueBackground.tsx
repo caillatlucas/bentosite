@@ -3,18 +3,36 @@
 
 import React, { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Float, PerspectiveCamera, Environment, useGLTF } from '@react-three/drei';
+import { useGLTF, PerspectiveCamera } from '@react-three/drei';
 import * as THREE from 'three';
 
-// Define custom R3F elements to bypass JSX IntrinsicElements check
+// Define custom R3F elements for total compatibility
 const AmbientLight = 'ambientLight' as any;
-const SpotLight = 'spotLight' as any;
 const PointLight = 'pointLight' as any;
+const DirectionalLight = 'directionalLight' as any;
 const ScenePrimitive = 'primitive' as any;
+const Mesh = 'mesh' as any;
+const BoxGeometry = 'boxGeometry' as any;
+const MeshStandardMaterial = 'meshStandardMaterial' as any;
+
+function DebugCube() {
+  const ref = useRef<THREE.Mesh>(null);
+  useFrame((state) => {
+    if (ref.current) {
+      ref.current.rotation.x = ref.current.rotation.y += 0.01;
+    }
+  });
+  return (
+    <Mesh ref={ref} position={[-2, 0, 0]}>
+      <BoxGeometry args={[0.5, 0.5, 0.5]} />
+      <MeshStandardMaterial color="red" />
+    </Mesh>
+  );
+}
 
 function Statue({ color }: { color: string }) {
   const mesh = useRef<THREE.Group>(null);
-  // Using relative path to be compatible with both local and GitHub Pages
+  // Using relative path
   const { scene } = useGLTF('models/model.glb');
   
   useMemo(() => {
@@ -25,7 +43,7 @@ function Statue({ color }: { color: string }) {
           roughness: 0.1,
           metalness: 0.5,
           emissive: color,
-          emissiveIntensity: 0.5, // Increased glow
+          emissiveIntensity: 0.2,
         });
       }
     });
@@ -34,10 +52,9 @@ function Statue({ color }: { color: string }) {
   useFrame((state) => {
     const t = state.clock.getElapsedTime();
     if (mesh.current) {
-      mesh.current.rotation.y = t * 0.15;
+      mesh.current.rotation.y = t * 0.2;
       const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
-      mesh.current.rotation.y += scrollY * 0.001;
-      mesh.current.position.y = Math.sin(t) * 0.1;
+      mesh.current.rotation.y += scrollY * 0.002;
     }
   });
 
@@ -45,34 +62,30 @@ function Statue({ color }: { color: string }) {
     <ScenePrimitive 
       ref={mesh} 
       object={scene} 
-      scale={2.8} 
-      position={[0, -1.5, 0]} 
+      scale={2.5} 
+      position={[0, -1, 0]} 
     />
   );
 }
 
-// Preload using relative path
-useGLTF.preload('models/model.glb');
-
 export default function StatueBackground({ color }: { color: string }) {
   return (
-    <div className="fixed inset-0 z-[-1] pointer-events-none">
-      <Canvas dpr={[1, 2]}>
-        <PerspectiveCamera makeDefault position={[0, 0, 5]} />
-        <AmbientLight intensity={1.5} /> {/* Increased ambient light */}
-        <SpotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={2} />
-        <PointLight position={[-10, -10, -10]} intensity={1.5} />
+    <div className="fixed inset-0 pointer-events-none" style={{ background: 'transparent' }}>
+      <Canvas 
+        shadows={false} 
+        camera={{ position: [0, 0, 5], fov: 45 }}
+        style={{ pointerEvents: 'none' }}
+      >
+        <AmbientLight intensity={1} />
+        <PointLight position={[10, 10, 10]} intensity={1.5} />
+        <DirectionalLight position={[-10, 5, 10]} intensity={1} />
         
         <React.Suspense fallback={null}>
-          <Float speed={3} rotationIntensity={0.8} floatIntensity={1}>
-            <Statue color={color} />
-          </Float>
+          <Statue color={color} />
+          {/* Debugging element */}
+          <DebugCube />
         </React.Suspense>
-        
-        <Environment preset="city" />
       </Canvas>
-      {/* Subtle Noise Effect Overlay */}
-      <div className="absolute inset-0 bg-noise opacity-[0.02] pointer-events-none" />
     </div>
   );
 }

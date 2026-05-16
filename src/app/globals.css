@@ -12,11 +12,13 @@
   --font-sans: var(--font-inter);
 }
 
-body {
-  background: transparent;
+html, body {
+  background: transparent !important;
   color: var(--text-black);
   font-family: var(--font-sans), sans-serif;
   overflow-x: hidden;
+  margin: 0;
+  padding: 0;
 }
 
 ::selection {
@@ -24,12 +26,12 @@ body {
   color: #fff;
 }
 
-/* Custom scrollbar for premium feel */
+/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--background);
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
   background: var(--soft-black);
