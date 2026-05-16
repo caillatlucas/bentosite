@@ -149,6 +149,9 @@ export default function Home() {
     const settingsChannel = supabase.channel('settings-realtime').on('postgres_changes', { event: '*', table: 'settings', schema: 'public' }, () => { fetchData(); }).subscribe();
     const mediaChannel = supabase.channel('media-realtime').on('postgres_changes', { event: '*', table: 'media', schema: 'public' }, () => { fetchData(); }).subscribe();
     
+    // Log silencieux de la visite globale (IP)
+    supabase.rpc('log_site_visit').catch(() => {});
+
     window.addEventListener("mousemove", handleMouseMove);
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {

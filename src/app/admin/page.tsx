@@ -164,6 +164,27 @@ export default function AdminDashboard() {
     setIsFetchingIps(false);
   };
 
+  const [isGlobalIpModalOpen, setIsGlobalIpModalOpen] = useState(false);
+  const [globalIpData, setGlobalIpData] = useState<{ ip: string; visited_at: string }[]>([]);
+  const [isFetchingGlobalIps, setIsFetchingGlobalIps] = useState(false);
+
+  const fetchGlobalIps = async () => {
+    setIsGlobalIpModalOpen(true);
+    setIsFetchingGlobalIps(true);
+    try {
+      const { data, error } = await supabase.rpc('get_all_site_visits');
+      if (error) {
+        console.error(error);
+        alert(`Erreur: ${error.message}\nAvez-vous créé la fonction SQL 'get_all_site_visits' ?`);
+      } else if (data) {
+        setGlobalIpData(data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    setIsFetchingGlobalIps(false);
+  };
+
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -767,43 +788,79 @@ export default function AdminDashboard() {
             </motion.div>
           )}
 
-          {activeTab === "users" && (
-            <motion.div key="users" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {allProfiles.map((profile) => {
-                  const userMessages = messages.filter(m => m.user_id === profile.id);
-                  return (
-                    <div key={profile.id} className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center gap-5 group hover:bg-black/30 transition-all shadow-xl">
-                      <div className="w-16 h-16 rounded-full bg-white/10 border border-white/20 overflow-hidden relative shrink-0">
-                        {profile.avatar_url ? (
-                          <Image src={profile.avatar_url} alt="Avatar" fill className="object-cover" unoptimized />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-white/20">
-                            <User size={32} />
+          {activeTab === "users" && (() => {
+            // Création dynamique des fiches "Guest" à partir des messages sans user_id
+            const guestMap = new Map();
+            messages.filter(m => !m.user_id && (m.contact || m.name)).forEach(m => {
+               const key = m.contact || m.name;
+               if (!guestMap.has(key)) {
+                  guestMap.set(key, {
+                     id: `guest-${key}`,
+                     full_name: `${m.name || 'Anonyme'} (Guest)`,
+                     avatar_url: null,
+                     is_guest: true,
+                     contact: m.contact
+                  });
+               }
+            });
+            const guestProfiles = Array.from(guestMap.values());
+            const displayProfiles = [...allProfiles, ...guestProfiles];
+
+            return (
+              <motion.div key="users" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
+                <div className="flex justify-between items-center bg-white/5 border border-white/10 p-4 rounded-2xl mb-6 shadow-lg">
+                  <h3 className="text-white font-serif text-xl">Communauté ({displayProfiles.length})</h3>
+                  <button onClick={fetchGlobalIps} className="bg-primary-red/10 text-primary-red border border-primary-red/20 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-primary-red/20 transition-all flex items-center gap-2 shadow-lg shadow-primary-red/5">
+                    Logs Globaux IP
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {displayProfiles.map((profile) => {
+                    const userMessages = profile.is_guest 
+                      ? messages.filter(m => !m.user_id && (m.contact || m.name) === profile.id.replace('guest-', ''))
+                      : messages.filter(m => m.user_id === profile.id);
+                    
+                    return (
+                      <div key={profile.id} className={`bg-black/20 backdrop-blur-xl border ${profile.is_guest ? 'border-dashed border-white/20' : 'border-white/10'} rounded-3xl p-6 flex items-center gap-5 group hover:bg-black/30 transition-all shadow-xl relative overflow-hidden`}>
+                        {profile.is_guest && <div className="absolute -right-4 -top-4 w-12 h-12 bg-white/5 rotate-45" />}
+                        <div className={`w-16 h-16 rounded-full ${profile.is_guest ? 'bg-white/5' : 'bg-white/10'} border border-white/20 overflow-hidden relative shrink-0`}>
+                          {profile.avatar_url ? (
+                            <Image src={profile.avatar_url} alt="Avatar" fill className="object-cover" unoptimized />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-white/20">
+                              <User size={32} />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-lg font-bold text-white truncate flex items-center gap-2">
+                            {profile.full_name} 
+                            {profile.is_guest && <span className="text-[8px] bg-white/10 px-1.5 py-0.5 rounded text-white/50 uppercase tracking-widest">Invité</span>}
+                          </h4>
+                          <p className="text-[10px] text-white/40 uppercase tracking-widest mb-2 truncate">
+                            {profile.is_guest ? `Contact: ${profile.contact || 'Inconnu'}` : `ID: ${profile.id.substring(0, 8)}...`}
+                          </p>
+                          <div className="flex items-center gap-3">
+                            <span className="text-[10px] font-bold bg-primary-red/10 text-primary-red px-2 py-0.5 rounded-full border border-primary-red/20">
+                              {userMessages.length} message{userMessages.length > 1 ? 's' : ''}
+                            </span>
+                            {!profile.is_guest && (
+                              <button 
+                                onClick={() => fetchIpHistory(profile.id)}
+                                className="text-[10px] font-bold bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full border border-blue-500/20 hover:bg-blue-500/20 transition-colors"
+                              >
+                                Historique IP
+                              </button>
+                            )}
                           </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-lg font-bold text-white truncate">{profile.full_name || "Anonyme"}</h4>
-                        <p className="text-[10px] text-white/40 uppercase tracking-widest mb-2 truncate">ID: {profile.id.substring(0, 8)}...</p>
-                        <div className="flex items-center gap-3">
-                          <span className="text-[10px] font-bold bg-primary-red/10 text-primary-red px-2 py-0.5 rounded-full border border-primary-red/20">
-                            {userMessages.length} message{userMessages.length > 1 ? 's' : ''}
-                          </span>
-                          <button 
-                            onClick={() => fetchIpHistory(profile.id)}
-                            className="text-[10px] font-bold bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full border border-blue-500/20 hover:bg-blue-500/20 transition-colors"
-                          >
-                            Historique IP
-                          </button>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </motion.div>
-          )}
+                    );
+                  })}
+                </div>
+              </motion.div>
+            );
+          })()}
 
           {activeTab === "shop" && (
             <motion.div key="shop" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
@@ -991,6 +1048,41 @@ export default function AdminDashboard() {
                 
                 <p className="text-[10px] text-white/30 mt-6 text-center leading-relaxed">
                   Note: Nécessite la fonction SQL <code className="bg-white/10 px-1 py-0.5 rounded">get_user_ips</code> dans Supabase.
+                </p>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <AnimatePresence>
+          {isGlobalIpModalOpen && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+              <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} className="bg-[#111] border border-primary-red/30 rounded-3xl p-8 max-w-2xl w-full shadow-[0_0_50px_rgba(255,49,49,0.1)] relative">
+                <button onClick={() => setIsGlobalIpModalOpen(false)} className="absolute top-6 right-6 text-white/50 hover:text-white transition-colors"><X size={24} /></button>
+                <div className="flex items-center gap-4 mb-6 border-b border-white/10 pb-4">
+                  <div className="p-3 bg-primary-red/10 text-primary-red rounded-xl"><User size={24} /></div>
+                  <h2 className="text-2xl font-serif text-white">Logs Globaux des Visiteurs (IP)</h2>
+                </div>
+                
+                {isFetchingGlobalIps ? (
+                  <div className="py-16 flex justify-center"><div className="w-10 h-10 border-2 border-primary-red border-t-transparent rounded-full animate-spin"></div></div>
+                ) : globalIpData.length > 0 ? (
+                  <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
+                    {globalIpData.map((item, idx) => (
+                      <div key={idx} className="bg-white/5 p-4 rounded-xl border border-white/5 flex justify-between items-center hover:bg-white/10 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <span className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e]"></span>
+                          <span className="font-mono text-sm text-white/90">{item.ip}</span>
+                        </div>
+                        <span className="text-[10px] uppercase text-white/40 bg-black/30 px-3 py-1 rounded-full">{new Date(item.visited_at).toLocaleString('fr-FR')}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-white/40 italic text-center py-10">Aucun visiteur enregistré.</p>
+                )}
+                
+                <p className="text-[10px] text-primary-red mt-6 text-center leading-relaxed font-bold tracking-widest uppercase">
+                  Attention: Ces données sont sensibles et privées.
                 </p>
               </motion.div>
             </motion.div>
