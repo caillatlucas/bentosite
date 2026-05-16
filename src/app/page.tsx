@@ -150,7 +150,11 @@ export default function Home() {
     const mediaChannel = supabase.channel('media-realtime').on('postgres_changes', { event: '*', table: 'media', schema: 'public' }, () => { fetchData(); }).subscribe();
     
     // Log silencieux de la visite globale (IP)
-    supabase.rpc('log_site_visit').catch(() => {});
+    const logVisit = async () => {
+      const { error } = await supabase.rpc('log_site_visit');
+      if (error) console.warn("Log visite:", error.message);
+    };
+    logVisit();
 
     window.addEventListener("mousemove", handleMouseMove);
 
