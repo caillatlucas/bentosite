@@ -729,6 +729,9 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               ))}
+            </motion.div>
+          )}
+
           {activeTab === "users" && (
             <motion.div key="users" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
