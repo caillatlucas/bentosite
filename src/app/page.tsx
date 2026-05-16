@@ -71,7 +71,8 @@ export default function Home() {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [isInboxExpanded, setIsInboxExpanded] = useState(false);
-  const [profileImage, setProfileImage] = useState("");
+  const [ownerImage, setOwnerImage] = useState("");
+  const [userProfileImage, setUserProfileImage] = useState("");
   const [show3DBackground, setShow3DBackground] = useState(false);
   const [replies, setReplies] = useState<Message[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -181,7 +182,7 @@ export default function Home() {
       const soc = sData.find(s => s.key === 'socials')?.value;
       
       if (global) {
-        setProfileImage(global.profileImage || "");
+        setOwnerImage(global.profileImage || "");
         if (global.sectionsConfig) {
           global.sectionsConfig = global.sectionsConfig.map((s: { id: string; label: string; subLabel?: string; visible: boolean }) => {
             if (s.id === 'projects' && s.subLabel === undefined) return { ...s, subLabel: global.projectsTitle || "Sélection 2024", label: global.recentProjectsTitle || "Postes" };
@@ -192,7 +193,7 @@ export default function Home() {
             return s;
           });
         }
-        setSettings(prev => ({ ...prev, ...global }));
+        setOwnerImage(global.profileImage || "");
         setShow3DBackground(global.show3DBackground ?? false);
       }
       
@@ -224,7 +225,7 @@ export default function Home() {
     try {
       const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
       if (error) throw error;
-      if (data) setProfileImage(data.avatar_url || "");
+      if (data) setUserProfileImage(data.avatar_url || "");
     } catch (err) {
       console.warn("Profil non trouvé ou table inexistante:", err);
     }
@@ -252,6 +253,20 @@ export default function Home() {
       
       if (data) {
         setReplies(data);
+        // On récupère aussi les avatars des profils si possible
+        const userIds = Array.from(new Set(data.map((m: any) => m.user_id).filter(Boolean)));
+        if (userIds.length > 0) {
+          const { data: pData } = await supabase.from('profiles').select('id, avatar_url, full_name').in('id', userIds);
+          if (pData) {
+            // On enrichit les messages avec les profils
+            const enriched = data.map((m: any) => ({
+              ...m,
+              profiles: pData.find(p => p.id === m.user_id)
+            }));
+            setReplies(enriched);
+          }
+        }
+        
         const unread = data.filter((m: Message) => m.reply && !localStorage.getItem(`read_reply_${m.id}`)).length;
         setUnreadCount(unread);
       }
@@ -480,8 +495,8 @@ export default function Home() {
             className="bg-white/10 backdrop-blur-xl border text-white w-12 h-12 md:w-14 md:h-14 rounded-full shadow-2xl flex items-center justify-center relative transition-colors overflow-hidden"
           >
             {user ? (
-              profileImage ? (
-                <Image src={profileImage} alt="Profile" fill className="object-cover" unoptimized />
+              userProfileImage ? (
+                <Image src={userProfileImage} alt="Profile" fill className="object-cover" unoptimized />
               ) : (
                 <User size={24} />
               )
@@ -734,7 +749,7 @@ export default function Home() {
             <div className="p-6 space-y-6">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 overflow-hidden relative flex items-center justify-center">
-                  {profileImage ? <Image src={profileImage} alt="Profile" fill className="object-cover" unoptimized /> : <User size={20} className="text-white/40" />}
+                  {userProfileImage ? <Image src={userProfileImage} alt="Profile" fill className="object-cover" unoptimized /> : <User size={20} className="text-white/40" />}
                 </div>
                 <div className="overflow-hidden">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-primary-red truncate">Connecté en tant que</p>
@@ -749,15 +764,13 @@ export default function Home() {
                     <input 
                       type="text" 
                       placeholder="URL de l'image..." 
-                      value={profileImage}
+                      value={userProfileImage}
                       onChange={async (e) => {
                         const newUrl = e.target.value;
-                        setProfileImage(newUrl);
+                        setUserProfileImage(newUrl);
                         await supabase.from('profiles').upsert({ id: user.id, avatar_url: newUrl, full_name: user.email.split('@')[0] });
                         if (user.email === 'caillatlucas2304@gmail.com') {
-                          const { data: globalData } = await supabase.from('settings').select('*').eq('key', 'global').single();
-                          const globalValue = globalData?.value || {};
-                          await supabase.from('settings').upsert({ key: 'global', value: { ...globalValue, profileImage: newUrl } });
+                          setOwnerImage(newUrl);
                         }
                       }}
                       className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-[10px] outline-none focus:border-primary-red transition-all text-white"

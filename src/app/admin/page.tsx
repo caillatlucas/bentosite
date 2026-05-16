@@ -191,7 +191,20 @@ export default function AdminDashboard() {
     const { data: msgData } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
     const { data: sData } = await supabase.from('settings').select('*');
     
-    if (msgData) setMessages(msgData);
+    if (msgData) {
+      setMessages(msgData);
+      const userIds = Array.from(new Set(msgData.map((m: any) => m.user_id).filter(Boolean)));
+      if (userIds.length > 0) {
+        const { data: profData } = await supabase.from('profiles').select('id, avatar_url, full_name').in('id', userIds);
+        if (profData) {
+          const enriched = msgData.map((m: any) => ({
+            ...m,
+            profiles: profData.find(p => p.id === m.user_id)
+          }));
+          setMessages(enriched);
+        }
+      }
+    }
 
     if (sData) {
       const global = sData.find(s => s.key === 'global')?.value;
@@ -621,12 +634,27 @@ export default function AdminDashboard() {
               {messages.map((msg) => (
                 <div key={msg.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 space-y-8 relative group shadow-2xl">
                   <button onClick={() => deleteMessage(msg.id)} className="absolute top-8 right-8 text-white/20 hover:text-red-500 transition-colors"><Trash2 size={20} /></button>
-                  <div className="flex items-center gap-4 flex-wrap">
-                    <h3 className="font-serif text-3xl text-white">{msg.title}</h3>
-                    {msg.order_id && <span className="bg-primary-red/20 text-primary-red px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border border-primary-red/20 shadow-lg shadow-primary-red/10">Commande: {msg.order_id}</span>}
-                    {msg.user_email && <span className="bg-blue-500/20 text-blue-400 px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border border-blue-500/20 flex items-center gap-2"><User size={12} /> {msg.user_email}</span>}
+                  <div className="flex items-start gap-6">
+                    <div className="w-16 h-16 rounded-full bg-white/10 border border-white/10 overflow-hidden relative shrink-0">
+                      {(msg as any).profiles?.avatar_url ? (
+                        <Image src={(msg as any).profiles.avatar_url} alt="Profile" fill className="object-cover" unoptimized />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-primary-red/10 text-primary-red">
+                          <User size={32} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 space-y-4">
+                      <div className="flex items-center gap-4 flex-wrap">
+                        <h3 className="font-serif text-3xl text-white">{(msg as any).profiles?.full_name || msg.name || "Anonyme"}</h3>
+                        <span className="text-white/40 text-xs">{(msg as any).profiles?.full_name ? `(${msg.name})` : ''}</span>
+                        {msg.order_id && <span className="bg-primary-red/20 text-primary-red px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border border-primary-red/20 shadow-lg shadow-primary-red/10">Commande: {msg.order_id}</span>}
+                        {msg.user_email && <span className="bg-blue-500/20 text-blue-400 px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border border-blue-500/20 flex items-center gap-2"><User size={12} /> {msg.user_email}</span>}
+                      </div>
+                      <h4 className="text-xl font-medium text-white/90">{msg.title}</h4>
+                      <p className="text-base leading-relaxed text-white/70 bg-white/5 p-6 rounded-2xl border border-white/5">{msg.content}</p>
+                    </div>
                   </div>
-                  <p className="text-base leading-relaxed text-white/70 bg-white/5 p-6 rounded-2xl border border-white/5">{msg.content}</p>
                   <div className="flex gap-4 items-end">
                     <div className="flex-1 space-y-2">
                       <textarea placeholder="Votre réponse..." value={replyText[msg.id] || ""} onChange={(e) => setReplyText({ ...replyText, [msg.id]: e.target.value })} rows={2} className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm text-white outline-none focus:border-primary-red transition-all resize-none" />
