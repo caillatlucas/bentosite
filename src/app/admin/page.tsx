@@ -48,6 +48,8 @@ interface Message {
   attachments?: string[];
   agreed_to_pay?: boolean;
   replies?: { text: string; date: string; from: string }[];
+  user_id?: string;
+  user_email?: string;
 }
 
 interface Product {
@@ -58,6 +60,7 @@ interface Product {
   images: string[];
   link?: string;
   link_text?: string;
+  purchase_message?: string;
   created_at?: string;
 }
 
@@ -256,12 +259,13 @@ export default function AdminDashboard() {
     const newIndex = direction === 'up' ? index - 1 : index + 1;
     if (newIndex < 0 || newIndex >= items.length) return;
 
-    const [removed] = items.splice(index, 1);
-    items.splice(newIndex, 0, removed);
+    const itemsCopy = items as any[];
+    const [removed] = itemsCopy.splice(index, 1);
+    itemsCopy.splice(newIndex, 0, removed);
 
-    if (type === 'projects') setProjects(items as Project[]);
-    else if (type === 'products') setProducts(items as Product[]);
-    else setMediaItems(items as MediaItem[]);
+    if (type === 'projects') setProjects(itemsCopy as Project[]);
+    else if (type === 'products') setProducts(itemsCopy as Product[]);
+    else setMediaItems(itemsCopy as MediaItem[]);
 
     const orderKey = type === 'projects' ? 'projectOrder' : type === 'products' ? 'productOrder' : 'mediaOrder';
     const { data: globalData } = await supabase.from('settings').select('*').eq('key', 'global').single();
@@ -269,7 +273,7 @@ export default function AdminDashboard() {
     
     const { error } = await supabase.from('settings').upsert({
       key: 'global',
-      value: { ...globalValue, [orderKey]: items.map(i => i.id) }
+      value: { ...globalValue, [orderKey]: itemsCopy.map(i => i.id) }
     });
     if (error) console.error("Error saving order:", error);
   };
