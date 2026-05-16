@@ -191,6 +191,7 @@ export default function Home() {
           });
         }
         setSettings(prev => ({ ...prev, ...global }));
+        setShow3DBackground(global.show3DBackground ?? false);
       }
       
       if (soc) {

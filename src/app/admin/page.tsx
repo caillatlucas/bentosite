@@ -681,6 +681,46 @@ export default function AdminDashboard() {
                     <motion.div animate={{ x: show3DBackground ? 24 : 4 }} className="w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm" />
                   </button>
                 </div>
+
+                <div className="space-y-6 pt-6 border-t border-text-black/10">
+                  <h3 className="font-serif text-2xl">Configuration des Sections</h3>
+                  <div className="space-y-4">
+                    {sectionsConfig.map((section, idx) => (
+                      <div key={section.id} className="flex items-center gap-4 bg-white/5 p-4 rounded-sm border border-text-black/5">
+                        <div className="flex flex-col gap-1">
+                          <button onClick={() => moveSection(idx, 'up')} className="opacity-30 hover:opacity-100"><ArrowLeft size={12} className="rotate-90" /></button>
+                          <button onClick={() => moveSection(idx, 'down')} className="opacity-30 hover:opacity-100"><ArrowLeft size={12} className="-rotate-90" /></button>
+                        </div>
+                        <div className="flex-1 grid grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <label className="text-[8px] font-bold uppercase opacity-40">Titre</label>
+                            <input type="text" value={section.label} onChange={(e) => {
+                              const newSections = [...sectionsConfig];
+                              newSections[idx].label = e.target.value;
+                              setSectionsConfig(newSections);
+                            }} className="w-full bg-transparent border-b border-text-black/10 py-1 text-sm outline-none" />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[8px] font-bold uppercase opacity-40">Sous-titre</label>
+                            <input type="text" value={section.subLabel || ""} onChange={(e) => {
+                              const newSections = [...sectionsConfig];
+                              newSections[idx].subLabel = e.target.value;
+                              setSectionsConfig(newSections);
+                            }} className="w-full bg-transparent border-b border-text-black/10 py-1 text-sm outline-none" />
+                          </div>
+                        </div>
+                        <button onClick={() => {
+                          const newSections = [...sectionsConfig];
+                          newSections[idx].visible = !newSections[idx].visible;
+                          setSectionsConfig(newSections);
+                        }} className={`w-10 h-5 rounded-full transition-colors relative ${ section.visible ? "bg-primary-red" : "bg-text-black/10" }`}>
+                          <motion.div animate={{ x: section.visible ? 20 : 4 }} className="w-3 h-3 bg-white rounded-full absolute top-1 shadow-sm" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 <button onClick={handleSaveSettings} className="bg-text-black text-white px-10 py-4 font-bold text-xs tracking-widest uppercase hover:bg-primary-red transition-colors">Enregistrer les réglages</button>
                 <h3 className="font-serif text-2xl border-b border-text-black/10 pb-4 pt-4">Sécurité (A2F)</h3>
                 <div className="space-y-6">
