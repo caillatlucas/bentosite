@@ -15,6 +15,9 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Lucas Caillat | Freelance Informatique",
   description: "Portfolio de Lucas Caillat - Freelance Informatique",
+  icons: {
+    icon: "/bentosite/favicon.ico",
+  },
 };
 
 export default function RootLayout({
