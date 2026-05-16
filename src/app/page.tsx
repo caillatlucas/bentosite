@@ -369,42 +369,42 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      <div className="fixed bottom-8 right-8 md:bottom-12 md:right-16 z-[100] flex flex-col gap-4">
-        <motion.button onClick={() => setIsNotifOpen(!isNotifOpen)} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="bg-white/10 backdrop-blur-xl border border-white/20 text-white w-12 h-12 md:w-14 md:h-14 rounded-full shadow-2xl flex items-center justify-center relative">
+      <div className="fixed bottom-8 right-8 md:bottom-12 md:right-16 z-[100] flex flex-col items-end gap-4">
+        <motion.button 
+          onClick={() => setIsNotifOpen(!isNotifOpen)} 
+          style={{ color: textColor, borderColor: textColor }}
+          whileHover={{ scale: 1.05 }} 
+          whileTap={{ scale: 0.95 }} 
+          className="bg-white/10 backdrop-blur-xl border text-white w-12 h-12 md:w-14 md:h-14 rounded-full shadow-2xl flex items-center justify-center relative transition-colors"
+        >
           <Bell size={24} />
           {unreadCount > 0 && <span className="absolute -top-1 -right-1 bg-primary-red text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white/10">{unreadCount}</span>}
         </motion.button>
         
-        <div className="relative group/auth">
+        <div className="flex gap-4">
+          {user?.email === 'lucas.caillat.pro@gmail.com' && (
+            <Link href="/admin">
+              <motion.div
+                style={{ color: textColor, borderColor: textColor }}
+                whileHover={{ scale: 1.05 }} 
+                whileTap={{ scale: 0.95 }} 
+                className="bg-white/10 backdrop-blur-xl border text-white w-12 h-12 md:w-14 md:h-14 rounded-full shadow-2xl flex items-center justify-center relative transition-colors"
+              >
+                <Settings size={24} />
+              </motion.div>
+            </Link>
+          )}
+          
           <motion.button 
-            onClick={() => user ? null : setIsAuthModalOpen(true)} 
+            onClick={() => user ? handleLogout() : setIsAuthModalOpen(true)} 
+            style={{ color: textColor, borderColor: textColor }}
             whileHover={{ scale: 1.05 }} 
             whileTap={{ scale: 0.95 }} 
-            className={`w-12 h-12 md:w-14 md:h-14 rounded-full shadow-2xl flex items-center justify-center relative transition-all ${user ? 'bg-primary-red text-white' : 'bg-white/10 backdrop-blur-xl border border-white/20 text-white/40'}`}
+            className="bg-white/10 backdrop-blur-xl border text-white w-12 h-12 md:w-14 md:h-14 rounded-full shadow-2xl flex items-center justify-center relative transition-colors"
           >
-            <User size={24} />
+            {user ? <LogOut size={24} /> : <User size={24} />}
             {user && <span className="absolute -top-1 -right-1 bg-green-500 w-3 h-3 rounded-full border-2 border-[#0a0a0a]"></span>}
           </motion.button>
-          
-          {user && (
-            <div className="absolute bottom-full right-0 mb-4 opacity-0 group-hover/auth:opacity-100 pointer-events-none group-hover/auth:pointer-events-auto transition-all translate-y-2 group-hover/auth:translate-y-0">
-              <div className="bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/10 p-4 rounded-3xl shadow-2xl min-w-[200px] space-y-3">
-                <div className="px-2 py-1">
-                  <p className="text-[9px] font-bold uppercase tracking-widest text-white/30">Compte</p>
-                  <p className="text-xs font-medium text-white truncate">{user.email}</p>
-                </div>
-                <div className="h-[1px] bg-white/10 mx-2"></div>
-                {user.email === 'lucas.caillat.pro@gmail.com' && (
-                  <Link href="/admin" className="flex items-center gap-3 px-3 py-2 text-xs font-bold uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/5 rounded-xl transition-all">
-                    <Settings size={14} /> Panel Admin
-                  </Link>
-                )}
-                <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2 text-xs font-bold uppercase tracking-widest text-red-400 hover:text-red-500 hover:bg-red-500/5 rounded-xl transition-all">
-                  <LogOut size={14} /> Déconnexion
-                </button>
-              </div>
-            </div>
-          )}
         </div>
 
         <motion.button onClick={() => setIsContactOpen(true)} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="bg-primary-red text-white w-14 h-14 md:w-16 md:h-16 rounded-full shadow-2xl flex items-center justify-center group overflow-hidden">
@@ -456,7 +456,7 @@ export default function Home() {
         {selectedProduct && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-12">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedProduct(null)} className="absolute inset-0 bg-soft-black/80 backdrop-blur-xl" />
-            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-6xl bg-white/10 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]">
+            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-6xl bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]">
               
               {/* Product Visuals */}
               <div className="w-full h-80 md:h-auto md:w-3/5 relative bg-white/5 group shrink-0">
@@ -536,7 +536,7 @@ export default function Home() {
               margin: isInboxExpanded ? 'auto' : undefined
             }} 
             exit={{ opacity: 0, y: 20, scale: 0.9 }} 
-            className={`fixed z-[200] bg-white/10 backdrop-blur-2xl shadow-2xl rounded-3xl border border-white/20 overflow-hidden flex flex-col ${isInboxExpanded ? '' : 'bottom-32 right-8 md:bottom-44 md:right-16 w-72 md:w-96'}`}
+            className={`fixed z-[200] bg-[#0a0a0a]/90 backdrop-blur-2xl shadow-2xl rounded-3xl border border-white/20 overflow-hidden flex flex-col ${isInboxExpanded ? '' : 'bottom-32 right-8 md:bottom-44 md:right-16 w-72 md:w-96'}`}
           >
             <div className="bg-white/5 backdrop-blur-md p-6 flex justify-between items-center shrink-0 border-b border-white/10"> 
               <div className="flex items-center gap-3">
@@ -593,7 +593,7 @@ export default function Home() {
         {isContactOpen && (
           <div className="fixed inset-0 z-[150] flex items-center justify-center p-6">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsContactOpen(false)} className="absolute inset-0 bg-black/60 backdrop-blur-xl" />
-            <motion.div initial={{ opacity: 0, y: 50, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 50, scale: 0.9 }} className="relative w-full max-w-lg bg-white/10 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl p-8 md:p-12 overflow-hidden text-white">
+            <motion.div initial={{ opacity: 0, y: 50, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 50, scale: 0.9 }} className="relative w-full max-w-lg bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl p-8 md:p-12 overflow-hidden text-white">
               {showSuccess ? (
                 <div className="py-12 text-center space-y-6">
                   <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-20 h-20 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto"><CheckCircle2 size={40} /></motion.div>
