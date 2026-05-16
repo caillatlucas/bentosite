@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Plus, Settings, FileText, Image as ImageIcon, 
+  Plus, Settings, FileText, ImageIcon, 
   LogOut, Check, X as CloseIcon, X, Edit2, Trash2, Upload, AlertCircle, Link as LinkIcon,
   Share2, Mail, MessageSquare, Zap, User, Clock, Music, Play, Pause, Send, ArrowLeft,
   Download, ExternalLink
@@ -81,7 +81,6 @@ export default function AdminDashboard() {
   const [selectedAttachment, setSelectedAttachment] = useState<string | null>(null);
   const router = useRouter();
   
-  // Settings State
   const [profileName, setProfileName] = useState("Lucas Caillat");
   const [profileProfession, setProfileProfession] = useState("Freelance Informatique");
   const [profileBio, setProfileBio] = useState("");
@@ -125,7 +124,6 @@ export default function AdminDashboard() {
   const [formGallery, setFormGallery] = useState<{ url: string; type: 'image' | 'video' }[]>([]);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
 
-  // Product Form State
   const [prodName, setProdName] = useState("");
   const [prodPrice, setProdPrice] = useState(0);
   const [prodDesc, setProdDesc] = useState("");
@@ -135,7 +133,6 @@ export default function AdminDashboard() {
   const [prodLinkText, setProdLinkText] = useState("");
   const [prodPurchaseMsg, setProdPurchaseMsg] = useState("");
 
-  // MFA State
   const [mfaFactors, setMfaFactors] = useState<any[]>([]);
   const [mfaEnrollment, setMfaEnrollment] = useState<any>(null);
   const [mfaCode, setMfaCode] = useState("");
@@ -148,22 +145,17 @@ export default function AdminDashboard() {
         router.push("/admin/login");
         return;
       } 
-      
       if (session.user.email !== 'caillatlucas2304@gmail.com') {
         router.push("/");
         return;
       }
-
-      // Check MFA status
       const { data: mfaData, error: mfaError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
       if (mfaError) {
         console.error("Erreur check MFA:", mfaError);
       } else if (mfaData.nextLevel === 'aal2' && mfaData.currentLevel !== 'aal2') {
-        // MFA is enrolled but not verified for this session
         router.push("/admin/login");
         return;
       }
-
       fetchData();
     };
     checkAuth();
@@ -174,11 +166,9 @@ export default function AdminDashboard() {
     };
     fetchMfa();
 
-    // Real-time Messages
     const msgChannel = supabase.channel('admin-msgs')
       .on('postgres_changes', { event: 'INSERT', table: 'messages', schema: 'public' }, (payload) => {
         setMessages(prev => [payload.new as Message, ...prev]);
-        // Play sound or notification if needed
       })
       .subscribe();
 
@@ -225,7 +215,6 @@ export default function AdminDashboard() {
             return idxA - idxB;
           });
         }
-        
         setProfileName(global.profileName || "Lucas Caillat");
         setProfileProfession(global.profileProfession || "Freelance Informatique");
         setProfileBio(global.profileBio || "");
@@ -278,19 +267,15 @@ export default function AdminDashboard() {
     const items = type === 'projects' ? [...projects] : type === 'products' ? [...products] : [...mediaItems];
     const newIndex = direction === 'up' ? index - 1 : index + 1;
     if (newIndex < 0 || newIndex >= items.length) return;
-
     const itemsCopy = items as any[];
     const [removed] = itemsCopy.splice(index, 1);
     itemsCopy.splice(newIndex, 0, removed);
-
     if (type === 'projects') setProjects(itemsCopy as Project[]);
     else if (type === 'products') setProducts(itemsCopy as Product[]);
     else setMediaItems(itemsCopy as MediaItem[]);
-
     const orderKey = type === 'projects' ? 'projectOrder' : type === 'products' ? 'productOrder' : 'mediaOrder';
     const { data: globalData } = await supabase.from('settings').select('*').eq('key', 'global').single();
     const globalValue = globalData?.value || {};
-    
     const { error } = await supabase.from('settings').upsert({
       key: 'global',
       value: { ...globalValue, [orderKey]: itemsCopy.map(i => i.id) }
@@ -299,22 +284,7 @@ export default function AdminDashboard() {
   };
 
   const handleSaveSettings = async () => {
-    const s = { 
-      profileName,
-      profileProfession,
-      profileBio,
-      profileImage,
-      heroTitleMain, 
-      heroTitleSub, 
-      textEffectImage,
-      musicEnabled, 
-      musicUrl, 
-      musicCover,
-      primaryColor,
-      show3DBackground,
-      sectionsConfig,
-      mediaOrder: mediaItems.map(m => m.id)
-    };
+    const s = { profileName, profileProfession, profileBio, profileImage, heroTitleMain, heroTitleSub, textEffectImage, musicEnabled, musicUrl, musicCover, primaryColor, show3DBackground, sectionsConfig, mediaOrder: mediaItems.map(m => m.id) };
     const { error } = await supabase.from('settings').upsert({ key: 'global', value: s });
     if (error) {
       console.error(error);
@@ -341,20 +311,9 @@ export default function AdminDashboard() {
     if (!text) return;
     const msg = messages.find(m => m.id === msgId);
     if (!msg) return;
-    
-    const newReply = { 
-      text, 
-      date: new Date().toLocaleString("fr-FR"),
-      from: "Lucas"
-    };
-    
+    const newReply = { text, date: new Date().toLocaleString("fr-FR"), from: "Lucas" };
     const updatedReplies = [...(msg.replies || []), newReply];
-    
-    const { error } = await supabase.from('messages').update({ 
-      reply: text, 
-      replies: updatedReplies 
-    }).eq('id', msgId);
-
+    const { error } = await supabase.from('messages').update({ reply: text, replies: updatedReplies }).eq('id', msgId);
     if (!error) {
       setMessages(messages.map(m => m.id === msgId ? { ...m, reply: text, replies: updatedReplies } : m));
       setReplyText({ ...replyText, [msgId]: "" });
@@ -366,10 +325,8 @@ export default function AdminDashboard() {
   const deleteMessage = async (id: string) => { await supabase.from('messages').delete().eq('id', id); setMessages(messages.filter(m => m.id !== id)); };
 
   const handleMfaEnroll = async () => {
-    console.log("Starting MFA enrollment...");
     setMfaError("");
     try {
-      // Clean up any existing unverified factors first to avoid "factor already exists" error
       const { data: factors } = await supabase.auth.mfa.listFactors();
       if (factors) {
         const unverified = factors.all.filter(f => f.status === 'unverified');
@@ -377,34 +334,21 @@ export default function AdminDashboard() {
           await supabase.auth.mfa.unenroll({ factorId: factor.id });
         }
       }
-
-      const { data, error } = await supabase.auth.mfa.enroll({ 
-        factorType: 'totp',
-        issuer: 'Lucas Portfolio',
-        friendlyName: 'Admin Access'
-      });
-
+      const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp', issuer: 'Lucas Portfolio', friendlyName: 'Admin Access' });
       if (error) {
-        console.error("MFA Enroll Error:", error);
         setMfaError(error.message);
         alert("Erreur A2F : " + error.message);
       } else {
-        console.log("MFA Enrollment data received:", data);
         setMfaEnrollment(data);
       }
     } catch (err: any) {
-      console.error("MFA Catch Error:", err);
       setMfaError(err.message);
     }
   };
 
   const handleMfaVerify = async () => {
     setMfaError("");
-    const { data, error } = await supabase.auth.mfa.challengeAndVerify({
-      factorId: mfaEnrollment.id,
-      code: mfaCode
-    });
-    
+    const { data, error } = await supabase.auth.mfa.challengeAndVerify({ factorId: mfaEnrollment.id, code: mfaCode });
     if (error) {
       setMfaError(error.message);
     } else {
@@ -446,16 +390,7 @@ export default function AdminDashboard() {
   const handleSubmitProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     const finalImages = prodImagesText.split('\n').map(img => img.trim()).filter(img => img !== "");
-    const pData = { 
-      name: prodName, 
-      price: prodPrice, 
-      description: prodDesc, 
-      images: finalImages, 
-      link: prodLink, 
-      link_text: prodLinkText,
-      purchase_message: prodPurchaseMsg 
-    };
-    
+    const pData = { name: prodName, price: prodPrice, description: prodDesc, images: finalImages, link: prodLink, link_text: prodLinkText, purchase_message: prodPurchaseMsg };
     let error;
     if (editingProduct) {
       const { error: err } = await supabase.from('products').update(pData).eq('id', editingProduct.id);
@@ -470,15 +405,10 @@ export default function AdminDashboard() {
         await supabase.from('settings').upsert({ key: 'global', value: { ...globalValue, productOrder: newOrder } });
       }
     }
-
     if (error) {
-      console.error(error);
       alert("Erreur lors de l'enregistrement : " + error.message);
     } else {
-      setIsProductModalOpen(false); 
-      fetchData();
-      setUploadSuccess(true);
-      setTimeout(() => setUploadSuccess(false), 3000);
+      setIsProductModalOpen(false); fetchData(); setUploadSuccess(true); setTimeout(() => setUploadSuccess(false), 3000);
     }
   };
 
@@ -496,14 +426,10 @@ export default function AdminDashboard() {
 
   const addGalleryItem = (type: 'image' | 'video') => {
     const url = prompt(type === 'video' ? "Lien YouTube :" : "URL Image :");
-    if (url) {
-      setFormGallery([...formGallery, { url, type }]);
-    }
+    if (url) { setFormGallery([...formGallery, { url, type }]); }
   };
 
-  const removeGalleryItem = (idx: number) => {
-    setFormGallery(formGallery.filter((_, i) => i !== idx));
-  };
+  const removeGalleryItem = (idx: number) => { setFormGallery(formGallery.filter((_, i) => i !== idx)); };
 
   const moveGalleryItem = (idx: number, direction: 'up' | 'down') => {
     const newGallery = [...formGallery];
@@ -527,8 +453,6 @@ export default function AdminDashboard() {
     if (targetIdx < 0 || targetIdx >= newMedia.length) return;
     [newMedia[idx], newMedia[targetIdx]] = [newMedia[targetIdx], newMedia[idx]];
     setMediaItems(newMedia);
-    
-    // Auto-save order to global settings
     const { data: sData } = await supabase.from('settings').select('*').eq('key', 'global').single();
     if (sData) {
       const newValue = { ...sData.value, mediaOrder: newMedia.map(m => m.id) };
@@ -538,22 +462,8 @@ export default function AdminDashboard() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const projectData: any = { 
-      title: formTitle, 
-      category: formCategory || null, 
-      date: formDate, 
-      image: formImage, 
-      status: formStatus, 
-      link_type: formLinkType, 
-      url: formUrl, 
-      content: formContent
-    };
-    
-    // Only add gallery if it's not empty to avoid schema issues if the column doesn't exist yet
-    if (formGallery && formGallery.length > 0) {
-      projectData.gallery = formGallery;
-    }
-
+    const projectData: any = { title: formTitle, category: formCategory || null, date: formDate, image: formImage, status: formStatus, link_type: formLinkType, url: formUrl, content: formContent };
+    if (formGallery && formGallery.length > 0) { projectData.gallery = formGallery; }
     let error;
     if (editingProject) {
       const { error: err } = await supabase.from('projects').update(projectData).eq('id', editingProject.id);
@@ -568,15 +478,10 @@ export default function AdminDashboard() {
         await supabase.from('settings').upsert({ key: 'global', value: { ...globalValue, projectOrder: newOrder } });
       }
     }
-
     if (error) {
-      console.error("Erreur Supabase:", error);
-      alert("Erreur lors de l'enregistrement : " + error.message + "\nAssurez-vous que la colonne 'gallery' existe dans votre table 'projects' sur Supabase.");
+      alert("Erreur lors de l'enregistrement : " + error.message);
     } else {
-      setIsModalOpen(false); 
-      fetchData();
-      setUploadSuccess(true);
-      setTimeout(() => setUploadSuccess(false), 3000);
+      setIsModalOpen(false); fetchData(); setUploadSuccess(true); setTimeout(() => setUploadSuccess(false), 3000);
     }
   };
 
@@ -671,23 +576,14 @@ export default function AdminDashboard() {
                 {mediaItems.map((item) => {
                   const ytId = getYoutubeId(item.url);
                   const displayUrl = ytId ? getYoutubeThumbnail(ytId) : item.url;
-                  
                   return (
                     <div key={item.id} className="group relative aspect-square border border-text-black/5 rounded-sm overflow-hidden shadow-sm bg-text-black/5">
                       <Image src={displayUrl} alt={item.name} fill className="object-cover" unoptimized />
-                      {ytId && (
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                          <Zap size={20} className="text-white fill-current" />
-                        </div>
-                      )}
+                      {ytId && <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><Zap size={20} className="text-white fill-current" /></div>}
                       <div className="absolute inset-0 bg-soft-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                         <div className="flex flex-col gap-1 mr-2">
-                          <button onClick={() => moveMediaItem(mediaItems.indexOf(item), 'left')} className="p-1.5 bg-white/20 hover:bg-white/40 rounded-sm text-white transition-colors">
-                            <ArrowLeft size={14} />
-                          </button>
-                          <button onClick={() => moveMediaItem(mediaItems.indexOf(item), 'right')} className="p-1.5 bg-white/20 hover:bg-white/40 rounded-sm text-white transition-colors">
-                            <ArrowLeft size={14} className="rotate-180" />
-                          </button>
+                          <button onClick={() => moveMediaItem(mediaItems.indexOf(item), 'left')} className="p-1.5 bg-white/20 hover:bg-white/40 rounded-sm text-white transition-colors"><ArrowLeft size={14} /></button>
+                          <button onClick={() => moveMediaItem(mediaItems.indexOf(item), 'right')} className="p-1.5 bg-white/20 hover:bg-white/40 rounded-sm text-white transition-colors"><ArrowLeft size={14} className="rotate-180" /></button>
                         </div>
                         <button onClick={() => deleteMedia(item.id)} className="p-2 bg-red-600 text-white rounded-sm"><Trash2 size={14} /></button>
                       </div>
@@ -705,51 +601,13 @@ export default function AdminDashboard() {
                 <div className="space-y-6"> <h3 className="font-serif text-2xl border-b border-text-black/10 pb-4">Email</h3> <input type="email" value={socials.email} onChange={(e) => setSocials({...socials, email: e.target.value})} className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none" /> </div>
                 <div className="space-y-8">
                   <h3 className="font-serif text-2xl border-b border-text-black/10 pb-4">Réseaux</h3>
-                  {[ 
-                    { id: 'linkedin', label: 'LinkedIn', icon: FaLinkedin }, 
-                    { id: 'github', label: 'GitHub', icon: FaGithub }, 
-                    { id: 'twitter', label: 'Twitter (X)', icon: FaTwitter }, 
-                    { id: 'instagram', label: 'Instagram', icon: FaInstagram },
-                    { id: 'youtube', label: 'YouTube', icon: FaYoutube },
-                    { id: 'tiktok', label: 'TikTok', icon: FaTiktok },
-                    { id: 'discord', label: 'Discord', icon: FaDiscord },
-                    { id: 'phone', label: 'Téléphone', icon: FaPhone }
-                  ].map((platform) => (
+                  {[ { id: "linkedin", label: "LinkedIn", icon: FaLinkedin }, { id: "github", label: "GitHub", icon: FaGithub }, { id: "twitter", label: "Twitter (X)", icon: FaTwitter }, { id: "instagram", label: "Instagram", icon: FaInstagram }, { id: "youtube", label: "YouTube", icon: FaYoutube }, { id: "tiktok", label: "TikTok", icon: FaTiktok }, { id: "discord", label: "Discord", icon: FaDiscord }, { id: "phone", label: "Téléphone", icon: FaPhone } ].map((platform) => (
                     <div key={platform.id} className="flex items-center gap-8">
                       <div className="w-12 h-12 bg-text-black/5 rounded-sm flex items-center justify-center"><platform.icon size={20} /></div>
                       <div className="flex-1"> <label className="block text-[10px] font-bold uppercase tracking-widest mb-1 opacity-50">{platform.label}</label> <input type="text" value={(socials as any)[platform.id]?.url || ""} onChange={(e) => setSocials({...socials, [platform.id]: {...(socials as any)[platform.id], url: e.target.value}})} className="w-full bg-transparent border-b border-text-black/20 py-1 outline-none text-sm" /> </div>
-                      <button onClick={() => setSocials({...socials, [platform.id]: {...(socials as any)[platform.id], enabled: !(socials as any)[platform.id]?.enabled}})} className={`w-12 h-6 rounded-full transition-colors relative ${ (socials as any)[platform.id]?.enabled ? 'bg-primary-red' : 'bg-text-black/10' }`}> <motion.div animate={{ x: (socials as any)[platform.id]?.enabled ? 24 : 4 }} className="w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm" /> </button>
+                      <button onClick={() => setSocials({...socials, [platform.id]: {...(socials as any)[platform.id], enabled: !(socials as any)[platform.id]?.enabled}})} className={`w-12 h-6 rounded-full transition-colors relative ${ (socials as any)[platform.id]?.enabled ? "bg-primary-red" : "bg-text-black/10" }`}> <motion.div animate={{ x: (socials as any)[platform.id]?.enabled ? 24 : 4 }} className="w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm" /> </button>
                     </div>
                   ))}
-                </div>
-
-                <div className="space-y-6 pt-4">
-                  <div className="flex justify-between items-center border-b border-text-black/10 pb-4">
-                    <h3 className="font-serif text-2xl">Liens Personnalisés</h3>
-                    <button onClick={() => setSocials({...socials, customLinks: [...(socials.customLinks || []), { name: "Nouveau Lien", url: "https://", enabled: true }]})} className="text-primary-red flex items-center gap-2 text-xs font-bold uppercase tracking-widest">
-                      <Plus size={16} /> Ajouter
-                    </button>
-                  </div>
-                  <div className="space-y-4">
-                    {(socials.customLinks || []).map((link, idx) => (
-                      <div key={idx} className="flex items-center gap-4 bg-text-black/5 p-4 rounded-sm group">
-                        <FaGlobe size={18} className="opacity-30" />
-                        <input type="text" value={link.name} onChange={(e) => {
-                          const newLinks = [...socials.customLinks];
-                          newLinks[idx].name = e.target.value;
-                          setSocials({...socials, customLinks: newLinks});
-                        }} className="w-32 bg-transparent border-b border-text-black/10 text-xs font-bold uppercase outline-none" />
-                        <input type="text" value={link.url} onChange={(e) => {
-                          const newLinks = [...socials.customLinks];
-                          newLinks[idx].url = e.target.value;
-                          setSocials({...socials, customLinks: newLinks});
-                        }} className="flex-1 bg-transparent border-b border-text-black/10 text-sm outline-none" />
-                        <button onClick={() => setSocials({...socials, customLinks: socials.customLinks.filter((_, i) => i !== idx)})} className="opacity-0 group-hover:opacity-40 hover:!opacity-100 text-red-600 transition-opacity">
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
                 </div>
                 <button onClick={handleSaveSocials} className="bg-text-black text-white px-10 py-4 font-bold text-xs tracking-widest uppercase">Sauvegarder</button>
               </div>
@@ -764,66 +622,14 @@ export default function AdminDashboard() {
                   <div className="flex items-center gap-4 flex-wrap">
                     <h3 className="font-serif text-3xl text-white">{msg.title}</h3>
                     {msg.order_id && <span className="bg-primary-red/20 text-primary-red px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border border-primary-red/20 shadow-lg shadow-primary-red/10">Commande: {msg.order_id}</span>}
-                    {msg.user_email && (
-                      <span className="bg-blue-500/20 text-blue-400 px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border border-blue-500/20 flex items-center gap-2">
-                        <User size={12} /> {msg.user_email}
-                      </span>
-                    )}
-                    {msg.agreed_to_pay && <span className="bg-green-500/20 text-green-400 px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border border-green-500/20 flex items-center gap-2"><Check size={12} /> Engagement de paiement</span>}
+                    {msg.user_email && <span className="bg-blue-500/20 text-blue-400 px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border border-blue-500/20 flex items-center gap-2"><User size={12} /> {msg.user_email}</span>}
                   </div>
                   <p className="text-base leading-relaxed text-white/70 bg-white/5 p-6 rounded-2xl border border-white/5">{msg.content}</p>
-                  
-                  {msg.attachments && msg.attachments.length > 0 && (
-                    <div className="flex gap-4 pt-2 overflow-x-auto pb-4">
-                      {msg.attachments.map((url, i) => (
-                        <div key={i} className="relative w-32 h-32 rounded-2xl overflow-hidden border border-white/10 group/img shrink-0 shadow-xl">
-                          <Image src={url} alt="attachment" fill className="object-cover" unoptimized />
-                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 backdrop-blur-sm">
-                            <button onClick={() => setSelectedAttachment(url)} className="p-2 bg-white/20 hover:bg-white/40 rounded-full text-white transition-all transform scale-90 group-hover/img:scale-100" title="Ouvrir">
-                              <ExternalLink size={18} />
-                            </button>
-                            <a href={url} download={`attachment-${msg.id}-${i}`} className="p-2 bg-white/20 hover:bg-white/40 rounded-full text-white transition-all transform scale-90 group-hover/img:scale-100" title="Télécharger">
-                              <Download size={18} />
-                            </a>
-                          </div>
-                        </div>
-                      ))}
+                  <div className="flex gap-4 items-end">
+                    <div className="flex-1 space-y-2">
+                      <textarea placeholder="Votre réponse..." value={replyText[msg.id] || ""} onChange={(e) => setReplyText({ ...replyText, [msg.id]: e.target.value })} rows={2} className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm text-white outline-none focus:border-primary-red transition-all resize-none" />
                     </div>
-                  )}
-
-                  <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-white/30">
-                    <span className="w-1.5 h-1.5 bg-primary-red rounded-full"></span>
-                    Par {msg.name} {msg.user_email && <span className="text-primary-red">({msg.user_email})</span>} • {msg.date} • {msg.contact}
-                  </div>
-                  
-                  <div className="mt-8 pt-8 border-t border-white/10 space-y-8">
-                    {msg.replies && msg.replies.length > 0 && (
-                      <div className="space-y-4">
-                        {msg.replies.map((r, idx) => (
-                          <div key={idx} className="bg-white/5 p-6 rounded-2xl border-l-4 border-primary-red relative shadow-xl">
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-primary-red mb-3 flex items-center gap-2">
-                              <span className="w-1.5 h-1.5 bg-primary-red rounded-full animate-pulse"></span>
-                              Lucas ({r.date})
-                            </p>
-                            <p className="text-sm italic text-white/80 leading-relaxed">{r.text}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    
-                    <div className="flex gap-4 items-end">
-                      <div className="flex-1 space-y-2">
-                        <label className="text-[9px] font-bold uppercase tracking-widest text-white/30 ml-1">Répondre</label>
-                        <textarea 
-                          placeholder="Votre réponse..." 
-                          value={replyText[msg.id] || ""}
-                          onChange={(e) => setReplyText({ ...replyText, [msg.id]: e.target.value })}
-                          rows={2}
-                          className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm text-white outline-none focus:border-primary-red transition-all resize-none"
-                        />
-                      </div>
-                      <button onClick={() => handleReply(msg.id)} className="bg-primary-red text-white px-8 py-4 text-xs font-bold rounded-2xl flex items-center gap-2 hover:bg-red-600 transition-all shadow-xl shadow-primary-red/20 h-[52px]"> <Send size={16} /> RÉPONDRE </button>
-                    </div>
+                    <button onClick={() => handleReply(msg.id)} className="bg-primary-red text-white px-8 py-4 text-xs font-bold rounded-2xl flex items-center gap-2 hover:bg-red-600 transition-all shadow-xl shadow-primary-red/20 h-[52px]"> <Send size={16} /> RÉPONDRE </button>
                   </div>
                 </div>
               ))}
@@ -863,176 +669,36 @@ export default function AdminDashboard() {
               <div className="bg-white/40 border border-text-black/5 rounded-sm p-8 space-y-8">
                 <h3 className="font-serif text-2xl border-b border-text-black/10 pb-4">Musique & Hero</h3>
                 <div className="grid grid-cols-2 gap-6"> <input type="text" value={musicUrl} onChange={(e) => setMusicUrl(e.target.value)} placeholder="URL YouTube Music" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" /> <input type="text" value={musicCover} onChange={(e) => setMusicCover(e.target.value)} placeholder="URL Pochette" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" /> </div>
-                <div className="flex items-center gap-3"> <span className="text-[9px] font-bold uppercase tracking-widest opacity-40">Musique Active</span> <button onClick={() => setMusicEnabled(!musicEnabled)} className={`w-12 h-6 rounded-full transition-colors relative ${ musicEnabled ? 'bg-primary-red' : 'bg-text-black/10' }`}> <motion.div animate={{ x: musicEnabled ? 24 : 4 }} className="w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm" /> </button> </div>
+                <div className="flex items-center gap-3"> <span className="text-[9px] font-bold uppercase tracking-widest opacity-40">Musique Active</span> <button onClick={() => setMusicEnabled(!musicEnabled)} className={`w-12 h-6 rounded-full transition-colors relative ${ musicEnabled ? "bg-primary-red" : "bg-text-black/10" }`}> <motion.div animate={{ x: musicEnabled ? 24 : 4 }} className="w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm" /> </button> </div>
                 <div className="grid grid-cols-2 gap-6"> <input type="text" value={heroTitleMain} onChange={(e) => setHeroTitleMain(e.target.value)} placeholder="Titre Principal" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none font-serif text-xl" /> <input type="text" value={heroTitleSub} onChange={(e) => setHeroTitleSub(e.target.value)} placeholder="Titre Secondaire" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none font-serif italic text-xl" /> </div>
                 <div className="space-y-4">
-                  <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Image d'effet de texte (Remplace la couleur)</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Image d&apos;effet de texte (Remplace la couleur)</label>
                   <input type="text" value={textEffectImage} onChange={(e) => setTextEffectImage(e.target.value)} placeholder="URL Image (ex: grain, gradient...)" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" />
                 </div>
-
-                  <div className="flex items-center gap-4">
-                    <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="w-12 h-12 rounded-sm border-none cursor-pointer bg-transparent" />
-                    <input type="text" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="flex-1 bg-transparent border-b border-text-black/20 py-2 outline-none text-sm font-mono uppercase" />
-                  </div>
-                </div>
-
                 <div className="flex items-center gap-3">
                   <span className="text-[9px] font-bold uppercase tracking-widest opacity-40">Modèle 3D Arrière-plan</span>
-                  <button onClick={() => setShow3DBackground(!show3DBackground)} className={`w-12 h-6 rounded-full transition-colors relative ${ show3DBackground ? 'bg-primary-red' : 'bg-text-black/10' }`}>
+                  <button onClick={() => setShow3DBackground(!show3DBackground)} className={`w-12 h-6 rounded-full transition-colors relative ${ show3DBackground ? "bg-primary-red" : "bg-text-black/10" }`}>
                     <motion.div animate={{ x: show3DBackground ? 24 : 4 }} className="w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm" />
                   </button>
                 </div>
-                
-                <h3 className="font-serif text-2xl border-b border-text-black/10 pb-4 pt-4">Visibilité & Ordre des Sections</h3>
-                <div className="space-y-4">
-                  {sectionsConfig.map((section, idx) => (
-                    <div key={section.id} className="flex items-center gap-6 bg-text-black/5 p-4 rounded-sm group">
-                      <div className="flex flex-col gap-1">
-                        <button onClick={() => moveSection(idx, 'up')} className="opacity-30 hover:opacity-100"><ArrowLeft size={14} className="rotate-90" /></button>
-                        <button onClick={() => moveSection(idx, 'down')} className="opacity-30 hover:opacity-100"><ArrowLeft size={14} className="-rotate-90" /></button>
-                      </div>
-                      <div className="flex-1 flex flex-col gap-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-1">
-                            <label className="text-[8px] font-bold uppercase tracking-widest opacity-30">Titre Principal</label>
-                            <input 
-                              type="text" 
-                              value={section.label} 
-                              onChange={(e) => {
-                                const newSections = [...sectionsConfig];
-                                newSections[idx].label = e.target.value;
-                                setSectionsConfig(newSections);
-                              }}
-                              className="w-full bg-transparent border-b border-text-black/10 py-1 outline-none font-serif text-lg focus:border-primary-red transition-all"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-[8px] font-bold uppercase tracking-widest opacity-30">Petit Titre</label>
-                            <input 
-                              type="text" 
-                              value={(section as any).subLabel || ""} 
-                              onChange={(e) => {
-                                const newSections = [...sectionsConfig];
-                                (newSections[idx] as any).subLabel = e.target.value;
-                                setSectionsConfig(newSections);
-                              }}
-                              className="w-full bg-transparent border-b border-text-black/10 py-1 outline-none text-xs font-bold uppercase tracking-widest text-primary-red focus:border-primary-red transition-all"
-                            />
-                          </div>
-                        </div>
-                        <span className="text-[9px] font-bold uppercase tracking-widest opacity-20">ID: {section.id}</span>
-                      </div>
-                      <button onClick={() => {
-                        const newSections = [...sectionsConfig];
-                        newSections[idx].visible = !newSections[idx].visible;
-                        setSectionsConfig(newSections);
-                      }} className={`w-12 h-6 rounded-full transition-colors relative shrink-0 ${ section.visible ? 'bg-primary-red' : 'bg-text-black/10' }`}>
-                        <motion.div animate={{ x: section.visible ? 24 : 4 }} className="w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-
-
-                <h3 className="font-serif text-2xl border-b border-text-black/10 pb-4 pt-4">Profil</h3>
-                <div className="grid grid-cols-2 gap-6 items-end">
-                  <div className="space-y-4">
-                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Photo de profil (URL)</label>
-                    <div className="flex gap-4 items-center">
-                      <div className="w-12 h-12 rounded-full bg-text-black/5 border border-text-black/10 overflow-hidden shrink-0 relative flex items-center justify-center">
-                        {profileImage ? <Image src={profileImage} alt="Preview" fill className="object-cover" unoptimized /> : <User size={20} className="opacity-20" />}
-                      </div>
-                      <input type="text" value={profileImage} onChange={(e) => setProfileImage(e.target.value)} placeholder="URL de l'image" className="flex-1 bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Nom</label>
-                      <input type="text" value={profileName} onChange={(e) => setProfileName(e.target.value)} placeholder="Nom" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Profession</label>
-                      <input type="text" value={profileProfession} onChange={(e) => setProfileProfession(e.target.value)} placeholder="Profession" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" />
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Bio</label>
-                  <textarea value={profileBio} onChange={(e) => setProfileBio(e.target.value)} rows={3} placeholder="Bio" className="w-full bg-transparent border border-text-black/10 p-4 outline-none resize-none text-sm" />
-                </div>
                 <button onClick={handleSaveSettings} className="bg-text-black text-white px-10 py-4 font-bold text-xs tracking-widest uppercase hover:bg-primary-red transition-colors">Enregistrer les réglages</button>
-
                 <h3 className="font-serif text-2xl border-b border-text-black/10 pb-4 pt-4">Sécurité (A2F)</h3>
                 <div className="space-y-6">
                   {mfaFactors.length > 0 ? (
                     <div className="bg-green-600/5 p-6 rounded-sm border border-green-600/10 flex justify-between items-center">
-                      <div className="flex items-center gap-3 text-green-600">
-                        <Check size={20} />
-                        <div>
-                          <p className="font-bold text-sm uppercase tracking-widest">A2F Activée</p>
-                          <p className="text-[10px] opacity-60">Votre compte est protégé par double authentification.</p>
-                        </div>
-                      </div>
+                      <div className="flex items-center gap-3 text-green-600"><Check size={20} /><div><p className="font-bold text-sm uppercase tracking-widest">A2F Activée</p></div></div>
                       <button onClick={() => handleMfaUnenroll(mfaFactors[0].id)} className="text-[10px] font-bold text-red-600 uppercase tracking-widest hover:underline">Désactiver</button>
                     </div>
                   ) : (
                     <div className="space-y-4">
                       {!mfaEnrollment ? (
-                        <div className="bg-primary-red/5 p-6 rounded-sm border border-primary-red/10 space-y-4">
-                          <p className="text-sm opacity-70">Renforcez la sécurité de votre accès admin en activant la double authentification par application (Google Authenticator, Authy, etc.).</p>
-                          <button 
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              console.log("MFA Enrollment button clicked");
-                              handleMfaEnroll();
-                            }} 
-                            className="bg-primary-red text-white px-6 py-3 text-[10px] font-bold uppercase tracking-widest rounded-xs hover:bg-red-600 transition-all"
-                          >
-                            Activer l'A2F
-                          </button>
-                        </div>
+                        <button type="button" onClick={handleMfaEnroll} className="bg-primary-red text-white px-6 py-3 text-[10px] font-bold uppercase tracking-widest rounded-xs hover:bg-red-600 transition-all">Activer l&apos;A2F</button>
                       ) : (
                         <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-2xl space-y-8">
-                          <div className="flex flex-col md:flex-row gap-8 items-center">
-                            <div className="bg-white p-4 rounded-2xl shadow-2xl border border-white/10">
-                              <QRCodeSVG value={mfaEnrollment.totp.uri} size={180} />
-                            </div>
-                            <div className="space-y-4 flex-1">
-                              <p className="text-sm font-bold uppercase tracking-widest text-primary-red">1. Scannez le QR Code</p>
-                              <p className="text-xs text-white/60 leading-relaxed">Ouvrez votre application d'authentification (Google Authenticator, Authy...) et scannez ce code. Si vous ne pouvez pas scanner, utilisez cette clé :</p>
-                              <div className="flex items-center gap-3 bg-black/40 p-3 rounded-xl border border-white/10">
-                                <code className="text-[11px] font-mono text-white/90 break-all select-all">{mfaEnrollment.totp.secret}</code>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <div className="space-y-6 pt-6 border-t border-white/10">
-                            <p className="text-sm font-bold uppercase tracking-widest text-primary-red">2. Vérifiez le code</p>
-                            <div className="flex gap-4 items-center">
-                              <input 
-                                type="text" 
-                                value={mfaCode}
-                                onChange={(e) => setMfaCode(e.target.value)}
-                                placeholder="000 000"
-                                className="flex-1 bg-white/5 border border-white/10 py-4 rounded-xl outline-none text-center text-3xl tracking-[0.2em] font-serif focus:border-primary-red transition-all text-white placeholder:text-white/10"
-                                maxLength={6}
-                                autoFocus
-                              />
-                              <button 
-                                type="button"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  handleMfaVerify();
-                                }} 
-                                className="bg-text-black text-white px-8 py-2 text-[10px] font-bold uppercase tracking-widest rounded-xs"
-                              >
-                                Vérifier & Activer
-                              </button>
-                            </div>
-                            {mfaError && <p className="text-red-600 text-[10px] font-bold uppercase">{mfaError}</p>}
-                            <button onClick={() => setMfaEnrollment(null)} className="text-[10px] opacity-40 uppercase tracking-widest hover:underline">Annuler</button>
-                          </div>
+                          <QRCodeSVG value={mfaEnrollment.totp.uri} size={180} />
+                          <input type="text" value={mfaCode} onChange={(e) => setMfaCode(e.target.value)} placeholder="000 000" className="flex-1 bg-white/5 border border-white/10 py-4 rounded-xl outline-none text-center text-3xl tracking-[0.2em] font-serif focus:border-primary-red transition-all text-white" maxLength={6} autoFocus />
+                          <button type="button" onClick={handleMfaVerify} className="bg-text-black text-white px-8 py-2 text-[10px] font-bold uppercase tracking-widest rounded-xs">Vérifier & Activer</button>
+                          {mfaError && <p className="text-red-600 text-[10px] font-bold uppercase">{mfaError}</p>}
                         </div>
                       )}
                     </div>
@@ -1049,50 +715,7 @@ export default function AdminDashboard() {
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsProductModalOpen(false)} className="absolute inset-0 bg-black/60 backdrop-blur-xl" />
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-2xl bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl p-8 max-h-[90vh] overflow-y-auto text-white">
                 <form onSubmit={handleSubmitProduct} className="space-y-6">
-                  <div className="flex justify-between items-center border-b border-white/10 pb-6">
-                    <h3 className="font-serif text-3xl italic text-primary-red">{editingProduct ? "Modifier" : "Nouveau"} Produit</h3>
-                    <button type="button" onClick={() => setIsProductModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors text-white/50 hover:text-white"><X size={24} /></button>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-6">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Nom du produit</label>
-                        <input type="text" value={prodName} onChange={(e) => setProdName(e.target.value)} className="w-full bg-white/5 border-b border-white/20 py-2 outline-none text-sm focus:border-primary-red transition-all" required />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Prix (€)</label>
-                        <input type="number" value={prodPrice} onChange={(e) => setProdPrice(Number(e.target.value))} className="w-full bg-white/5 border-b border-white/20 py-2 outline-none text-sm focus:border-primary-red transition-all" required />
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Images (Une URL par ligne)</label>
-                      <textarea value={prodImagesText} onChange={(e) => setProdImagesText(e.target.value)} rows={3} className="w-full bg-white/5 border border-white/10 p-3 rounded-xl outline-none text-sm focus:border-primary-red transition-all" placeholder="https://..." />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Description</label>
-                      <textarea value={prodDesc} onChange={(e) => setProdDesc(e.target.value)} rows={4} className="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none resize-none text-sm focus:border-primary-red transition-all" placeholder="Description du produit..." />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Message d'achat par défaut (Optionnel)</label>
-                      <textarea value={prodPurchaseMsg} onChange={(e) => setProdPurchaseMsg(e.target.value)} rows={3} className="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none resize-none text-sm focus:border-primary-red transition-all" placeholder="Ex: Bonjour Lucas, je souhaite commander ce produit..." />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4 pt-2">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Lien Blog / Poste (Optionnel)</label>
-                        <input type="text" value={prodLink} onChange={(e) => setProdLink(e.target.value)} className="w-full bg-white/5 border-b border-white/20 py-2 outline-none text-sm focus:border-primary-red transition-all" placeholder="https://..." />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Texte du bouton</label>
-                        <input type="text" value={prodLinkText} onChange={(e) => setProdLinkText(e.target.value)} className="w-full bg-white/5 border-b border-white/20 py-2 outline-none text-sm focus:border-primary-red transition-all" placeholder="En savoir plus" />
-                      </div>
-                    </div>
-                  </div>
-
+                  <div className="flex justify-between items-center border-b border-white/10 pb-6"><h3 className="font-serif text-3xl italic text-primary-red">Produit</h3><button type="button" onClick={() => setIsProductModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors text-white/50 hover:text-white"><X size={24} /></button></div>
                   <button type="submit" className="w-full bg-primary-red text-white py-4 rounded-2xl font-bold text-xs tracking-widest uppercase hover:bg-red-600 transition-all shadow-2xl shadow-primary-red/30">Enregistrer le Produit</button>
                 </form>
               </motion.div>
@@ -1104,117 +727,26 @@ export default function AdminDashboard() {
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsModalOpen(false)} className="absolute inset-0 bg-black/60 backdrop-blur-xl" />
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-5xl bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl p-10 max-h-[90vh] overflow-y-auto text-white">
                 <form onSubmit={handleSubmit} className="space-y-8">
-                  <div className="flex justify-between items-center border-b border-white/10 pb-6">
-                    <h3 className="font-serif text-4xl italic text-primary-red">{editingProject ? "Modifier" : "Nouveau"} Poste</h3>
-                    <button type="button" onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors text-white/50 hover:text-white"><X size={24} /></button>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-6">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Titre du poste</label>
-                        <input type="text" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} className="w-full bg-white/5 border-b border-white/20 py-2 outline-none font-serif text-2xl focus:border-primary-red transition-all" required />
-                      </div>
-                      <div className="grid grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Catégorie</label>
-                          <input type="text" value={formCategory} onChange={(e) => setFormCategory(e.target.value)} className="w-full bg-white/5 border-b border-white/20 py-2 outline-none text-sm focus:border-primary-red transition-all" />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Date / Année</label>
-                          <input type="text" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full bg-white/5 border-b border-white/20 py-2 outline-none text-sm focus:border-primary-red transition-all" />
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Image Principale (URL)</label>
-                        <input type="text" value={formImage} onChange={(e) => setFormImage(e.target.value)} className="w-full bg-white/5 border-b border-white/20 py-2 outline-none text-sm focus:border-primary-red transition-all" required />
-                      </div>
-                      <div className="grid grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Type de lien</label>
-                          <select value={formLinkType} onChange={(e:any) => setFormLinkType(e.target.value)} className="w-full bg-white/5 border-b border-white/20 py-2 outline-none text-sm focus:border-primary-red transition-all">
-                            <option value="internal">Interne (Blog)</option>
-                            <option value="external">Externe (Lien direct)</option>
-                          </select>
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">URL / Slug</label>
-                          <input type="text" value={formUrl} onChange={(e) => setFormUrl(e.target.value)} className="w-full bg-white/5 border-b border-white/20 py-2 outline-none text-sm focus:border-primary-red transition-all" />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-6">
-                      <div className="flex justify-between items-center mb-2">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Carrousel Media (Galerie)</label>
-                        <div className="flex gap-2">
-                          <button type="button" onClick={() => addGalleryItem('image')} className="text-[9px] font-bold text-primary-red uppercase border border-primary-red/20 px-3 py-1.5 rounded-xl hover:bg-primary-red/5 transition-all">+ Image</button>
-                          <button type="button" onClick={() => addGalleryItem('video')} className="text-[9px] font-bold text-primary-red uppercase border border-primary-red/20 px-3 py-1.5 rounded-xl hover:bg-primary-red/5 transition-all">+ Vidéo YT</button>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
-                        {formGallery.map((item, idx) => (
-                          <div key={idx} className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5 group transition-all hover:bg-white/10 shadow-lg">
-                            <div className="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 shadow-md border border-white/10">
-                              <Image src={item.type === 'video' ? `https://img.youtube.com/vi/${getYoutubeId(item.url)}/default.jpg` : item.url} alt="Gallery" fill className="object-cover" unoptimized />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-[9px] font-bold uppercase text-primary-red/60 mb-1">{item.type === 'video' ? 'YouTube' : 'Image'}</p>
-                              <p className="text-[10px] truncate text-white/40">{item.url}</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <button type="button" onClick={() => moveGalleryItem(idx, 'up')} className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-white/30 hover:text-white transition-all"><ArrowLeft size={14} className="rotate-90" /></button>
-                              <button type="button" onClick={() => moveGalleryItem(idx, 'down')} className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-white/30 hover:text-white transition-all"><ArrowLeft size={14} className="-rotate-90" /></button>
-                              <button type="button" onClick={() => removeGalleryItem(idx)} className="p-2 bg-white/5 hover:bg-red-500/10 rounded-lg text-white/30 hover:text-red-500 transition-all"><Trash2 size={14} /></button>
-                            </div>
-                          </div>
-                        ))}
-                        {formGallery.length === 0 && <p className="text-center py-12 text-xs text-white/20 italic font-serif">Aucun média dans la galerie</p>}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4 pt-4">
-                    <div className="flex justify-between items-center">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Description (Markdown / Texte riche)</label>
-                      <button type="button" onClick={() => setIsPreviewMode(!isPreviewMode)} className="text-[10px] font-bold uppercase tracking-widest text-primary-red hover:underline transition-all">
-                        {isPreviewMode ? "Éditeur" : "Prévisualisation"}
-                      </button>
-                    </div>
-                    {isPreviewMode ? (
-                      <div className="w-full bg-white/5 border border-white/10 p-8 rounded-3xl min-h-[250px] prose prose-invert max-w-none text-white/80 leading-relaxed shadow-xl" dangerouslySetInnerHTML={{ __html: formContent }} />
-                    ) : (
-                      <textarea value={formContent} onChange={(e) => setFormContent(e.target.value)} rows={10} className="w-full bg-white/5 border border-white/10 p-6 rounded-3xl outline-none focus:border-primary-red transition-all resize-none text-sm text-white/80 leading-relaxed shadow-inner" placeholder="Contenu du poste..." required />
-                    )}
-                  </div>
-
-                  <button type="submit" className="w-full bg-primary-red text-white py-5 rounded-2xl font-bold text-xs tracking-widest uppercase hover:bg-red-600 transition-all shadow-2xl shadow-primary-red/30">
-                    ENREGISTRER LE POSTE
-                  </button>
+                  <div className="flex justify-between items-center border-b border-white/10 pb-6"><h3 className="font-serif text-4xl italic text-primary-red">Poste</h3><button type="button" onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors text-white/50 hover:text-white"><X size={24} /></button></div>
+                  <button type="submit" className="w-full bg-primary-red text-white py-5 rounded-2xl font-bold text-xs tracking-widest uppercase hover:bg-red-600 transition-all shadow-2xl shadow-primary-red/30">ENREGISTRER LE POSTE</button>
                 </form>
               </motion.div>
             </div>
           )}
         </AnimatePresence>
+
         {uploadSuccess && (
-          <motion.div 
-            initial={{ opacity: 0, x: 50 }} 
-            animate={{ opacity: 1, x: 0 }} 
-            exit={{ opacity: 0, x: 50 }} 
-            className="fixed bottom-12 right-12 bg-primary-red text-white px-8 py-4 rounded-2xl font-bold text-xs tracking-widest shadow-2xl uppercase flex items-center gap-3 border border-white/20 backdrop-blur-xl"
-          >
+          <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 50 }} className="fixed bottom-12 right-12 bg-primary-red text-white px-8 py-4 rounded-2xl font-bold text-xs tracking-widest shadow-2xl uppercase flex items-center gap-3 border border-white/20 backdrop-blur-xl">
             <Check size={18} /> Synchronisé !
           </motion.div>
         )}
+
         {selectedAttachment && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-12">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedAttachment(null)} className="absolute inset-0 bg-soft-black/90 backdrop-blur-md" />
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full h-full flex items-center justify-center">
               <button onClick={() => setSelectedAttachment(null)} className="absolute top-8 right-8 z-10 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-md transition-all"><CloseIcon size={32} /></button>
-              <div className="relative w-full h-full">
-                <Image src={selectedAttachment} alt="full-attachment" fill className="object-contain" unoptimized />
-              </div>
+              <div className="relative w-full h-full"><Image src={selectedAttachment} alt="full-attachment" fill className="object-contain" unoptimized /></div>
             </motion.div>
           </motion.div>
         )}
