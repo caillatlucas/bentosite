@@ -89,16 +89,16 @@ function ProjectContent() {
           className="lg:col-span-8 space-y-12"
         >
           <div className="prose prose-xl prose-red">
-            <h2 className="font-serif text-4xl mb-8">À propos du projet</h2>
-            <div className="text-lg leading-relaxed text-text-black/80 whitespace-pre-wrap">
+            <h2 className="font-serif text-4xl mb-8 text-white">À propos du projet</h2>
+            <div className="text-lg leading-relaxed text-white/80 whitespace-pre-wrap">
               {project.content || "Aucune description disponible."}
             </div>
             
             {project.gallery && project.gallery.length > 0 && (
               <div className="mt-16 space-y-6">
-                <div className="flex justify-between items-center border-b border-text-black/10 pb-4">
-                  <h3 className="font-serif text-3xl italic">Galerie Media</h3>
-                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-30">Défilement horizontal →</p>
+                <div className="flex justify-between items-center border-b border-white/10 pb-4">
+                  <h3 className="font-serif text-3xl italic text-white">Galerie Media</h3>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-white/30">Défilement horizontal →</p>
                 </div>
                 <div className="flex gap-6 overflow-x-auto pb-8 snap-x snap-mandatory no-scrollbar">
                   {project.gallery.map((item, i) => {

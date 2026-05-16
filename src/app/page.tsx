@@ -464,17 +464,54 @@ export default function Home() {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedProduct(null)} className="absolute inset-0 bg-soft-black/80 backdrop-blur-xl" />
             <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-6xl bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]">
               
-              {/* Product Visuals */}
-              <div className="w-full h-80 md:h-auto md:w-3/5 relative bg-white/5 group shrink-0">
-                <Image src={selectedProduct.images[activeProdImg] || ""} alt={selectedProduct.name} fill className="object-contain p-8 md:p-12 drop-shadow-2xl" unoptimized />
-                <button onClick={() => setSelectedProduct(null)} className="absolute top-6 left-6 z-10 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-md transition-all shadow-xl"><X size={24} /></button>
+              <div className="w-full h-80 md:h-auto md:w-3/5 relative bg-white/5 group shrink-0 overflow-hidden">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeProdImg}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3 }}
+                    className="absolute inset-0"
+                    drag="x"
+                    dragConstraints={{ left: 0, right: 0 }}
+                    onDragEnd={(_, info) => {
+                      if (info.offset.x > 50) setActiveProdImg(prev => (prev - 1 + selectedProduct.images.length) % selectedProduct.images.length);
+                      else if (info.offset.x < -50) setActiveProdImg(prev => (prev + 1) % selectedProduct.images.length);
+                    }}
+                  >
+                    <Image src={selectedProduct.images[activeProdImg] || ""} alt={selectedProduct.name} fill className="object-contain p-8 md:p-12 drop-shadow-2xl" unoptimized />
+                  </motion.div>
+                </AnimatePresence>
+                
+                <button onClick={() => setSelectedProduct(null)} className="absolute top-6 left-6 z-20 p-3 bg-black/40 hover:bg-black/60 rounded-full text-white backdrop-blur-md transition-all shadow-xl"><X size={24} /></button>
                 
                 {selectedProduct.images.length > 1 && (
-                  <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-10 px-6 py-3 bg-black/40 backdrop-blur-md rounded-full border border-white/10">
-                    {selectedProduct.images.map((_, i) => (
-                      <button key={i} onClick={() => setActiveProdImg(i)} className={`w-3 h-3 rounded-full transition-all ${activeProdImg === i ? 'bg-primary-red scale-125' : 'bg-white/20 hover:bg-white/40'}`} />
-                    ))}
-                  </div>
+                  <>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setActiveProdImg(prev => (prev - 1 + selectedProduct.images.length) % selectedProduct.images.length); }}
+                      className="absolute left-6 top-1/2 -translate-y-1/2 z-20 p-3 bg-black/40 hover:bg-primary-red rounded-full text-white backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 hidden md:flex"
+                    >
+                      <ArrowLeft size={20} />
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setActiveProdImg(prev => (prev + 1) % selectedProduct.images.length); }}
+                      className="absolute right-6 top-1/2 -translate-y-1/2 z-20 p-3 bg-black/40 hover:bg-primary-red rounded-full text-white backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 hidden md:flex"
+                    >
+                      <ArrowLeft size={20} className="rotate-180" />
+                    </button>
+                    
+                    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 z-20">
+                      <div className="px-4 py-1.5 bg-black/60 backdrop-blur-md rounded-full border border-white/10 text-[10px] font-bold tracking-widest text-white/80">
+                        {activeProdImg + 1} / {selectedProduct.images.length}
+                      </div>
+                      <div className="flex gap-2">
+                        {selectedProduct.images.map((_, i) => (
+                          <button key={i} onClick={() => setActiveProdImg(i)} className={`w-2 h-2 rounded-full transition-all ${activeProdImg === i ? 'bg-primary-red w-4' : 'bg-white/20 hover:bg-white/40'}`} />
+                        ))}
+                      </div>
+                    </div>
+                  </>
                 )}
               </div>
 
@@ -733,9 +770,9 @@ export default function Home() {
           
           if (section.id === 'shop' && products.length > 0) return (
             <section key="shop" className="relative z-10">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-4">
-                <h2 className="font-serif text-6xl md:text-8xl tracking-tighter leading-none italic">{section.label}</h2>
-                <p className="text-xl md:text-2xl text-[var(--primary-red)] font-light italic">{section.subLabel}</p>
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-4 pt-4">
+                <h2 className="font-serif text-6xl md:text-8xl tracking-tighter leading-tight italic pb-2">{section.label}</h2>
+                <p className="text-xl md:text-2xl text-[var(--primary-red)] font-light italic mb-4 md:mb-8">{section.subLabel}</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {products.map((product) => (
@@ -749,14 +786,14 @@ export default function Home() {
                   >
                     <div className="relative aspect-square overflow-hidden m-4 rounded-xl">
                       <Image src={product.images[0] || ""} alt={product.name} fill className="object-cover group-hover:scale-105 transition-transform duration-700" unoptimized />
-                      <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-md border border-white/30 text-white px-4 py-2 text-sm font-bold shadow-xl rounded-lg">{product.price}€</div>
+                      <div className="absolute top-4 right-4 bg-primary-red text-white px-4 py-2 text-sm font-bold shadow-xl rounded-lg border border-white/20">{product.price}€</div>
                     </div>
                     <div className="p-8 pt-4 space-y-4">
                       <div className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 bg-primary-red rounded-full"></span>
-                        <h3 className="font-serif text-2xl text-soft-black">{product.name}</h3>
+                        <h3 className="font-serif text-2xl text-white leading-tight">{product.name}</h3>
                       </div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-soft-black/40 group-hover:text-primary-red transition-colors">Voir les détails</p>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 group-hover:text-primary-red transition-colors">Voir les détails</p>
                     </div>
                   </motion.div>
                 ))}
