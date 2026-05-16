@@ -948,7 +948,7 @@ export default function AdminDashboard() {
                         <div className="bg-white border border-text-black/10 p-8 rounded-sm space-y-6">
                           <div className="flex flex-col md:flex-row gap-8 items-center">
                             <div className="bg-white p-4 border border-text-black/5 rounded-sm">
-                              <QRCodeSVG value={mfaEnrollment.totp.qr_code} size={180} />
+                              <QRCodeSVG value={mfaEnrollment.totp.uri} size={180} />
                             </div>
                             <div className="space-y-4 flex-1">
                               <p className="text-sm font-bold uppercase tracking-widest">1. Scannez le QR Code</p>
