@@ -610,7 +610,7 @@ export default function Home() {
                   {formOrderId && (
                     <div className="bg-primary-red/5 p-6 rounded-sm border border-primary-red/20 space-y-3">
                       <p className="text-[10px] font-bold uppercase tracking-widest text-primary-red">Votre code de commande</p>
-                      <p className="text-4xl font-serif text-soft-black">{formOrderId}</p>
+                      <p className="text-4xl font-serif text-white">{formOrderId}</p>
                       <p className="text-[9px] opacity-40 italic">Notez ce code pour le donner lors du paiement en cash.</p>
                     </div>
                   )}
