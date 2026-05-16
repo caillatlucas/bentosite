@@ -3,8 +3,14 @@
 
 import React, { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { useScroll, Float, PerspectiveCamera, Environment, useGLTF } from '@react-three/drei';
+import { Float, PerspectiveCamera, Environment, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
+
+// Define custom R3F elements to bypass JSX IntrinsicElements check
+const AmbientLight = 'ambientLight' as any;
+const SpotLight = 'spotLight' as any;
+const PointLight = 'pointLight' as any;
+const ScenePrimitive = 'primitive' as any;
 
 function Statue({ color }: { color: string }) {
   const mesh = useRef<THREE.Group>(null);
@@ -34,8 +40,6 @@ function Statue({ color }: { color: string }) {
     }
   });
 
-  const ScenePrimitive = 'primitive' as any;
-
   return (
     <ScenePrimitive 
       ref={mesh} 
@@ -53,9 +57,9 @@ export default function StatueBackground({ color }: { color: string }) {
     <div className="fixed inset-0 z-[-1] pointer-events-none opacity-40">
       <Canvas dpr={[1, 2]}>
         <PerspectiveCamera makeDefault position={[0, 0, 5]} />
-        <ambientLight intensity={0.5} />
-        <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
-        <pointLight position={[-10, -10, -10]} />
+        <AmbientLight intensity={0.5} />
+        <SpotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
+        <PointLight position={[-10, -10, -10]} />
         
         <Float speed={2} rotationIntensity={0.5} floatIntensity={0.5}>
           <Statue color={color} />
