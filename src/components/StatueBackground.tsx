@@ -1,0 +1,67 @@
+'use client';
+
+import React, { useRef, useMemo } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { useScroll, Float, PerspectiveCamera, Environment, useGLTF } from '@react-three/drei';
+import * as THREE from 'three';
+
+function Statue({ color }: { color: string }) {
+  const mesh = useRef<THREE.Group>(null);
+  const { scene } = useGLTF('/models/antinous.glb');
+  
+  useMemo(() => {
+    scene.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        child.material = new THREE.MeshStandardMaterial({
+          color: color,
+          roughness: 0.2,
+          metalness: 0.8,
+          emissive: color,
+          emissiveIntensity: 0.1,
+        });
+      }
+    });
+  }, [scene, color]);
+
+  useFrame((state) => {
+    const t = state.clock.getElapsedTime();
+    if (mesh.current) {
+      mesh.current.rotation.y = t * 0.1;
+      const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
+      mesh.current.rotation.y += scrollY * 0.001;
+      mesh.current.position.y = Math.sin(t) * 0.05;
+    }
+  });
+
+  return (
+    <primitive 
+      ref={mesh} 
+      object={scene} 
+      scale={2.2} 
+      position={[2, -1, 0]} 
+    />
+  );
+}
+
+useGLTF.preload('/models/antinous.glb');
+
+export default function StatueBackground({ color }: { color: string }) {
+  return (
+    <div className="fixed inset-0 z-[-1] pointer-events-none opacity-40">
+      <Canvas dpr={[1, 2]}>
+        <PerspectiveCamera makeDefault position={[0, 0, 5]} />
+        <ambientLight intensity={0.5} />
+        <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
+        <pointLight position={[-10, -10, -10]} />
+        
+        <Float speed={2} rotationIntensity={0.5} floatIntensity={0.5}>
+          <Statue color={color} />
+        </Float>
+        
+        <Environment preset="city" />
+      </Canvas>
+      {/* Noise Effect Overlay */}
+      <div className="absolute inset-0 bg-noise opacity-[0.03] pointer-events-none" />
+    </div>
+  );
+}

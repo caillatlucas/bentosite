@@ -93,6 +93,7 @@ export default function AdminDashboard() {
   const [musicUrl, setMusicUrl] = useState("");
   const [musicCover, setMusicCover] = useState("");
   const [primaryColor, setPrimaryColor] = useState("#ff3131");
+  const [show3DBackground, setShow3DBackground] = useState(false);
   const [sectionsConfig, setSectionsConfig] = useState([
     { id: 'projects', label: 'Projets', subLabel: 'Sélection 2024', visible: true },
     { id: 'shop', label: 'Boutique', subLabel: 'Nos Produits', visible: true },
@@ -236,6 +237,7 @@ export default function AdminDashboard() {
         setMusicUrl(global.musicUrl || "");
         setMusicCover(global.musicCover || "");
         setPrimaryColor(global.primaryColor || "#ff3131");
+        setShow3DBackground(global.show3DBackground ?? false);
         if (global.sectionsConfig) {
           const migratedSections = global.sectionsConfig.map((s: any) => {
             if (s.id === 'projects' && s.subLabel === undefined) return { ...s, subLabel: global.projectsTitle || "Sélection 2024", label: global.recentProjectsTitle || "Postes" };
@@ -309,6 +311,7 @@ export default function AdminDashboard() {
       musicUrl, 
       musicCover,
       primaryColor,
+      show3DBackground,
       sectionsConfig,
       mediaOrder: mediaItems.map(m => m.id)
     };
@@ -867,12 +870,17 @@ export default function AdminDashboard() {
                   <input type="text" value={textEffectImage} onChange={(e) => setTextEffectImage(e.target.value)} placeholder="URL Image (ex: grain, gradient...)" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" />
                 </div>
 
-                <div className="space-y-4">
-                  <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Couleur Principale</label>
                   <div className="flex items-center gap-4">
                     <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="w-12 h-12 rounded-sm border-none cursor-pointer bg-transparent" />
                     <input type="text" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="flex-1 bg-transparent border-b border-text-black/20 py-2 outline-none text-sm font-mono uppercase" />
                   </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span className="text-[9px] font-bold uppercase tracking-widest opacity-40">Modèle 3D Arrière-plan</span>
+                  <button onClick={() => setShow3DBackground(!show3DBackground)} className={`w-12 h-6 rounded-full transition-colors relative ${ show3DBackground ? 'bg-primary-red' : 'bg-text-black/10' }`}>
+                    <motion.div animate={{ x: show3DBackground ? 24 : 4 }} className="w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm" />
+                  </button>
                 </div>
                 
                 <h3 className="font-serif text-2xl border-b border-text-black/10 pb-4 pt-4">Visibilité & Ordre des Sections</h3>

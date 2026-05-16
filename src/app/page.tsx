@@ -9,6 +9,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { SocialConfig } from "@/components/Socials";
+import dynamic from 'next/dynamic';
+
+const StatueBackground = dynamic(() => import('@/components/StatueBackground'), { ssr: false });
 
 interface MediaItem { id: string; url: string; name: string; }
 interface Message { id: string; name: string; title: string; content: string; contact?: string; date: string; reply?: string; order_id?: string; attachments?: string[]; agreed_to_pay?: boolean; replies?: { text: string; date: string; from: string }[]; user_id?: string; user_email?: string; }
@@ -52,7 +55,8 @@ export default function Home() {
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [isInboxExpanded, setIsInboxExpanded] = useState(false);
   const [profileImage, setProfileImage] = useState("");
-  const [replies, setReplies] = useState<Message[]>([]);
+  const [show3DBackground, setShow3DBackground] = useState(false);
+  const [replies, setReplies] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [user, setUser] = useState<any>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -124,10 +128,12 @@ export default function Home() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      if (session?.user) fetchUserProfile(session.user.id);
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+      if (session?.user) fetchUserProfile(session.user.id);
     });
 
     return () => { 
@@ -190,11 +196,30 @@ export default function Home() {
     if (pData) setProducts(pData);
   };
 
+  const fetchUserProfile = async (userId: string) => {
+    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
+    if (data) {
+      setProfileImage(data.avatar_url || "");
+    }
+  };
+
   const checkReplies = async () => {
     const myMsgIdsRaw = localStorage.getItem("my_sent_messages");
-    if (!myMsgIdsRaw) return;
-    const myMsgIds = JSON.parse(myMsgIdsRaw);
-    const { data } = await supabase.from('messages').select('*').in('id', myMsgIds).order('created_at', { ascending: false });
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    let query = supabase.from('messages').select('*, profiles(avatar_url, full_name)');
+    
+    if (session?.user) {
+      query = query.or(`user_id.eq.${session.user.id},user_email.eq.${session.user.email}`);
+    } else if (myMsgIdsRaw) {
+      const myMsgIds = JSON.parse(myMsgIdsRaw);
+      query = query.in('id', myMsgIds);
+    } else {
+      return;
+    }
+
+    const { data } = await query.order('created_at', { ascending: false });
+    
     if (data) {
       setReplies(data);
       const unread = data.filter(m => m.reply && !localStorage.getItem(`read_reply_${m.id}`)).length;
@@ -341,6 +366,8 @@ export default function Home() {
           className="fixed inset-0 z-0 pointer-events-none bg-cover bg-center"
         />
       )}
+
+      {show3DBackground && <StatueBackground color={backgroundColor === '#ffffff' ? pColor : '#ffffff'} />}
       {/* Dynamic Theme Styles */}
       <style jsx global>{`
         :root {
@@ -609,8 +636,15 @@ export default function Home() {
                 replies.map(r => (
                   <div key={r.id} className="bg-white/5 border border-white/10 rounded-2xl p-6 relative group hover:bg-white/10 transition-all cursor-pointer" onClick={() => { if(r.reply) localStorage.setItem(`read_reply_${r.id}`, "true"); checkReplies(); }}>
                     <div className="flex justify-between items-start mb-4">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">{r.title}</p>
-                      {r.order_id && <span className="text-[10px] font-bold text-primary-red bg-primary-red/10 px-2 py-0.5 rounded-sm">Code: {r.order_id}</span>}
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-white/10 border border-white/10 overflow-hidden relative shrink-0">
+                          {r.profiles?.avatar_url ? <Image src={r.profiles.avatar_url} alt="Profile" fill className="object-cover" unoptimized /> : <User size={14} className="m-auto mt-2 text-white/20" />}
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">{r.profiles?.full_name || r.title || "Utilisateur"}</p>
+                          {r.order_id && <span className="text-[9px] font-bold text-primary-red">Code: {r.order_id}</span>}
+                        </div>
+                      </div>
                     </div>
                     <div className="space-y-4 mb-4">
                       {r.replies && r.replies.length > 0 ? (
@@ -667,7 +701,7 @@ export default function Home() {
                 </div>
               </div>
 
-              {user.email === 'caillatlucas2304@gmail.com' && (
+              {user && (
                 <div className="space-y-4 pt-4 border-t border-white/5">
                   <p className="text-[9px] font-bold uppercase tracking-widest text-white/30">Photo de profil</p>
                   <div className="space-y-2">
@@ -678,9 +712,12 @@ export default function Home() {
                       onChange={async (e) => {
                         const newUrl = e.target.value;
                         setProfileImage(newUrl);
-                        const { data: globalData } = await supabase.from('settings').select('*').eq('key', 'global').single();
-                        const globalValue = globalData?.value || {};
-                        await supabase.from('settings').upsert({ key: 'global', value: { ...globalValue, profileImage: newUrl } });
+                        await supabase.from('profiles').upsert({ id: user.id, avatar_url: newUrl, full_name: user.email.split('@')[0] });
+                        if (user.email === 'caillatlucas2304@gmail.com') {
+                          const { data: globalData } = await supabase.from('settings').select('*').eq('key', 'global').single();
+                          const globalValue = globalData?.value || {};
+                          await supabase.from('settings').upsert({ key: 'global', value: { ...globalValue, profileImage: newUrl } });
+                        }
                       }}
                       className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-[10px] outline-none focus:border-primary-red transition-all text-white"
                     />
