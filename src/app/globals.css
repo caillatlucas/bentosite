@@ -1,15 +1,6 @@
-@import "tailwindcss";
-
-@theme {
-  --color-background: #d3d3d3;
-  --color-primary-red: #ff3131;
-  --color-text-black: #111111;
-  --color-soft-black: #1c1c1c;
-  --color-shadow-red: rgba(255, 49, 49, 0.18);
-  
-  --font-serif: var(--font-playfair);
-  --font-sans: var(--font-inter);
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --background: #d3d3d3;
@@ -17,6 +8,8 @@
   --text-black: #111111;
   --soft-black: #1c1c1c;
   --shadow-red: rgba(255, 49, 49, 0.18);
+  --font-serif: var(--font-playfair);
+  --font-sans: var(--font-inter);
 }
 
 body {
@@ -44,4 +37,12 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--primary-red);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
