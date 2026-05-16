@@ -14,7 +14,7 @@ const ScenePrimitive = 'primitive' as any;
 
 function Statue({ color }: { color: string }) {
   const mesh = useRef<THREE.Group>(null);
-  const { scene } = useGLTF('/bentosite/models/antinous.glb');
+  const { scene } = useGLTF('/bentosite/models/model.glb');
   
   useMemo(() => {
     scene.traverse((child) => {
@@ -50,7 +50,7 @@ function Statue({ color }: { color: string }) {
   );
 }
 
-useGLTF.preload('/models/antinous.glb');
+useGLTF.preload('/bentosite/models/model.glb');
 
 export default function StatueBackground({ color }: { color: string }) {
   return (
