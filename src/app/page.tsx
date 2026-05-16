@@ -103,7 +103,7 @@ export default function Home() {
 
   // Color transition - Adjusted for portrait
   const pColor = settings.primaryColor || "#ff3131";
-  const backgroundColor = useTransform(scrollYProgress, [0, 0.15], [pColor, "#d3d3d3"]);
+  const backgroundColor = useTransform(scrollYProgress, [0, 0.15], [pColor, "#ffffff"]);
   const textColor = useTransform(scrollYProgress, [0, 0.15], ["#ffffff", pColor]);
   const secondaryTextColor = useTransform(scrollYProgress, [0, 0.15], ["rgba(255,255,255,0.7)", "rgba(17,17,17,0.6)"]);
   const adminBtnColor = useTransform(scrollYProgress, [0, 0.15], ["#ffffff", "#111111"]);
@@ -299,6 +299,10 @@ export default function Home() {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      alert("L'image est trop lourde (max 2Mo). Veuillez la compresser.");
+      return;
+    }
     const reader = new FileReader();
     reader.onloadend = () => {
       setFormAttachments([...formAttachments, reader.result as string]);
@@ -432,9 +436,6 @@ export default function Home() {
           --color-primary-red: ${pColor};
           --shadow-red: ${pColor}22;
           --color-shadow-red: ${pColor}22;
-        }
-        @media (max-width: 768px) {
-          html, body { background-color: ${pColor} !important; }
         }
       `}</style>
 
@@ -714,8 +715,11 @@ export default function Home() {
                             {rep.media && rep.media.length > 0 && (
                               <div className="flex flex-wrap gap-2 pt-1">
                                 {rep.media.map((m, midx) => (
-                                  <div key={midx} className="relative w-20 h-20 rounded-lg overflow-hidden border border-white/10 group cursor-pointer" onClick={(e) => { e.stopPropagation(); setSelectedImage({ url: m.url, name: "Joint" } as any); }}>
+                                  <div key={midx} className="relative w-20 h-20 rounded-lg overflow-hidden border border-white/10 group cursor-pointer shadow-lg" onClick={(e) => { e.stopPropagation(); setSelectedImage({ url: m.url, name: "Image jointe" } as any); }}>
                                     <Image src={m.url} alt="Media" fill className="object-cover group-hover:scale-105 transition-transform" unoptimized />
+                                    <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                      <Maximize2 size={16} className="text-white" />
+                                    </div>
                                   </div>
                                 ))}
                               </div>
