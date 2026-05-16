@@ -14,7 +14,7 @@ const ScenePrimitive = 'primitive' as any;
 
 function Statue({ color }: { color: string }) {
   const mesh = useRef<THREE.Group>(null);
-  const { scene } = useGLTF('/models/antinous.glb');
+  const { scene } = useGLTF('/bentosite/models/antinous.glb');
   
   useMemo(() => {
     scene.traverse((child) => {
@@ -61,9 +61,11 @@ export default function StatueBackground({ color }: { color: string }) {
         <SpotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
         <PointLight position={[-10, -10, -10]} />
         
-        <Float speed={2} rotationIntensity={0.5} floatIntensity={0.5}>
-          <Statue color={color} />
-        </Float>
+        <React.Suspense fallback={null}>
+          <Float speed={2} rotationIntensity={0.5} floatIntensity={0.5}>
+            <Statue color={color} />
+          </Float>
+        </React.Suspense>
         
         <Environment preset="city" />
       </Canvas>
