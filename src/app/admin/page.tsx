@@ -6,7 +6,7 @@ import {
   Plus, Settings, FileText, ImageIcon, 
   LogOut, Check, X as CloseIcon, X, Edit2, Trash2, Upload, AlertCircle, Link as LinkIcon,
   Share2, Mail, MessageSquare, Zap, User, Clock, Music, Play, Pause, Send, ArrowLeft,
-  Download, ExternalLink
+  Download, ExternalLink, Users, Phone
 } from "lucide-react";
 import { FaLinkedin, FaGithub, FaTwitter, FaInstagram, FaYoutube, FaTiktok, FaGlobe, FaDiscord, FaPhone } from "react-icons/fa";
 import Link from "next/link";
@@ -77,7 +77,9 @@ export default function AdminDashboard() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [replyText, setReplyText] = useState<{ [key: string]: string }>({});
+  const [replyMedia, setReplyMedia] = useState<{ [key: string]: { url: string; type: 'image' | 'video' }[] }>({});
   const [messages, setMessages] = useState<Message[]>([]);
+  const [allProfiles, setAllProfiles] = useState<any[]>([]);
   const [selectedAttachment, setSelectedAttachment] = useState<string | null>(null);
   const router = useRouter();
   
@@ -206,6 +208,9 @@ export default function AdminDashboard() {
       }
     }
 
+    const { data: allP } = await supabase.from('profiles').select('*');
+    if (allP) setAllProfiles(allP);
+
     if (sData) {
       const global = sData.find(s => s.key === 'global')?.value;
       if (global) {
@@ -323,15 +328,17 @@ export default function AdminDashboard() {
 
   const handleReply = async (msgId: string) => {
     const text = replyText[msgId];
-    if (!text) return;
+    const media = replyMedia[msgId] || [];
+    if (!text && media.length === 0) return;
     const msg = messages.find(m => m.id === msgId);
     if (!msg) return;
-    const newReply = { text, date: new Date().toLocaleString("fr-FR"), from: "Lucas" };
+    const newReply = { text, date: new Date().toLocaleString("fr-FR"), from: "Lucas", media };
     const updatedReplies = [...(msg.replies || []), newReply];
     const { error } = await supabase.from('messages').update({ reply: text, replies: updatedReplies }).eq('id', msgId);
     if (!error) {
       setMessages(messages.map(m => m.id === msgId ? { ...m, reply: text, replies: updatedReplies } : m));
       setReplyText({ ...replyText, [msgId]: "" });
+      setReplyMedia({ ...replyMedia, [msgId]: [] });
     }
   };
 
@@ -505,6 +512,7 @@ export default function AdminDashboard() {
     { id: "media", label: "Médias", icon: ImageIcon },
     { id: "shop", label: "Boutique", icon: Zap },
     { id: "messages", label: "Messages", icon: MessageSquare },
+    { id: "users", label: "Utilisateurs", icon: Users },
     { id: "social", label: "Social", icon: Share2 },
     { id: "settings", label: "Réglages", icon: Settings },
   ];
@@ -650,19 +658,106 @@ export default function AdminDashboard() {
                         <span className="text-white/40 text-xs">{(msg as any).profiles?.full_name ? `(${msg.name})` : ''}</span>
                         {msg.order_id && <span className="bg-primary-red/20 text-primary-red px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border border-primary-red/20 shadow-lg shadow-primary-red/10">Commande: {msg.order_id}</span>}
                         {msg.user_email && <span className="bg-blue-500/20 text-blue-400 px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border border-blue-500/20 flex items-center gap-2"><User size={12} /> {msg.user_email}</span>}
+                        {(msg as any).contact && <span className="bg-green-500/20 text-green-400 px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border border-green-500/20 flex items-center gap-2"><Phone size={12} /> {(msg as any).contact}</span>}
                       </div>
                       <h4 className="text-xl font-medium text-white/90">{msg.title}</h4>
                       <p className="text-base leading-relaxed text-white/70 bg-white/5 p-6 rounded-2xl border border-white/5">{msg.content}</p>
                     </div>
                   </div>
-                  <div className="flex gap-4 items-end">
-                    <div className="flex-1 space-y-2">
-                      <textarea placeholder="Votre réponse..." value={replyText[msg.id] || ""} onChange={(e) => setReplyText({ ...replyText, [msg.id]: e.target.value })} rows={2} className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm text-white outline-none focus:border-primary-red transition-all resize-none" />
+                  <div className="space-y-4">
+                    {msg.replies && msg.replies.length > 0 && (
+                      <div className="space-y-4 pt-4 border-t border-white/10">
+                        {msg.replies.map((rep, ridx) => (
+                          <div key={ridx} className="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-3">
+                            <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest opacity-40">
+                              <span>Lucas</span>
+                              <span>{rep.date}</span>
+                            </div>
+                            <p className="text-sm text-white/80">{rep.text}</p>
+                            {rep.media && rep.media.length > 0 && (
+                              <div className="flex flex-wrap gap-2 pt-2">
+                                {rep.media.map((m, midx) => (
+                                  <div key={midx} className="relative w-20 h-20 rounded-lg overflow-hidden border border-white/10">
+                                    <Image src={m.url} alt="Reply Media" fill className="object-cover" unoptimized />
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    <div className="flex flex-col gap-3">
+                      {replyMedia[msg.id]?.length > 0 && (
+                        <div className="flex flex-wrap gap-2 p-2 bg-white/5 rounded-xl border border-white/10">
+                          {replyMedia[msg.id].map((m, idx) => (
+                            <div key={idx} className="relative w-16 h-16 rounded-lg overflow-hidden group">
+                              <Image src={m.url} alt="Pending Media" fill className="object-cover" unoptimized />
+                              <button onClick={() => setReplyMedia({ ...replyMedia, [msg.id]: replyMedia[msg.id].filter((_, i) => i !== idx) })} className="absolute inset-0 bg-red-500/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white">
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex gap-4 items-end">
+                        <div className="flex-1 relative">
+                          <textarea 
+                            placeholder="Votre réponse..." 
+                            value={replyText[msg.id] || ""} 
+                            onChange={(e) => setReplyText({ ...replyText, [msg.id]: e.target.value })} 
+                            rows={2} 
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 pr-12 text-sm text-white outline-none focus:border-primary-red transition-all resize-none" 
+                          />
+                          <button 
+                            onClick={() => {
+                              const url = prompt("URL de l'image :");
+                              if (url) {
+                                const current = replyMedia[msg.id] || [];
+                                setReplyMedia({ ...replyMedia, [msg.id]: [...current, { url, type: 'image' }] });
+                              }
+                            }}
+                            className="absolute right-4 bottom-4 text-white/30 hover:text-primary-red transition-colors"
+                          >
+                            <Plus size={20} />
+                          </button>
+                        </div>
+                        <button onClick={() => handleReply(msg.id)} className="bg-primary-red text-white px-8 py-4 text-xs font-bold rounded-2xl flex items-center gap-2 hover:bg-red-600 transition-all shadow-xl shadow-primary-red/20 h-[52px]"> <Send size={16} /> RÉPONDRE </button>
+                      </div>
                     </div>
-                    <button onClick={() => handleReply(msg.id)} className="bg-primary-red text-white px-8 py-4 text-xs font-bold rounded-2xl flex items-center gap-2 hover:bg-red-600 transition-all shadow-xl shadow-primary-red/20 h-[52px]"> <Send size={16} /> RÉPONDRE </button>
                   </div>
                 </div>
               ))}
+          {activeTab === "users" && (
+            <motion.div key="users" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {allProfiles.map((profile) => {
+                  const userMessages = messages.filter(m => m.user_id === profile.id);
+                  return (
+                    <div key={profile.id} className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex items-center gap-5 group hover:bg-black/30 transition-all shadow-xl">
+                      <div className="w-16 h-16 rounded-full bg-white/10 border border-white/20 overflow-hidden relative shrink-0">
+                        {profile.avatar_url ? (
+                          <Image src={profile.avatar_url} alt="Avatar" fill className="object-cover" unoptimized />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-white/20">
+                            <User size={32} />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-lg font-bold text-white truncate">{profile.full_name || "Anonyme"}</h4>
+                        <p className="text-[10px] text-white/40 uppercase tracking-widest mb-2 truncate">ID: {profile.id.substring(0, 8)}...</p>
+                        <div className="flex items-center gap-3">
+                          <span className="text-[10px] font-bold bg-primary-red/10 text-primary-red px-2 py-0.5 rounded-full border border-primary-red/20">
+                            {userMessages.length} message{userMessages.length > 1 ? 's' : ''}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </motion.div>
           )}
 

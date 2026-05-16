@@ -705,10 +705,21 @@ export default function Home() {
                     </div>
                     <div className="space-y-4 mb-4">
                       {r.replies && r.replies.length > 0 ? (
-                        r.replies.map((rep: { text: string; date: string; from: string }, idx: number) => (
-                          <div key={idx} className={`${rep.from === 'Lucas' ? 'bg-white/5 border-l-2 border-primary-red pl-4 py-2 rounded-r-lg' : ''}`}>
-                            <p className="text-[9px] font-bold uppercase text-white/30 mb-1">{rep.from} • {rep.date}</p>
-                            <p className="text-sm font-medium text-white/90">{rep.text}</p>
+                        r.replies.map((rep: { text: string; date: string; from: string; media?: { url: string; type: string }[] }, idx: number) => (
+                          <div key={idx} className={`${rep.from === 'Lucas' ? 'bg-white/5 border-l-2 border-primary-red pl-4 py-2 rounded-r-lg' : ''} space-y-3`}>
+                            <div>
+                              <p className="text-[9px] font-bold uppercase text-white/30 mb-1">{rep.from} • {rep.date}</p>
+                              <p className="text-sm font-medium text-white/90">{rep.text}</p>
+                            </div>
+                            {rep.media && rep.media.length > 0 && (
+                              <div className="flex flex-wrap gap-2 pt-1">
+                                {rep.media.map((m, midx) => (
+                                  <div key={midx} className="relative w-20 h-20 rounded-lg overflow-hidden border border-white/10 group cursor-pointer" onClick={(e) => { e.stopPropagation(); setSelectedImage({ url: m.url, name: "Joint" } as any); }}>
+                                    <Image src={m.url} alt="Media" fill className="object-cover group-hover:scale-105 transition-transform" unoptimized />
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         ))
                       ) : (
