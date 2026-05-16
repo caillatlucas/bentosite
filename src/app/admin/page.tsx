@@ -932,7 +932,17 @@ export default function AdminDashboard() {
                       {!mfaEnrollment ? (
                         <div className="bg-primary-red/5 p-6 rounded-sm border border-primary-red/10 space-y-4">
                           <p className="text-sm opacity-70">Renforcez la sécurité de votre accès admin en activant la double authentification par application (Google Authenticator, Authy, etc.).</p>
-                          <button onClick={handleMfaEnroll} className="bg-primary-red text-white px-6 py-3 text-[10px] font-bold uppercase tracking-widest rounded-xs hover:bg-red-600 transition-all">Activer l'A2F</button>
+                          <button 
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              console.log("MFA Enrollment button clicked");
+                              handleMfaEnroll();
+                            }} 
+                            className="bg-primary-red text-white px-6 py-3 text-[10px] font-bold uppercase tracking-widest rounded-xs hover:bg-red-600 transition-all"
+                          >
+                            Activer l'A2F
+                          </button>
                         </div>
                       ) : (
                         <div className="bg-white border border-text-black/10 p-8 rounded-sm space-y-6">
@@ -958,7 +968,16 @@ export default function AdminDashboard() {
                                 className="flex-1 bg-transparent border-b border-text-black/20 py-2 outline-none text-center text-2xl tracking-[0.3em] font-serif"
                                 maxLength={6}
                               />
-                              <button onClick={handleMfaVerify} className="bg-text-black text-white px-8 py-2 text-[10px] font-bold uppercase tracking-widest rounded-xs">Vérifier & Activer</button>
+                              <button 
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handleMfaVerify();
+                                }} 
+                                className="bg-text-black text-white px-8 py-2 text-[10px] font-bold uppercase tracking-widest rounded-xs"
+                              >
+                                Vérifier & Activer
+                              </button>
                             </div>
                             {mfaError && <p className="text-red-600 text-[10px] font-bold uppercase">{mfaError}</p>}
                             <button onClick={() => setMfaEnrollment(null)} className="text-[10px] opacity-40 uppercase tracking-widest hover:underline">Annuler</button>
