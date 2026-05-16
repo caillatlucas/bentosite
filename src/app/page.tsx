@@ -367,9 +367,11 @@ export default function Home() {
       if (error) throw error;
       
       if (data) {
-        const existing = localStorage.getItem("my_sent_messages");
-        const ids = existing ? JSON.parse(existing) : [];
-        localStorage.setItem("my_sent_messages", JSON.stringify([...ids, data[0].id]));
+        if (!user) {
+          const existing = localStorage.getItem("my_sent_messages");
+          const ids = existing ? JSON.parse(existing) : [];
+          localStorage.setItem("my_sent_messages", JSON.stringify([...ids, data[0].id]));
+        }
         setIsSubmitting(false); 
         setShowSuccess(true);
         setOrderAgreed(false);

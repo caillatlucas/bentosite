@@ -141,6 +141,29 @@ export default function AdminDashboard() {
   const [mfaCode, setMfaCode] = useState("");
   const [mfaError, setMfaError] = useState("");
 
+  const [ipHistoryUserId, setIpHistoryUserId] = useState<string | null>(null);
+  const [ipHistoryData, setIpHistoryData] = useState<{ ip: string; last_sign_in: string }[]>([]);
+  const [isFetchingIps, setIsFetchingIps] = useState(false);
+
+  const fetchIpHistory = async (userId: string) => {
+    setIpHistoryUserId(userId);
+    setIsFetchingIps(true);
+    setIpHistoryData([]);
+    try {
+      // Appel d'une fonction RPC Supabase (nécessite une fonction SQL côté serveur)
+      const { data, error } = await supabase.rpc('get_user_ips', { target_user_id: userId });
+      if (error) {
+        console.error(error);
+        alert("Erreur. Assurez-vous d'avoir créé la fonction SQL 'get_user_ips' dans Supabase.");
+      } else if (data) {
+        setIpHistoryData(data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    setIsFetchingIps(false);
+  };
+
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -767,6 +790,12 @@ export default function AdminDashboard() {
                           <span className="text-[10px] font-bold bg-primary-red/10 text-primary-red px-2 py-0.5 rounded-full border border-primary-red/20">
                             {userMessages.length} message{userMessages.length > 1 ? 's' : ''}
                           </span>
+                          <button 
+                            onClick={() => fetchIpHistory(profile.id)}
+                            className="text-[10px] font-bold bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full border border-blue-500/20 hover:bg-blue-500/20 transition-colors"
+                          >
+                            Historique IP
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -937,6 +966,36 @@ export default function AdminDashboard() {
             </motion.div>
           </motion.div>
         )}
+
+        <AnimatePresence>
+          {ipHistoryUserId && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+              <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} className="bg-[#111] border border-white/10 rounded-2xl p-8 max-w-md w-full shadow-2xl relative">
+                <button onClick={() => setIpHistoryUserId(null)} className="absolute top-6 right-6 text-white/50 hover:text-white transition-colors"><X size={24} /></button>
+                <h2 className="text-2xl font-serif text-white mb-6">Historique IP</h2>
+                
+                {isFetchingIps ? (
+                  <div className="py-12 flex justify-center"><div className="w-8 h-8 border-2 border-primary-red border-t-transparent rounded-full animate-spin"></div></div>
+                ) : ipHistoryData.length > 0 ? (
+                  <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                    {ipHistoryData.map((item, idx) => (
+                      <div key={idx} className="bg-white/5 p-4 rounded-xl border border-white/10 flex justify-between items-center">
+                        <span className="font-mono text-sm text-blue-400">{item.ip}</span>
+                        <span className="text-[10px] uppercase text-white/40">{new Date(item.last_sign_in).toLocaleString('fr-FR')}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-white/40 italic text-center py-6">Aucun historique disponible.</p>
+                )}
+                
+                <p className="text-[10px] text-white/30 mt-6 text-center leading-relaxed">
+                  Note: Nécessite la fonction SQL <code className="bg-white/10 px-1 py-0.5 rounded">get_user_ips</code> dans Supabase.
+                </p>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
     </div>
   );
