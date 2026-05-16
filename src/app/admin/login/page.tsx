@@ -82,14 +82,16 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     
-    const { error: verifyError } = await supabase.auth.mfa.verify({
-      factorId: mfaChallenge.factor_id,
-      challengeId: mfaChallenge.id,
-      code: totpCode
+    console.log("Attempting MFA verification with factor:", mfaChallenge.factor_id || mfaChallenge.id);
+
+    const { error: verifyError } = await supabase.auth.mfa.challengeAndVerify({
+      factorId: mfaChallenge.factor_id || mfaChallenge.id,
+      code: totpCode.replace(/\s/g, '')
     });
 
     if (verifyError) {
-      setError("Code invalide");
+      console.error("MFA Verify Error:", verifyError);
+      setError("Code invalide ou expiré");
     } else {
       router.push("/admin");
     }
