@@ -153,8 +153,8 @@ export default function AdminDashboard() {
       // Appel d'une fonction RPC Supabase (nécessite une fonction SQL côté serveur)
       const { data, error } = await supabase.rpc('get_user_ips', { target_user_id: userId });
       if (error) {
-        console.error(error);
-        alert("Erreur. Assurez-vous d'avoir créé la fonction SQL 'get_user_ips' dans Supabase.");
+        console.error("Détail de l'erreur RPC:", error);
+        alert(`Erreur Supabase: ${error.message}\n\nDétails techniques: ${error.details || 'Aucun'}\nCode: ${error.code}`);
       } else if (data) {
         setIpHistoryData(data);
       }
