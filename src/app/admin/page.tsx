@@ -47,7 +47,7 @@ interface Message {
   order_id?: string;
   attachments?: string[];
   agreed_to_pay?: boolean;
-  replies?: { text: string; date: string; from: string }[];
+  replies?: { text: string; date: string; from: string; media?: { url: string; type: 'image' | 'video' }[] }[];
   user_id?: string;
   user_email?: string;
 }
