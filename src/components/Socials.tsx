@@ -13,12 +13,13 @@ import {
   FaPhone
 } from "react-icons/fa";
 
-interface SocialLink {
+export interface SocialLink {
   url: string;
   enabled: boolean;
 }
 
-interface SocialConfig {
+export interface SocialConfig {
+  email: string;
   linkedin: SocialLink;
   github: SocialLink;
   twitter: SocialLink;
@@ -31,6 +32,7 @@ interface SocialConfig {
 }
 
 const defaultSocials: SocialConfig = {
+  email: "contact@lucascaillat.fr",
   linkedin: { url: "https://linkedin.com/in/lucascaillat", enabled: true },
   github: { url: "https://github.com/lucascaillat", enabled: true },
   twitter: { url: "https://twitter.com/lucascaillat", enabled: false },

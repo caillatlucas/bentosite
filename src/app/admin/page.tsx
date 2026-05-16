@@ -8,10 +8,11 @@ import {
   Share2, Mail, MessageSquare, Zap, User, Clock, Music, Play, Pause, Send, ArrowLeft,
   Download, ExternalLink
 } from "lucide-react";
-import { FaLinkedin, FaGithub, FaTwitter, FaInstagram, FaYoutube, FaTiktok, FaGlobe } from "react-icons/fa";
+import { FaLinkedin, FaGithub, FaTwitter, FaInstagram, FaYoutube, FaTiktok, FaGlobe, FaDiscord, FaPhone } from "react-icons/fa";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { SocialConfig } from "@/components/Socials";
 import { supabase } from "@/lib/supabase";
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -60,16 +61,6 @@ interface Product {
   created_at?: string;
 }
 
-interface SocialConfig {
-  email: string;
-  linkedin: { url: string; enabled: boolean };
-  github: { url: string; enabled: boolean };
-  twitter: { url: string; enabled: boolean };
-  instagram: { url: string; enabled: boolean };
-  youtube: { url: string; enabled: boolean };
-  tiktok: { url: string; enabled: boolean };
-  customLinks: { name: string; url: string; enabled: boolean }[];
-}
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("pages");

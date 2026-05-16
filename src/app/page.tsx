@@ -8,6 +8,7 @@ import Socials from "@/components/Socials";
 import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
+import { SocialConfig } from "@/components/Socials";
 
 interface MediaItem { id: string; url: string; name: string; }
 interface Message { id: string; name: string; title: string; content: string; contact?: string; date: string; reply?: string; order_id?: string; attachments?: string[]; agreed_to_pay?: boolean; replies?: { text: string; date: string; from: string }[]; user_id?: string; user_email?: string; }
@@ -37,7 +38,7 @@ export default function Home() {
       { id: 'bento', label: 'À propos', subLabel: 'Bento Grid', visible: true }
     ]
   });
-  const [socialsConfig, setSocialsConfig] = useState<any>(null);
+  const [socialsConfig, setSocialsConfig] = useState<SocialConfig | null>(null);
   const [galleryMedia, setGalleryMedia] = useState<MediaItem[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedImage, setSelectedImage] = useState<MediaItem | null>(null);
