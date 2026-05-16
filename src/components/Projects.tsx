@@ -25,9 +25,11 @@ interface ProjectsProps {
   };
   label?: string;
   subLabel?: string;
+  textColor?: any;
+  secondaryTextColor?: any;
 }
 
-export default function Projects({ config, label, subLabel }: ProjectsProps) {
+export default function Projects({ config, label, subLabel, textColor, secondaryTextColor }: ProjectsProps) {
   const [projects, setProjects] = useState<Project[]>([]);
 
   const fetchProjects = async () => {
