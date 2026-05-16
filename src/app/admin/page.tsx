@@ -91,10 +91,7 @@ export default function AdminDashboard() {
   const [profileName, setProfileName] = useState("Lucas Caillat");
   const [profileProfession, setProfileProfession] = useState("Freelance Informatique");
   const [profileBio, setProfileBio] = useState("");
-  const [projectsTitle, setProjectsTitle] = useState("Sélection 2024");
-  const [recentProjectsTitle, setRecentProjectsTitle] = useState("Projets Récents");
-  const [galleryTitle, setGalleryTitle] = useState("Galerie");
-  const [bentoGridTitle, setBentoGridTitle] = useState("Bento Grid");
+  const [profileBio, setProfileBio] = useState("");
   const [heroTitleMain, setHeroTitleMain] = useState("CAILLAT");
   const [heroTitleSub, setHeroTitleSub] = useState("Lucas");
   const [textEffectImage, setTextEffectImage] = useState("");
@@ -103,10 +100,10 @@ export default function AdminDashboard() {
   const [musicCover, setMusicCover] = useState("");
   const [primaryColor, setPrimaryColor] = useState("#ff3131");
   const [sectionsConfig, setSectionsConfig] = useState([
-    { id: 'projects', label: 'Projets', visible: true },
-    { id: 'shop', label: 'Boutique', visible: true },
-    { id: 'gallery', label: 'Galerie', visible: true },
-    { id: 'bento', label: 'À propos (Bento Grid)', visible: true }
+    { id: 'projects', label: 'Projets', subLabel: 'Sélection 2024', visible: true },
+    { id: 'shop', label: 'Boutique', subLabel: 'Nos Produits', visible: true },
+    { id: 'gallery', label: 'Galerie', subLabel: 'Galerie Photo/Vidéo', visible: true },
+    { id: 'bento', label: 'À propos', subLabel: 'Bento Grid', visible: true }
   ]);
 
   const [socials, setSocials] = useState<SocialConfig>({
@@ -200,10 +197,6 @@ export default function AdminDashboard() {
         setProfileName(global.name || "Lucas Caillat");
         setProfileProfession(global.profession || "Freelance Informatique");
         setProfileBio(global.bio || "");
-        setProjectsTitle(global.projectsTitle || "Sélection 2024");
-        setRecentProjectsTitle(global.recentProjectsTitle || "Projets Récents");
-        setGalleryTitle(global.galleryTitle || "Galerie");
-        setBentoGridTitle(global.bentoGridTitle || "Bento Grid");
         setHeroTitleMain(global.heroTitleMain || "CAILLAT");
         setHeroTitleSub(global.heroTitleSub || "Lucas");
         setTextEffectImage(global.textEffectImage || "");
@@ -211,7 +204,16 @@ export default function AdminDashboard() {
         setMusicUrl(global.musicUrl || "");
         setMusicCover(global.musicCover || "");
         setPrimaryColor(global.primaryColor || "#ff3131");
-        if (global.sectionsConfig) setSectionsConfig(global.sectionsConfig);
+        if (global.sectionsConfig) {
+          const migratedSections = global.sectionsConfig.map((s: any) => {
+            if (s.id === 'projects' && s.subLabel === undefined) return { ...s, subLabel: global.projectsTitle || "Sélection 2024", label: global.recentProjectsTitle || s.label };
+            if (s.id === 'gallery' && s.subLabel === undefined) return { ...s, subLabel: "Galerie Photo/Vidéo", label: global.galleryTitle || s.label };
+            if (s.id === 'shop' && s.subLabel === undefined) return { ...s, subLabel: "Nos Produits" };
+            if (s.id === 'bento' && s.subLabel === undefined) return { ...s, subLabel: "Bento Grid", label: global.bentoGridTitle || s.label };
+            return s;
+          });
+          setSectionsConfig(migratedSections);
+        }
       }
       const soc = sData.find(s => s.key === 'socials')?.value;
       if (soc) {
@@ -241,10 +243,6 @@ export default function AdminDashboard() {
       name: profileName, 
       profession: profileProfession, 
       bio: profileBio, 
-      projectsTitle, 
-      recentProjectsTitle,
-      galleryTitle, 
-      bentoGridTitle,
       heroTitleMain, 
       heroTitleSub, 
       textEffectImage,
@@ -780,18 +778,36 @@ export default function AdminDashboard() {
                         <button onClick={() => moveSection(idx, 'up')} className="opacity-30 hover:opacity-100"><ArrowLeft size={14} className="rotate-90" /></button>
                         <button onClick={() => moveSection(idx, 'down')} className="opacity-30 hover:opacity-100"><ArrowLeft size={14} className="-rotate-90" /></button>
                       </div>
-                      <div className="flex-1 flex flex-col md:flex-row md:items-center gap-4">
-                        <input 
-                          type="text" 
-                          value={section.label} 
-                          onChange={(e) => {
-                            const newSections = [...sectionsConfig];
-                            newSections[idx].label = e.target.value;
-                            setSectionsConfig(newSections);
-                          }}
-                          className="bg-transparent border-b border-text-black/10 py-1 outline-none font-serif text-lg focus:border-primary-red transition-all w-full md:w-auto md:min-w-[200px]"
-                        />
-                        <span className="text-[9px] font-bold uppercase tracking-widest opacity-30">ID: {section.id}</span>
+                      <div className="flex-1 flex flex-col gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <label className="text-[8px] font-bold uppercase tracking-widest opacity-30">Titre Principal</label>
+                            <input 
+                              type="text" 
+                              value={section.label} 
+                              onChange={(e) => {
+                                const newSections = [...sectionsConfig];
+                                newSections[idx].label = e.target.value;
+                                setSectionsConfig(newSections);
+                              }}
+                              className="w-full bg-transparent border-b border-text-black/10 py-1 outline-none font-serif text-lg focus:border-primary-red transition-all"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[8px] font-bold uppercase tracking-widest opacity-30">Petit Titre</label>
+                            <input 
+                              type="text" 
+                              value={(section as any).subLabel || ""} 
+                              onChange={(e) => {
+                                const newSections = [...sectionsConfig];
+                                (newSections[idx] as any).subLabel = e.target.value;
+                                setSectionsConfig(newSections);
+                              }}
+                              className="w-full bg-transparent border-b border-text-black/10 py-1 outline-none text-xs font-bold uppercase tracking-widest text-primary-red focus:border-primary-red transition-all"
+                            />
+                          </div>
+                        </div>
+                        <span className="text-[9px] font-bold uppercase tracking-widest opacity-20">ID: {section.id}</span>
                       </div>
                       <button onClick={() => {
                         const newSections = [...sectionsConfig];
@@ -804,27 +820,6 @@ export default function AdminDashboard() {
                   ))}
                 </div>
 
-                <h3 className="font-serif text-2xl border-b border-text-black/10 pb-4 pt-4">Titres des Sections</h3>
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Projets Récents (Grand)</label>
-                    <input type="text" value={recentProjectsTitle} onChange={(e) => setRecentProjectsTitle(e.target.value)} className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Sélection 2024 (Petit)</label>
-                    <input type="text" value={projectsTitle} onChange={(e) => setProjectsTitle(e.target.value)} className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Galerie (Grand)</label>
-                    <input type="text" value={galleryTitle} onChange={(e) => setGalleryTitle(e.target.value)} className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Bento Grid (Petit)</label>
-                    <input type="text" value={bentoGridTitle} onChange={(e) => setBentoGridTitle(e.target.value)} className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none" />
-                  </div>
-                </div>
 
                 <h3 className="font-serif text-2xl border-b border-text-black/10 pb-4 pt-4">Profil</h3>
                 <div className="grid grid-cols-2 gap-6"> <input type="text" value={profileName} onChange={(e) => setProfileName(e.target.value)} placeholder="Nom" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none" /> <input type="text" value={profileProfession} onChange={(e) => setProfileProfession(e.target.value)} placeholder="Profession" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none" /> </div>

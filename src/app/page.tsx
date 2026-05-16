@@ -31,10 +31,10 @@ export default function Home() {
     musicCover: "",
     primaryColor: "#ff3131",
     sectionsConfig: [
-      { id: 'projects', label: 'Projets', visible: true },
-      { id: 'shop', label: 'Boutique', visible: true },
-      { id: 'gallery', label: 'Galerie', visible: true },
-      { id: 'bento', label: 'Bento Grid', visible: true }
+      { id: 'projects', label: 'Projets', subLabel: 'Sélection 2024', visible: true },
+      { id: 'shop', label: 'Boutique', subLabel: 'Nos Produits', visible: true },
+      { id: 'gallery', label: 'Galerie', subLabel: 'Galerie Photo/Vidéo', visible: true },
+      { id: 'bento', label: 'À propos', subLabel: 'Bento Grid', visible: true }
     ]
   });
   const [socialsConfig, setSocialsConfig] = useState<any>(null);
@@ -124,7 +124,20 @@ export default function Home() {
     if (sData) {
       const global = sData.find(s => s.key === 'global')?.value;
       const soc = sData.find(s => s.key === 'socials')?.value;
-      if (global) setSettings(prev => ({ ...prev, ...global }));
+      
+      if (global) {
+        if (global.sectionsConfig) {
+          global.sectionsConfig = global.sectionsConfig.map((s: any) => {
+            if (s.id === 'projects' && s.subLabel === undefined) return { ...s, subLabel: global.projectsTitle || "Sélection 2024", label: global.recentProjectsTitle || s.label };
+            if (s.id === 'gallery' && s.subLabel === undefined) return { ...s, subLabel: "Galerie Photo/Vidéo", label: global.galleryTitle || s.label };
+            if (s.id === 'shop' && s.subLabel === undefined) return { ...s, subLabel: "Nos Produits" };
+            if (s.id === 'bento' && s.subLabel === undefined) return { ...s, subLabel: "Bento Grid", label: global.bentoGridTitle || s.label };
+            return s;
+          });
+        }
+        setSettings(prev => ({ ...prev, ...global }));
+      }
+      
       if (soc) {
         setSocialsConfig(soc);
         setSettings(prev => ({ ...prev, email: soc.email }));
@@ -572,13 +585,13 @@ export default function Home() {
 
       <div className="max-w-[1600px] mx-auto w-full space-y-32 md:space-y-48">
         {(settings.sectionsConfig || []).filter(s => s.visible).map((section) => {
-          if (section.id === 'projects') return <Projects key="projects" config={settings} label={section.label} />;
+          if (section.id === 'projects') return <Projects key="projects" config={settings} label={section.label} subLabel={section.subLabel} />;
           
           if (section.id === 'shop' && products.length > 0) return (
             <section key="shop" className="relative z-10">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-4">
-                <h2 className="font-serif text-6xl md:text-8xl tracking-tighter leading-none italic">{section.label || "Boutique"}</h2>
-                <p className="text-xl md:text-2xl text-[var(--primary-red)] font-light italic">Nos Produits</p>
+                <h2 className="font-serif text-6xl md:text-8xl tracking-tighter leading-none italic">{section.label}</h2>
+                <p className="text-xl md:text-2xl text-[var(--primary-red)] font-light italic">{section.subLabel}</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {products.map((product) => (
@@ -613,9 +626,9 @@ export default function Home() {
               <section key="gallery" className="relative">
                 <div className="flex justify-between items-end mb-12 md:mb-16 border-b border-text-black/10 pb-6"> 
                   <div className="space-y-2">
-                    <h2 className="font-serif text-3xl md:text-5xl lg:text-6xl text-soft-black">{settings.galleryTitle}</h2> 
+                    <h2 className="font-serif text-3xl md:text-5xl lg:text-6xl text-soft-black">{section.label}</h2> 
                     <div className="flex items-center gap-4">
-                      <span className="text-text-black/50 text-[10px] md:text-sm tracking-widest uppercase">Galerie Photo/Vidéo</span>
+                      <span className="text-text-black/50 text-[10px] md:text-sm tracking-widest uppercase">{section.subLabel}</span>
                       {totalPages > 1 && (
                         <div className="flex items-center gap-2">
                           <button 
@@ -690,8 +703,8 @@ export default function Home() {
           if (section.id === 'bento') return (
             <section key="bento" className="relative z-10">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-4">
-                <h2 className="font-serif text-6xl md:text-8xl tracking-tighter leading-none italic">{settings.bentoGridTitle}</h2>
-                <p className="text-xl md:text-2xl text-[var(--primary-red)] font-light italic">À propos</p>
+                <h2 className="font-serif text-6xl md:text-8xl tracking-tighter leading-none italic">{section.label}</h2>
+                <p className="text-xl md:text-2xl text-[var(--primary-red)] font-light italic">{section.subLabel}</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="md:col-span-2 aspect-square md:aspect-video bg-white/40 backdrop-blur-md border border-text-black/5 rounded-sm p-12 flex flex-col justify-between group overflow-hidden relative">
