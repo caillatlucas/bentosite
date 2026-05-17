@@ -1486,7 +1486,8 @@ export default function Home() {
               style={{ rotateX, rotateY, transformStyle: "preserve-3d" }} 
               className="absolute -top-28 right-0 md:-top-16 md:-right-12 z-30 origin-center scale-90 md:scale-100"
             >
-              <div className="bg-[#0c0c0c]/90 backdrop-blur-2xl border border-white/15 p-5 rounded-[32px] w-72 flex flex-col shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_20px_50px_rgba(0,0,0,0.8)] relative overflow-hidden">
+              {/* Desktop Full Card Player */}
+              <div className="hidden md:flex bg-[#0c0c0c]/90 backdrop-blur-2xl border border-white/15 p-5 rounded-[32px] w-72 flex-col shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_20px_50px_rgba(0,0,0,0.8)] relative overflow-hidden">
                 {/* Header */}
                 <div className="flex justify-between items-center pb-3 border-b border-white/5">
                   <span className="text-[8px] font-bold uppercase tracking-[0.25em] text-white/50 font-sans truncate max-w-[180px]">
@@ -1554,7 +1555,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Controls (SkipBack, Play/Pause/Mute, SkipForward) - No Share/Plus! */}
+                {/* Controls (SkipBack, Play/Pause/Mute, SkipForward) */}
                 <div className="flex justify-center items-center gap-6 mt-4 pb-2">
                   <button 
                     className="text-white/60 hover:text-white transition-colors" 
@@ -1596,6 +1597,48 @@ export default function Home() {
                   </button>
                 </div>
               </div>
+
+              {/* Mobile Compact Capsule Player */}
+              <div 
+                onClick={() => setIsMuted(!isMuted)}
+                className="flex md:hidden pointer-events-auto cursor-pointer bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 p-2 rounded-full items-center gap-3 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.6)] hover:bg-[#0c0c0c]/95 transition-all duration-300 relative overflow-hidden h-12 w-64 select-none pr-4"
+              >
+                {/* Cover art spinning */}
+                <div className={`relative w-8 h-8 rounded-full overflow-hidden shadow-lg shrink-0 border border-white/10 ${!isMuted && settings.musicRotationEnabled ? "animate-spin-slow" : ""}`}>
+                  {settings.musicCover ? (
+                    <Image src={settings.musicCover} alt="Cover" fill className="object-cover" unoptimized />
+                  ) : (
+                    <div className="w-full h-full bg-[#222] flex items-center justify-center">
+                      <Music size={14} className="text-white/40" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Song info and play status */}
+                <div className="flex-1 min-w-0 flex flex-col justify-center">
+                  <span className="text-[7px] font-bold uppercase tracking-[0.2em] text-primary-red leading-none mb-0.5">Musique</span>
+                  <span className="text-[10px] font-bold text-white uppercase tracking-wider truncate leading-none">
+                    {songTitle || settings.heroTitleMain || "BENTO PLAYER"}
+                  </span>
+                </div>
+
+                <div className="w-[1px] h-4 bg-white/15 shrink-0" />
+
+                {/* Play/Pause icon */}
+                <div className="text-white shrink-0 flex items-center justify-center">
+                  {isMuted ? (
+                    <Play size={12} fill="currentColor" className="ml-0.5 text-white/80" />
+                  ) : (
+                    <Pause size={12} fill="currentColor" className="text-white" />
+                  )}
+                </div>
+
+                {/* Progress bar line running along the bottom */}
+                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-white/10 overflow-hidden">
+                  <div className="h-full bg-primary-red transition-all duration-300" style={{ width: `${playerProgress}%` }} />
+                </div>
+              </div>
+
               <div id="youtube-player" className="hidden" />
             </motion.div>
           )}
@@ -1677,7 +1720,7 @@ export default function Home() {
                         <span className="w-1.5 h-1.5 bg-primary-red rounded-full"></span>
                         <motion.h3 style={{ color: textColor }} className="font-serif text-2xl leading-tight">{product.name}</motion.h3>
                       </div>
-                      <motion.p style={{ color: secondaryTextColor }} className="text-[10px] font-bold uppercase tracking-widest group-hover:text-primary-red transition-colors">Voir les détails</motion.p>
+                      <motion.p className="text-[10px] font-bold uppercase tracking-widest text-white/60 group-hover:text-white transition-colors">Voir les détails</motion.p>
                     </div>
                   </motion.div>
                 ))}
@@ -1927,13 +1970,13 @@ export default function Home() {
 
                 {/* Comments list column */}
                 <div className="lg:col-span-2 space-y-6">
-                  {comments.filter(c => !c.parent_id && !c.deleted_by_user).length === 0 ? (
+                  {comments.filter(c => !c.parent_id && (!c.deleted_by_user || comments.some(r => r.parent_id === c.id))).length === 0 ? (
                     <div className="bg-[#0c0c0c]/85 backdrop-blur-2xl border border-dashed border-white/15 rounded-3xl p-12 text-center text-white/90 font-semibold italic shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.6)]">
                       Aucun commentaire pour le moment. Soyez le premier à vous exprimer !
                     </div>
                   ) : (
                     comments
-                      .filter(c => !c.parent_id && !c.deleted_by_user)
+                      .filter(c => !c.parent_id && (!c.deleted_by_user || comments.some(r => r.parent_id === c.id)))
                       .map((comment) => {
                         const isAuthor = user?.id === comment.user_id;
                         const isAdmin = user?.email === 'caillatlucas2304@gmail.com';
@@ -1954,12 +1997,13 @@ export default function Home() {
                           .filter(c => c.parent_id === comment.id && !c.deleted_by_user)
                           .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
+                        const isDeleted = comment.deleted_by_user;
                         return (
                           <div key={comment.id} className="space-y-4">
                             {/* Main Top-Level Comment */}
                             <div className="bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 rounded-3xl p-6 md:p-8 flex gap-4 md:gap-5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.6)] relative group hover:bg-[#0c0c0c]/95 transition-all duration-300">
                               <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10 border border-white/20 overflow-hidden relative shrink-0 flex items-center justify-center">
-                                {comment.avatar_url ? (
+                                {comment.avatar_url && !isDeleted ? (
                                   <Image src={comment.avatar_url} alt={comment.user_name} fill className="object-cover" unoptimized />
                                 ) : (
                                   <User size={18} className="text-white/40" />
@@ -1970,11 +2014,17 @@ export default function Home() {
                                 <div className="flex justify-between items-start">
                                   <div>
                                     <h4 className="text-sm font-bold text-white leading-none flex items-center gap-2">
-                                      {comment.user_name}
-                                      {comment.user_email === 'caillatlucas2304@gmail.com' && (
-                                        <span className="text-[8px] bg-primary-red/20 text-primary-red px-2 py-0.5 rounded-full border border-primary-red/20 font-bold uppercase tracking-widest">
-                                          Admin
-                                        </span>
+                                      {isDeleted ? (
+                                        <span className="text-white/50 italic font-medium">Commentaire supprimé</span>
+                                      ) : (
+                                        <>
+                                          {comment.user_name}
+                                          {comment.user_email === 'caillatlucas2304@gmail.com' && (
+                                            <span className="text-[8px] bg-primary-red/20 text-primary-red px-2 py-0.5 rounded-full border border-primary-red/20 font-bold uppercase tracking-widest">
+                                              Admin
+                                            </span>
+                                          )}
+                                        </>
                                       )}
                                     </h4>
                                     <span className="text-[9px] uppercase tracking-widest text-white/40 block mt-1.5">
@@ -1982,7 +2032,7 @@ export default function Home() {
                                     </span>
                                   </div>
 
-                                  {canDelete && (
+                                  {canDelete && !isDeleted && (
                                     <button
                                       onClick={() => handleCommentDelete(comment.id)}
                                       className="p-2 bg-white/5 hover:bg-red-500/20 text-white/40 hover:text-red-500 rounded-full transition-all opacity-0 group-hover:opacity-100"
@@ -1993,31 +2043,41 @@ export default function Home() {
                                   )}
                                 </div>
 
-                                <p className="text-sm text-white font-medium leading-relaxed whitespace-pre-wrap">
-                                  {comment.content}
-                                </p>
+                                {isDeleted ? (
+                                  <p className="text-sm text-white/30 italic font-normal leading-relaxed">
+                                    Ce message a été supprimé par l'utilisateur.
+                                  </p>
+                                ) : (
+                                  <>
+                                    <p className="text-sm text-white font-medium leading-relaxed whitespace-pre-wrap">
+                                      {comment.content}
+                                    </p>
 
-                                {comment.image_url && (
-                                  <div
-                                    onClick={() => setSelectedImage({ url: comment.image_url, name: `Image de ${comment.user_name}` } as any)}
-                                    className="relative max-w-sm aspect-video rounded-2xl overflow-hidden border border-white/10 group cursor-zoom-in mt-3 shadow-lg"
-                                  >
-                                    <Image src={comment.image_url} alt="Attached Media" fill className="object-cover group-hover:scale-102 transition-transform" unoptimized />
-                                    <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                      <Maximize2 size={20} className="text-white drop-shadow-md" />
-                                    </div>
-                                  </div>
+                                    {comment.image_url && (
+                                      <div
+                                        onClick={() => setSelectedImage({ url: comment.image_url, name: `Image de ${comment.user_name}` } as any)}
+                                        className="relative max-w-sm aspect-video rounded-2xl overflow-hidden border border-white/10 group cursor-zoom-in mt-3 shadow-lg"
+                                      >
+                                        <Image src={comment.image_url} alt="Attached Media" fill className="object-cover group-hover:scale-102 transition-transform" unoptimized />
+                                        <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                          <Maximize2 size={20} className="text-white drop-shadow-md" />
+                                        </div>
+                                      </div>
+                                    )}
+                                  </>
                                 )}
 
                                 {/* Likes & Reply Actions Footer */}
                                 <div className="flex items-center gap-4 pt-2 border-t border-white/5">
-                                  <button
-                                    onClick={() => handleCommentLike(comment)}
-                                    className="flex items-center gap-1.5 group/like text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors"
-                                  >
-                                    <Heart size={14} className={hasLiked ? "fill-primary-red text-primary-red" : "text-white/40 group-hover/like:text-white transition-colors"} />
-                                    <span>{commentLikes.length}</span>
-                                  </button>
+                                  {!isDeleted && (
+                                    <button
+                                      onClick={() => handleCommentLike(comment)}
+                                      className="flex items-center gap-1.5 group/like text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors"
+                                    >
+                                      <Heart size={14} className={hasLiked ? "fill-primary-red text-primary-red" : "text-white/40 group-hover/like:text-white transition-colors"} />
+                                      <span>{commentLikes.length}</span>
+                                    </button>
+                                  )}
 
                                   <button
                                     onClick={() => {
@@ -2025,7 +2085,7 @@ export default function Home() {
                                         setReplyingToId(null);
                                       } else {
                                         setReplyingToId(comment.id);
-                                        setReplyingToName(comment.user_name);
+                                        setReplyingToName(isDeleted ? "Commentaire supprimé" : comment.user_name);
                                       }
                                     }}
                                     className="flex items-center gap-1.5 group/reply text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors"
