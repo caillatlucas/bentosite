@@ -127,6 +127,7 @@ export default function AdminDashboard() {
   const [formUrl, setFormUrl] = useState("");
   const [formContent, setFormContent] = useState("");
   const [formGallery, setFormGallery] = useState<{ url: string; type: 'image' | 'video' }[]>([]);
+  const [formDetails, setFormDetails] = useState("");
   const [isPreviewMode, setIsPreviewMode] = useState(false);
 
   const [prodName, setProdName] = useState("");
@@ -585,7 +586,17 @@ export default function AdminDashboard() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const projectData: any = { title: formTitle, category: formCategory || null, date: formDate, image: formImage, status: formStatus, link_type: formLinkType, url: formUrl, content: formContent };
+    const projectData: any = { 
+      title: formTitle, 
+      category: formCategory || null, 
+      date: formDate, 
+      image: formImage, 
+      status: formStatus, 
+      link_type: formLinkType, 
+      url: formUrl, 
+      content: formContent,
+      details: formDetails || null 
+    };
     if (formGallery && formGallery.length > 0) { projectData.gallery = formGallery; }
     let error;
     if (editingProject) {
@@ -652,7 +663,20 @@ export default function AdminDashboard() {
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-16 gap-6">
           <h2 className="font-serif text-5xl text-white italic">{tabs.find((t) => t.id === activeTab)?.label}</h2>
           {activeTab === "pages" && (
-            <button onClick={() => { setEditingProject(null); setFormTitle(""); setFormCategory(""); setFormDate(""); setFormImage(""); setFormContent(""); setFormGallery([]); setIsModalOpen(true); }} className="bg-primary-red text-white px-8 py-3.5 rounded-2xl hover:bg-red-600 transition-all flex items-center gap-2 text-sm font-bold shadow-2xl shadow-primary-red/30">
+            <button onClick={() => {
+              setEditingProject(null);
+              setFormTitle("");
+              setFormCategory("");
+              // Set publication date automatically
+              const now = new Date();
+              const formattedDate = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+              setFormDate(formattedDate);
+              setFormImage("");
+              setFormContent("");
+              setFormDetails("");
+              setFormGallery([]);
+              setIsModalOpen(true);
+            }} className="bg-primary-red text-white px-8 py-3.5 rounded-2xl hover:bg-red-600 transition-all flex items-center gap-2 text-sm font-bold shadow-2xl shadow-primary-red/30">
               <Plus size={18} /> NOUVEAU POSTE
             </button>
           )}
@@ -680,7 +704,20 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => { setEditingProject(project); setFormTitle(project.title); setFormCategory(project.category || ""); setFormDate(project.date); setFormImage(project.image); setFormStatus(project.status); setFormLinkType(project.link_type); setFormUrl(project.url); setFormContent(project.content); setFormGallery(project.gallery || []); setIsModalOpen(true); }} className="p-3 bg-white/5 hover:bg-white/10 rounded-xl text-white/50 hover:text-primary-red transition-all"><Edit2 size={18} /></button>
+                    <button onClick={() => {
+                      setEditingProject(project);
+                      setFormTitle(project.title);
+                      setFormCategory(project.category || "");
+                      setFormDate(project.date || "");
+                      setFormImage(project.image);
+                      setFormStatus(project.status);
+                      setFormLinkType(project.link_type);
+                      setFormUrl(project.url || "");
+                      setFormContent(project.content || "");
+                      setFormDetails((project as any).details || "");
+                      setFormGallery(project.gallery || []);
+                      setIsModalOpen(true);
+                    }} className="p-3 bg-white/5 hover:bg-white/10 rounded-xl text-white/50 hover:text-primary-red transition-all"><Edit2 size={18} /></button>
                     <button onClick={() => deleteProject(project.id)} className="p-3 bg-white/5 hover:bg-white/10 rounded-xl text-white/50 hover:text-red-500 transition-all"><Trash2 size={18} /></button>
                   </div>
                 </div>
@@ -1469,6 +1506,17 @@ export default function AdminDashboard() {
                       rows={6} 
                       className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white resize-none" 
                       placeholder="Décrivez le projet en détail..." 
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 ml-1">Détails (ex: Temps de lecture, Rôle, Client...) (Non obligatoire)</label>
+                    <textarea 
+                      value={formDetails} 
+                      onChange={(e) => setFormDetails(e.target.value)} 
+                      rows={3} 
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white resize-none" 
+                      placeholder="Ex: Temps de lecture: 5 min • Rôle: Designer • Client: Lucas" 
                     />
                   </div>
 

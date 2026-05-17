@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, Calendar, Tag, User } from "lucide-react";
+import { ArrowLeft, Calendar, Tag, User, Info, Maximize2 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
@@ -19,6 +19,30 @@ interface Project {
   url?: string;
   content?: string;
   gallery?: { url: string; type: 'image' | 'video' }[];
+  details?: string;
+}
+
+// Markdown parser helper for bold text (**text**) and newlines (\n -> <br />)
+function parseMarkdown(text: string): React.ReactNode[] {
+  if (!text) return [];
+  const boldParts = text.split(/(\*\*[^*]+\*\*)/g);
+  return boldParts.flatMap((part, index) => {
+    const isBold = part.startsWith("**") && part.endsWith("**");
+    const content = isBold ? part.slice(2, -2) : part;
+    const lines = content.split('\n');
+    const nodes: React.ReactNode[] = [];
+    lines.forEach((line, lineIdx) => {
+      if (isBold) {
+        nodes.push(<strong key={`${index}-${lineIdx}`} className="font-bold text-white">{line}</strong>);
+      } else {
+        nodes.push(line);
+      }
+      if (lineIdx < lines.length - 1) {
+        nodes.push(<br key={`br-${index}-${lineIdx}`} />);
+      }
+    });
+    return nodes;
+  });
 }
 
 function ProjectContent() {
@@ -37,7 +61,7 @@ function ProjectContent() {
 
   if (!project) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] text-white">
         <p className="font-serif text-2xl animate-pulse">Chargement...</p>
       </div>
     );
@@ -69,12 +93,12 @@ function ProjectContent() {
               <div className="p-2 bg-white/5 rounded-full group-hover:bg-primary-red/10 transition-all"><ArrowLeft size={14} /></div> Retour au portfolio
             </Link>
             <h1 className="font-serif text-6xl md:text-8xl lg:text-[140px] leading-[0.9] tracking-tighter mb-4 text-white drop-shadow-2xl">
-              {project.title}
+              {parseMarkdown(project.title)}
             </h1>
             <div className="flex items-center gap-4">
               <span className="w-3 h-3 bg-primary-red rounded-full animate-pulse"></span>
               <p className="text-xl md:text-3xl text-white/60 font-light italic font-serif">
-                {project.category}
+                {parseMarkdown(project.category)}
               </p>
             </div>
           </motion.div>
@@ -96,7 +120,7 @@ function ProjectContent() {
               </div>
             </div>
             <div className="text-lg leading-relaxed text-white/80 whitespace-pre-wrap">
-              {project.content || "Aucune description disponible."}
+              {project.content ? parseMarkdown(project.content) : "Aucune description disponible."}
             </div>
             
             {project.gallery && project.gallery.length > 0 && (
@@ -151,29 +175,40 @@ function ProjectContent() {
         >
           <div className="bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 p-12 rounded-3xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_20px_50px_rgba(0,0,0,0.8)] transition-all duration-300">
             <div className="flex justify-start mb-10 pb-6 border-b border-white/10">
-              <div className="inline-flex items-center gap-4 bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 px-6 py-3.5 rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.6)] transition-all duration-300">
-                <span className="w-2.5 h-2.5 bg-primary-red rounded-full animate-pulse shadow-[0_0_10px_var(--primary-red)]"></span>
-                <h4 className="font-serif text-xl md:text-2xl text-white tracking-tight leading-none italic">Détails</h4>
+              <div className="inline-flex items-center gap-3 bg-white/5 border border-white/10 px-6 py-2.5 rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
+                <span className="w-2 h-2 bg-primary-red rounded-full animate-pulse shadow-[0_0_8px_var(--primary-red)]"></span>
+                <span className="font-serif italic text-white text-lg font-medium">Détails</span>
               </div>
             </div>
             <div className="space-y-8">
               <div className="flex items-center gap-6">
-                <div className="w-12 h-12 bg-white/5 flex items-center justify-center rounded-2xl text-primary-red border border-white/5">
+                <div className="w-12 h-12 bg-white/5 flex items-center justify-center rounded-2xl text-primary-red border border-white/5 shrink-0">
                   <Calendar size={20} />
                 </div>
                 <div>
                   <p className="text-[10px] uppercase tracking-[0.2em] text-white/30 font-bold">Date de publication</p>
-                  <p className="font-medium text-lg text-white/80">{project.date || "Mai 2024"}</p>
+                  <p className="font-medium text-lg text-white/80">{parseMarkdown(project.date || "Mai 2024")}</p>
                 </div>
               </div>
               {project.category && (
                 <div className="flex items-center gap-6">
-                  <div className="w-12 h-12 bg-white/5 flex items-center justify-center rounded-2xl text-primary-red border border-white/5">
+                  <div className="w-12 h-12 bg-white/5 flex items-center justify-center rounded-2xl text-primary-red border border-white/5 shrink-0">
                     <Tag size={20} />
                   </div>
                   <div>
                     <p className="text-[10px] uppercase tracking-[0.2em] text-white/30 font-bold">Catégorie</p>
-                    <p className="font-medium text-lg text-white/80">{project.category}</p>
+                    <p className="font-medium text-lg text-white/80">{parseMarkdown(project.category)}</p>
+                  </div>
+                </div>
+              )}
+              {project.details && (
+                <div className="flex items-start gap-6">
+                  <div className="w-12 h-12 bg-white/5 flex items-center justify-center rounded-2xl text-primary-red border border-white/5 shrink-0">
+                    <Info size={20} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/30 font-bold">Infos complémentaires</p>
+                    <p className="font-medium text-lg text-white/85 whitespace-pre-wrap">{parseMarkdown(project.details)}</p>
                   </div>
                 </div>
               )}
@@ -200,7 +235,7 @@ function ProjectContent() {
 
 export default function ProjectPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center font-serif">Chargement...</div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center font-serif bg-[#0a0a0a] text-white">Chargement...</div>}>
       <ProjectContent />
     </Suspense>
   );

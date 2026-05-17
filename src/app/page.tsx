@@ -13,6 +13,29 @@ import dynamic from 'next/dynamic';
 
 const StatueBackground = dynamic(() => import('@/components/StatueBackground'), { ssr: false });
 
+// Markdown parser helper for bold text (**text**) and newlines (\n -> <br />)
+function parseMarkdown(text: string): React.ReactNode[] {
+  if (!text) return [];
+  const boldParts = text.split(/(\*\*[^*]+\*\*)/g);
+  return boldParts.flatMap((part, index) => {
+    const isBold = part.startsWith("**") && part.endsWith("**");
+    const content = isBold ? part.slice(2, -2) : part;
+    const lines = content.split('\n');
+    const nodes: React.ReactNode[] = [];
+    lines.forEach((line, lineIdx) => {
+      if (isBold) {
+        nodes.push(<strong key={`${index}-${lineIdx}`} className="font-bold text-white">{line}</strong>);
+      } else {
+        nodes.push(line);
+      }
+      if (lineIdx < lines.length - 1) {
+        nodes.push(<br key={`br-${index}-${lineIdx}`} />);
+      }
+    });
+    return nodes;
+  });
+}
+
 interface MediaItem { id: string; url: string; name: string; }
 interface Message { 
   id: string; 
@@ -1722,8 +1745,8 @@ export default function Home() {
         </div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, delay: 0.5 }} className="mt-12 md:mt-24 max-w-xl self-center md:self-start text-center md:text-left">
-          <motion.p style={{ color: textColor }} className="text-lg md:text-3xl font-light tracking-wide leading-relaxed mb-3 md:mb-4">{settings.profession}</motion.p>
-          {settings.bio && <motion.p style={{ color: secondaryTextColor }} className="text-xs md:text-lg font-medium leading-relaxed max-w-md px-4 md:px-0">{settings.bio}</motion.p>}
+          <motion.p style={{ color: textColor }} className="text-lg md:text-3xl font-light tracking-wide leading-relaxed mb-3 md:mb-4">{parseMarkdown(settings.profession)}</motion.p>
+          {settings.bio && <motion.p style={{ color: secondaryTextColor }} className="text-xs md:text-lg font-medium leading-relaxed max-w-md px-4 md:px-0">{parseMarkdown(settings.bio)}</motion.p>}
           <motion.div style={{ backgroundColor: textColor }} className="h-[1px] w-12 mt-6 md:mt-8 opacity-30 mx-auto md:mx-0"></motion.div>
         </motion.div>
       </section>
@@ -2095,7 +2118,7 @@ export default function Home() {
                                 ) : (
                                   <>
                                     <p className="text-sm text-white font-medium leading-relaxed whitespace-pre-wrap">
-                                      {comment.content}
+                                      {parseMarkdown(comment.content)}
                                     </p>
 
                                     {comment.image_url && (
@@ -2282,7 +2305,7 @@ export default function Home() {
                                         </div>
 
                                         <p className="text-xs text-white font-medium leading-relaxed whitespace-pre-wrap">
-                                          {reply.content}
+                                          {parseMarkdown(reply.content)}
                                         </p>
 
                                         {reply.image_url && (
@@ -2334,7 +2357,7 @@ export default function Home() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="md:col-span-2 aspect-square md:aspect-video bg-black/20 backdrop-blur-md border border-white/20 rounded-2xl p-12 flex flex-col justify-between group overflow-hidden relative shadow-2xl hover:bg-black/30 transition-all">
-                  <div className="relative z-10"> <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--primary-red)] mb-4">Ma Bio</p> <h3 className="font-serif text-3xl md:text-5xl leading-tight mb-6 text-white">{settings.bio || "Exploration créative et solutions techniques."}</h3> </div>
+                  <div className="relative z-10"> <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--primary-red)] mb-4">Ma Bio</p> <h3 className="font-serif text-3xl md:text-5xl leading-tight mb-6 text-white">{parseMarkdown(settings.bio || "Exploration créative et solutions techniques.")}</h3> </div>
                   <Socials config={socialsConfig} color={textColor} />
                 </div>
                 <div className="aspect-square bg-[var(--primary-red)]/90 backdrop-blur-md border border-white/20 rounded-2xl p-10 flex flex-col justify-between text-white relative overflow-hidden group shadow-2xl hover:bg-[var(--primary-red)] transition-all">
