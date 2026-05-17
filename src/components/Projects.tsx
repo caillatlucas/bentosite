@@ -96,7 +96,7 @@ export default function Projects({ config, label, subLabel, textColor, secondary
                   
                   {/* Content Overlay */}
                   <div className="absolute bottom-0 left-0 w-full p-6 md:p-8 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                    <div className="bg-white/10 backdrop-blur-lg border border-white/10 p-4 rounded-xl shadow-xl">
+                    <div className="bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 p-4 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.6)]">
                       {project.category && (
                         <div className="flex items-center gap-2 mb-2">
                           <span className="w-1 h-1 bg-primary-red rounded-full animate-pulse"></span>

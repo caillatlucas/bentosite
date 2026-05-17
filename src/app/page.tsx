@@ -1035,7 +1035,7 @@ export default function Home() {
           style={{ color: textColor, borderColor: textColor }}
           whileHover={{ scale: 1.05 }} 
           whileTap={{ scale: 0.95 }} 
-          className="bg-white/10 backdrop-blur-xl border text-white w-12 h-12 md:w-14 md:h-14 rounded-full shadow-2xl flex items-center justify-center relative transition-colors"
+          className="bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 text-white w-12 h-12 md:w-14 md:h-14 rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_10px_30px_rgba(0,0,0,0.5)] flex items-center justify-center relative transition-all duration-300 hover:bg-[#0c0c0c]/95"
         >
           <Bell size={24} />
           {unreadCount > 0 && <span className="absolute -top-1 -right-1 bg-primary-red text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white/10">{unreadCount}</span>}
@@ -1048,7 +1048,7 @@ export default function Home() {
                 style={{ color: textColor, borderColor: textColor }}
                 whileHover={{ scale: 1.05 }} 
                 whileTap={{ scale: 0.95 }} 
-                className="bg-white/10 backdrop-blur-xl border text-white w-12 h-12 md:w-14 md:h-14 rounded-full shadow-2xl flex items-center justify-center relative transition-colors"
+                className="bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 text-white w-12 h-12 md:w-14 md:h-14 rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_10px_30px_rgba(0,0,0,0.5)] flex items-center justify-center relative transition-all duration-300 hover:bg-[#0c0c0c]/95"
               >
                 <Settings size={24} />
               </motion.div>
@@ -1060,7 +1060,7 @@ export default function Home() {
             style={{ color: textColor, borderColor: textColor }}
             whileHover={{ scale: 1.05 }} 
             whileTap={{ scale: 0.95 }} 
-            className="bg-white/10 backdrop-blur-xl border text-white w-12 h-12 md:w-14 md:h-14 rounded-full shadow-2xl flex items-center justify-center relative transition-colors overflow-hidden"
+            className="bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 text-white w-12 h-12 md:w-14 md:h-14 rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_10px_30px_rgba(0,0,0,0.5)] flex items-center justify-center relative transition-all duration-300 hover:bg-[#0c0c0c]/95 overflow-hidden"
           >
             {user ? (
               userProfileImage ? (
@@ -1241,7 +1241,7 @@ export default function Home() {
               margin: isInboxExpanded ? 'auto' : undefined
             }} 
             exit={{ opacity: 0, y: 20, scale: 0.9 }} 
-            className={`fixed z-[200] bg-[#0a0a0a]/90 backdrop-blur-2xl shadow-2xl rounded-3xl border border-white/20 overflow-hidden flex flex-col ${isInboxExpanded ? '' : 'bottom-32 right-8 md:bottom-44 md:right-16 w-72 md:w-96'}`}
+            className={`fixed z-[200] bg-[#0c0c0c]/85 backdrop-blur-2xl rounded-3xl border border-white/15 overflow-hidden flex flex-col shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_20px_50px_rgba(0,0,0,0.8)] ${isInboxExpanded ? '' : 'bottom-32 right-8 md:bottom-44 md:right-16 w-72 md:w-96'}`}
           >
             <div className="bg-white/5 backdrop-blur-md p-6 flex justify-between items-center shrink-0 border-b border-white/10"> 
               <div className="flex items-center gap-3">
@@ -1321,7 +1321,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 20, scale: 0.9 }} 
             animate={{ opacity: 1, y: 0, scale: 1 }} 
             exit={{ opacity: 0, y: 20, scale: 0.9 }} 
-            className="fixed bottom-32 right-8 md:bottom-44 md:right-16 z-[300] bg-[#0a0a0a]/90 backdrop-blur-2xl shadow-2xl rounded-3xl border border-white/20 w-72 md:w-80 overflow-hidden flex flex-col"
+            className="fixed bottom-32 right-8 md:bottom-44 md:right-16 z-[300] bg-[#0c0c0c]/85 backdrop-blur-2xl rounded-3xl border border-white/15 w-72 md:w-80 overflow-hidden flex flex-col shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_20px_50px_rgba(0,0,0,0.8)]"
           >
             <div className="bg-white/5 backdrop-blur-md p-6 border-b border-white/10 flex justify-between items-center">
               <h4 className="text-white font-serif italic text-lg">Mon Compte</h4>
@@ -1482,141 +1482,120 @@ export default function Home() {
       <section className="flex-1 flex flex-col justify-center min-h-[85vh] relative z-10 mt-24 md:mt-0 max-w-[1600px] mx-auto w-full">
         <div className="relative" style={{ perspective: 1000 }}>
           {settings.musicEnabled && musicId && (
-            <motion.div style={{ rotateX, rotateY, transformStyle: "preserve-3d" }} className="absolute -top-28 left-0 md:-top-16 md:-left-12 z-30 origin-left">
-              {isMusicExpanded ? (
-                /* Expanded Smartphone Music Player Card */
-                <div className="bg-[#0c0c0c]/90 backdrop-blur-2xl border border-white/15 p-5 rounded-[32px] w-72 flex flex-col shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_20px_50px_rgba(0,0,0,0.8)] transition-all duration-500 scale-90 md:scale-100 origin-top-left">
-                  {/* Header */}
-                  <div className="flex justify-between items-center pb-4 border-b border-white/5">
-                    <button onClick={() => setIsMusicExpanded(false)} className="text-white/40 hover:text-white transition-colors p-1 rounded-full hover:bg-white/5">
-                      <ChevronDown size={18} />
-                    </button>
-                    <span className="text-[8px] font-bold uppercase tracking-[0.25em] text-white/50 font-sans truncate max-w-[150px]">
-                      {settings.musicCover ? "MUSIQUE EN COURS" : "BENTO PLAYER"}
-                    </span>
-                    <div className="w-6 h-6 flex items-center justify-center">
-                      <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#22c55e]" />
+            <motion.div 
+              style={{ rotateX, rotateY, transformStyle: "preserve-3d" }} 
+              className="absolute -top-28 right-0 md:-top-16 md:-right-12 z-30 origin-center scale-90 md:scale-100"
+            >
+              <div className="bg-[#0c0c0c]/90 backdrop-blur-2xl border border-white/15 p-5 rounded-[32px] w-72 flex flex-col shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_20px_50px_rgba(0,0,0,0.8)] relative overflow-hidden">
+                {/* Header */}
+                <div className="flex justify-between items-center pb-3 border-b border-white/5">
+                  <span className="text-[8px] font-bold uppercase tracking-[0.25em] text-white/50 font-sans truncate max-w-[180px]">
+                    {settings.musicCover ? "MUSIQUE EN COURS" : "BENTO PLAYER"}
+                  </span>
+                  <div className="w-6 h-6 flex items-center justify-center">
+                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#22c55e]" />
+                  </div>
+                </div>
+
+                {/* Cover Art */}
+                <div className="relative w-full aspect-square rounded-2xl overflow-hidden shadow-2xl border border-white/10 mt-4 bg-black/40">
+                  {settings.musicCover ? (
+                    <Image 
+                      src={settings.musicCover} 
+                      alt="Cover Art" 
+                      fill 
+                      className={`object-cover ${!isMuted && settings.musicRotationEnabled ? "animate-spin-slow" : ""}`} 
+                      unoptimized 
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-tr from-[#111] to-[#333] flex items-center justify-center">
+                      <Music size={48} className="text-white/20" />
                     </div>
-                  </div>
+                  )}
+                </div>
 
-                  {/* Cover Art */}
-                  <div className="relative w-full aspect-square rounded-2xl overflow-hidden shadow-2xl border border-white/10 mt-4 bg-black/40">
-                    {settings.musicCover ? (
-                      <Image src={settings.musicCover} alt="Cover Art" fill className={`object-cover ${!isMuted && settings.musicRotationEnabled ? "animate-spin-slow" : ""}`} unoptimized />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-tr from-[#111] to-[#333] flex items-center justify-center">
-                        <Music size={48} className="text-white/20" />
-                      </div>
-                    )}
+                {/* Song Info */}
+                <div className="flex justify-between items-center mt-5">
+                  <div className="min-w-0 flex-1">
+                    <h4 className="text-sm font-bold text-white truncate font-sans" title={songTitle || settings.heroTitleMain || "BENTO TRACK"}>
+                      {songTitle || settings.heroTitleMain || "BENTO TRACK"}
+                    </h4>
+                    <p className="text-xs text-white/50 truncate font-sans" title={songArtist || settings.heroTitleSub || "Lucas Caillat"}>
+                      {songArtist || settings.heroTitleSub || "Lucas Caillat"}
+                    </p>
                   </div>
+                </div>
 
-                  {/* Song Info */}
-                  <div className="flex justify-between items-center mt-5">
-                    <div className="min-w-0 flex-1">
-                      <h4 className="text-sm font-bold text-white truncate font-sans" title={songTitle || settings.heroTitleMain || "BENTO TRACK"}>
-                        {songTitle || settings.heroTitleMain || "BENTO TRACK"}
-                      </h4>
-                      <p className="text-xs text-white/50 truncate font-sans" title={songArtist || settings.heroTitleSub || "Lucas Caillat"}>
-                        {songArtist || settings.heroTitleSub || "Lucas Caillat"}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Scrubber / Progress Bar */}
-                  <div className="space-y-1.5 mt-5">
+                {/* Scrubber / Progress Bar */}
+                <div className="space-y-1.5 mt-5">
+                  <div 
+                    className="relative w-full h-1 bg-white/10 rounded-full overflow-hidden cursor-pointer" 
+                    onClick={(e) => {
+                      if (!ytPlayer) return;
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      const clickX = e.clientX - rect.left;
+                      const percentage = clickX / rect.width;
+                      const targetTime = percentage * duration;
+                      try {
+                        ytPlayer.seekTo(targetTime, true);
+                        setCurrentTime(targetTime);
+                        setPlayerProgress(percentage * 100);
+                      } catch(err) {}
+                    }}
+                  >
                     <div 
-                      className="relative w-full h-1 bg-white/10 rounded-full overflow-hidden cursor-pointer" 
-                      onClick={(e) => {
-                        if (!ytPlayer) return;
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        const clickX = e.clientX - rect.left;
-                        const percentage = clickX / rect.width;
-                        const targetTime = percentage * duration;
-                        try {
-                          ytPlayer.seekTo(targetTime, true);
-                          setCurrentTime(targetTime);
-                          setPlayerProgress(percentage * 100);
-                        } catch(err) {}
-                      }}
-                    >
-                      <div 
-                        className="absolute left-0 top-0 h-full bg-primary-red rounded-full shadow-[0_0_8px_var(--primary-red)]" 
-                        style={{ width: `${playerProgress}%` }}
-                      />
-                    </div>
-                    <div className="flex justify-between text-[9px] font-bold text-white/40 uppercase tracking-widest font-sans">
-                      <span>{formatTime(Math.round(currentTime))}</span>
-                      <span>{formatTime(Math.round(duration))}</span>
-                    </div>
+                      className="absolute left-0 top-0 h-full bg-primary-red rounded-full shadow-[0_0_8px_var(--primary-red)]" 
+                      style={{ width: `${playerProgress}%` }}
+                    />
                   </div>
-
-                  {/* Controls */}
-                  <div className="flex justify-center items-center gap-6 mt-4 pb-2">
-                    <button 
-                      className="text-white/60 hover:text-white transition-colors" 
-                      onClick={() => {
-                        if (!ytPlayer) return;
-                        try {
-                          const target = Math.max(0, currentTime - 10);
-                          ytPlayer.seekTo(target, true);
-                          setCurrentTime(target);
-                        } catch (err) {}
-                      }}
-                    >
-                      <SkipBack size={18} fill="currentColor" />
-                    </button>
-                    
-                    <button 
-                      onClick={() => setIsMuted(!isMuted)} 
-                      className="w-12 h-12 bg-white text-black hover:bg-white/90 rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-105 active:scale-95"
-                    >
-                      {isMuted ? (
-                        <Play size={18} fill="currentColor" className="ml-0.5 text-black" />
-                      ) : (
-                        <Pause size={18} fill="currentColor" className="text-black" />
-                      )}
-                    </button>
-
-                    <button 
-                      className="text-white/60 hover:text-white transition-colors" 
-                      onClick={() => {
-                        if (!ytPlayer) return;
-                        try {
-                          const target = Math.min(duration, currentTime + 10);
-                          ytPlayer.seekTo(target, true);
-                          setCurrentTime(target);
-                        } catch (err) {}
-                      }}
-                    >
-                      <SkipForward size={18} fill="currentColor" />
-                    </button>
-                  </div>
-
-                  {/* Bottom Accessories */}
-                  <div className="flex justify-center items-center pt-4 border-t border-white/5 mt-4 text-white/40">
-                    <button className="hover:text-white transition-colors flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest" onClick={() => setIsMuted(!isMuted)}>
-                      {isMuted ? <><VolumeX size={14} /> Sourdine</> : <><Volume2 size={14} /> Actif</>}
-                    </button>
+                  <div className="flex justify-between text-[9px] font-bold text-white/40 uppercase tracking-widest font-sans">
+                    <span>{formatTime(Math.round(currentTime))}</span>
+                    <span>{formatTime(Math.round(duration))}</span>
                   </div>
                 </div>
-              ) : (
-                /* Collapsed compact pill */
-                <div 
-                  onClick={() => setIsMusicExpanded(true)}
-                  className="cursor-pointer bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 p-2 md:p-3 rounded-full flex items-center gap-3 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.6)] group hover:bg-[#0c0c0c]/95 transition-all duration-300 scale-90 md:scale-100 origin-left"
-                >
-                  <div className={`relative w-8 h-8 rounded-full overflow-hidden shadow-lg shrink-0 ${!isMuted && settings.musicRotationEnabled ? "animate-spin-slow" : ""}`}>
-                    {settings.musicCover ? <Image src={settings.musicCover} alt="Cover" fill className="object-cover" unoptimized /> : <div className="w-full h-full bg-primary-red flex items-center justify-center"><Music size={14} className="text-white" /></div>}
-                  </div>
-                  <div className="pr-3 flex items-center gap-2">
-                    <div className="flex flex-col">
-                      <span className="text-[7px] font-bold uppercase tracking-[0.2em] text-primary-red leading-none mb-0.5">Lecteur</span>
-                      <span className="text-[9px] font-bold text-white uppercase tracking-wider max-w-[80px] truncate leading-none">{songTitle || settings.heroTitleMain || "Musique"}</span>
-                    </div>
-                    <ChevronDown size={14} className="text-white/40 group-hover:text-white transition-colors rotate-180" />
-                  </div>
+
+                {/* Controls (SkipBack, Play/Pause/Mute, SkipForward) - No Share/Plus! */}
+                <div className="flex justify-center items-center gap-6 mt-4 pb-2">
+                  <button 
+                    className="text-white/60 hover:text-white transition-colors" 
+                    onClick={() => {
+                      if (!ytPlayer) return;
+                      try {
+                        const target = Math.max(0, currentTime - 10);
+                        ytPlayer.seekTo(target, true);
+                        setCurrentTime(target);
+                      } catch (err) {}
+                    }}
+                  >
+                    <SkipBack size={18} fill="currentColor" />
+                  </button>
+                  
+                  <button 
+                    onClick={() => setIsMuted(!isMuted)} 
+                    className="w-12 h-12 bg-white text-black hover:bg-white/90 rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-105 active:scale-95"
+                  >
+                    {isMuted ? (
+                      <Play size={18} fill="currentColor" className="ml-0.5 text-black" />
+                    ) : (
+                      <Pause size={18} fill="currentColor" className="text-black" />
+                    )}
+                  </button>
+
+                  <button 
+                    className="text-white/60 hover:text-white transition-colors" 
+                    onClick={() => {
+                      if (!ytPlayer) return;
+                      try {
+                        const target = Math.min(duration, currentTime + 10);
+                        ytPlayer.seekTo(target, true);
+                        setCurrentTime(target);
+                      } catch (err) {}
+                    }}
+                  >
+                    <SkipForward size={18} fill="currentColor" />
+                  </button>
                 </div>
-              )}
+              </div>
               <div id="youtube-player" className="hidden" />
             </motion.div>
           )}
@@ -1687,7 +1666,7 @@ export default function Home() {
                     whileInView={{ opacity: 1, y: 0 }} 
                     viewport={{ once: true }} 
                     onClick={() => { setSelectedProduct(product); setActiveProdImg(0); }}
-                    className="group bg-black/20 backdrop-blur-md border border-white/20 rounded-2xl overflow-hidden shadow-2xl cursor-pointer hover:bg-black/30 transition-all duration-500"
+                    className="group bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 rounded-3xl overflow-hidden shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_20px_50px_rgba(0,0,0,0.8)] cursor-pointer hover:bg-[#0c0c0c]/95 transition-all duration-500 hover:scale-[1.01]"
                   >
                     <div className="relative aspect-square overflow-hidden m-4 rounded-xl">
                       <Image src={product.images[0] || ""} alt={product.name} fill className="object-cover group-hover:scale-105 transition-transform duration-700" unoptimized />
