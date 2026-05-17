@@ -1,7 +1,7 @@
 /// <reference types="@react-three/fiber" />
 'use client';
 
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useGLTF, ContactShadows } from '@react-three/drei';
 import * as THREE from 'three';
@@ -19,40 +19,48 @@ function Statue({ color, textureUrl }: { color: string; textureUrl?: string }) {
   // Detect if color is white (top of page) to trigger the red shadow effect
   const isWhite = color.toLowerCase() === '#ffffff' || color.toLowerCase() === 'white';
 
+  // React state to store the loaded texture
+  const [texture, setTexture] = useState<THREE.Texture | null>(null);
+
+  // Load the texture when textureUrl changes
+  useEffect(() => {
+    if (!textureUrl) {
+      setTexture(null);
+      return;
+    }
+
+    const loader = new THREE.TextureLoader();
+    
+    loader.load(
+      textureUrl,
+      (tex) => {
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.RepeatWrapping;
+        tex.repeat.set(2, 2);
+        tex.needsUpdate = true;
+        setTexture(tex);
+      },
+      undefined,
+      (err) => {
+        console.error("Error loading texture in Three.js:", err);
+      }
+    );
+  }, [textureUrl]);
+
   useMemo(() => {
     const toonMaterial = new THREE.MeshToonMaterial({
-      color: textureUrl ? '#ffffff' : color, // Use white if texture is present, so the texture renders in its true colors!
+      color: texture ? '#ffffff' : color, // Use white if texture is present, so the texture renders in its true colors!
+      map: texture, // Defined from the start when the texture state is loaded!
       emissive: isWhite ? '#ff0000' : color, // Red glow when white
       emissiveIntensity: isWhite ? 0.3 : 0.1,
     });
-
-    if (textureUrl) {
-      const loader = new THREE.TextureLoader();
-      loader.setCrossOrigin('anonymous');
-      loader.load(
-        textureUrl,
-        (tex) => {
-          tex.wrapS = THREE.RepeatWrapping;
-          tex.wrapT = THREE.RepeatWrapping;
-          tex.repeat.set(2, 2);
-          tex.needsUpdate = true;
-          
-          toonMaterial.map = tex;
-          toonMaterial.needsUpdate = true;
-        },
-        undefined,
-        (err) => {
-          console.error("Error loading texture in Three.js:", err);
-        }
-      );
-    }
 
     scene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         child.material = toonMaterial;
       }
     });
-  }, [scene, color, isWhite, textureUrl]);
+  }, [scene, color, isWhite, texture]);
 
   useFrame((state) => {
     const t = state.clock.getElapsedTime();
