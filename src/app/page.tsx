@@ -96,6 +96,7 @@ export default function Home() {
   const [orderAgreed, setOrderAgreed] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [isCompressing, setIsCompressing] = useState(false);
+  const [activeSection, setActiveSection] = useState("");
 
   const [isMuted, setIsMuted] = useState(true);
   const mouseX = useMotionValue(0);
@@ -134,6 +135,44 @@ export default function Home() {
     // White at the top (on primary color background), pColor when scrolled (on gray background)
     setStatueColor(latest < 0.05 ? "#ffffff" : pColor);
   });
+
+  // Autoplay gallery and scroll observer for active sections
+  useEffect(() => {
+    if (!isClient) return;
+
+    let timer: NodeJS.Timeout;
+    if (galleryMedia.length > 0) {
+      const itemsPerPage = 5;
+      const totalPages = Math.ceil(galleryMedia.length / itemsPerPage);
+      timer = setInterval(() => {
+        setGalleryIndex(prev => (prev + 1) % totalPages);
+      }, 5000);
+    }
+
+    const handleScroll = () => {
+      const sections = ['projects', 'shop', 'gallery', 'bento'];
+      let currentSection = "";
+      for (const id of sections) {
+        const el = document.getElementById(id);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          if (rect.top <= 200 && rect.bottom >= 200) {
+            currentSection = id;
+            break;
+          }
+        }
+      }
+      setActiveSection(currentSection);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+
+    return () => {
+      if (timer) clearInterval(timer);
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [isClient, galleryMedia.length]);
 
   useEffect(() => {
     setIsClient(true);
@@ -454,10 +493,49 @@ export default function Home() {
   if (!isClient) return null;
   const musicId = settings.musicUrl ? getYoutubeId(settings.musicUrl) : null;
 
+  const navSections = (settings.sectionsConfig || []).filter(s => {
+    if (s.id === 'shop' && products.length === 0) return false;
+    if (s.id === 'gallery' && galleryMedia.length === 0) return false;
+    return s.visible;
+  });
+
+  const scrollToSection = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <motion.main 
       className="min-h-screen relative flex flex-col pt-24 pb-24 md:pt-32 md:pb-32 px-6 md:px-16 w-full overflow-x-hidden bg-transparent"
     >
+      {/* Center Category Floating Navigation Bar */}
+      {navSections.length > 0 && (
+        <header className="fixed top-6 left-1/2 -translate-x-1/2 z-[250] flex items-center justify-center bg-black/45 backdrop-blur-xl border border-white/10 px-5 py-2 rounded-full shadow-2xl transition-all duration-300">
+          <nav className="flex items-center gap-1 md:gap-2">
+            {navSections.map((sec) => {
+              const isActive = activeSection === sec.id;
+              let displayLabel = sec.label;
+              if (sec.id === 'projects' && displayLabel === 'Postes') displayLabel = 'Projets';
+              return (
+                <button
+                  key={sec.id}
+                  onClick={() => scrollToSection(sec.id)}
+                  type="button"
+                  className={`px-4 py-1.5 rounded-full text-[9px] md:text-xs font-bold tracking-wider uppercase transition-all duration-300 ${
+                    isActive 
+                      ? "bg-primary-red text-white shadow-lg shadow-primary-red/30 scale-105" 
+                      : "text-white/60 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  {displayLabel}
+                </button>
+              );
+            })}
+          </nav>
+        </header>
+      )}
       {/* Background Texture Overlay */}
       {hasTextImg && (
         <motion.div 
@@ -995,10 +1073,14 @@ export default function Home() {
 
       <div className="max-w-[1600px] mx-auto w-full space-y-32 md:space-y-48">
         {(settings.sectionsConfig || []).filter(s => s.visible).map((section) => {
-          if (section.id === 'projects') return <Projects key="projects" config={settings} label={section.label} subLabel={section.subLabel} textColor={textColor} secondaryTextColor={secondaryTextColor} />;
+          if (section.id === 'projects') return (
+            <div key="projects" id="projects" className="scroll-mt-28 md:scroll-mt-36">
+              <Projects config={settings} label={section.label} subLabel={section.subLabel} textColor={textColor} secondaryTextColor={secondaryTextColor} />
+            </div>
+          );
           
           if (section.id === 'shop' && products.length > 0) return (
-            <section key="shop" className="relative z-10">
+            <section key="shop" id="shop" className="relative z-10 scroll-mt-28 md:scroll-mt-36">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-4 pt-4">
                 <motion.h2 style={{ color: textColor }} className="font-serif text-6xl md:text-8xl tracking-tighter leading-tight italic pb-2">{section.label}</motion.h2>
                 <motion.p style={{ color: secondaryTextColor }} className="text-xl md:text-2xl font-light italic mb-4 md:mb-8">{section.subLabel}</motion.p>
@@ -1036,42 +1118,43 @@ export default function Home() {
             const currentItems = galleryMedia.slice(galleryIndex * itemsPerPage, (galleryIndex + 1) * itemsPerPage);
 
             return (
-              <section key="gallery" className="relative">
-                <div className="flex justify-between items-end mb-12 md:mb-16 border-b border-text-black/10 pb-6"> 
+              <section key="gallery" id="gallery" className="relative scroll-mt-28 md:scroll-mt-36">
+                <div className="flex justify-between items-end mb-12 md:mb-16 border-b border-white/10 pb-6"> 
                   <div className="space-y-2">
                     <motion.h2 style={{ color: textColor }} className="font-serif text-3xl md:text-5xl lg:text-6xl">{section.label}</motion.h2> 
-                    <div className="flex items-center gap-4">
-                      <motion.span style={{ color: secondaryTextColor }} className="text-[10px] md:text-sm tracking-widest uppercase">{section.subLabel}</motion.span>
-                      {totalPages > 1 && (
-                        <div className="flex items-center gap-2">
-                          <button 
-                            onClick={() => setGalleryIndex(prev => (prev - 1 + totalPages) % totalPages)}
-                            className="w-8 h-8 rounded-full border border-text-black/10 flex items-center justify-center hover:bg-primary-red hover:text-white transition-all"
-                          >
-                            <ArrowUpRight size={14} style={{ transform: 'rotate(-135deg)' }} />
-                          </button>
-                          <span className="text-[10px] font-bold opacity-30">{galleryIndex + 1} / {totalPages}</span>
-                          <button 
-                            onClick={() => setGalleryIndex(prev => (prev + 1) % totalPages)}
-                            className="w-8 h-8 rounded-full border border-text-black/10 flex items-center justify-center hover:bg-primary-red hover:text-white transition-all"
-                          >
-                            <ArrowUpRight size={14} style={{ transform: 'rotate(45deg)' }} />
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                    <motion.span style={{ color: secondaryTextColor }} className="text-[10px] md:text-sm tracking-widest uppercase">{section.subLabel}</motion.span>
                   </div>
+                  {/* Custom Premium Arrows */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center gap-3">
+                      <button 
+                        onClick={() => setGalleryIndex(prev => (prev - 1 + totalPages) % totalPages)}
+                        type="button"
+                        className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center hover:bg-primary-red hover:text-white transition-all text-white bg-white/5 shadow-lg shadow-black/10"
+                      >
+                        <ArrowUpRight size={18} style={{ transform: 'rotate(-135deg)' }} />
+                      </button>
+                      <button 
+                        onClick={() => setGalleryIndex(prev => (prev + 1) % totalPages)}
+                        type="button"
+                        className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center hover:bg-primary-red hover:text-white transition-all text-white bg-white/5 shadow-lg shadow-black/10"
+                      >
+                        <ArrowUpRight size={18} style={{ transform: 'rotate(45deg)' }} />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
-                <div className="relative overflow-hidden">
+                {/* Bento Grid with sliding horizontal transitions */}
+                <div className="relative overflow-hidden w-full">
                   <AnimatePresence mode="wait">
                     <motion.div 
                       key={galleryIndex}
-                      initial={{ opacity: 0, x: 20 }}
+                      initial={{ opacity: 0, x: 40 }}
                       animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ duration: 0.5, ease: "anticipate" }}
-                      className="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-4 md:h-[800px]"
+                      exit={{ opacity: 0, x: -40 }}
+                      transition={{ duration: 0.5, ease: "easeInOut" }}
+                      className="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-4 md:h-[650px] lg:h-[800px]"
                     >
                       {currentItems.map((item, i) => {
                         const ytId = getYoutubeId(item.url);
@@ -1085,13 +1168,16 @@ export default function Home() {
                         return (
                           <motion.div 
                             key={item.id} 
-                            initial={{ opacity: 0, scale: 0.9 }} 
+                            initial={{ opacity: 0, scale: 0.95 }} 
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: i * 0.05 }} 
                             onClick={() => setSelectedImage(item)} 
-                            className={`relative overflow-hidden rounded-2xl bg-black/20 backdrop-blur-md border border-white/20 group cursor-zoom-in aspect-square md:aspect-auto shadow-2xl hover:bg-black/30 transition-all ${gridClass}`}
+                            className={`relative overflow-hidden rounded-3xl bg-black/20 backdrop-blur-md border border-white/20 group cursor-zoom-in aspect-square md:aspect-auto shadow-2xl hover:bg-black/30 transition-all ${gridClass}`}
                           >
-                            <Image src={displayUrl} alt={item.name} fill className="object-cover transition-transform duration-700 group-hover:scale-105 opacity-90 group-hover:opacity-100" unoptimized />
+                            <Image src={displayUrl} alt={item.name || ""} fill className="object-cover transition-transform duration-700 group-hover:scale-105 opacity-90 group-hover:opacity-100" unoptimized />
+                            
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                            
                             {ytId && (
                               <div className="absolute inset-0 flex items-center justify-center">
                                 <div className="w-12 h-12 md:w-16 md:h-16 bg-white/20 backdrop-blur-md text-white rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 group-hover:bg-primary-red transition-all duration-500 border border-white/30">
@@ -1099,22 +1185,49 @@ export default function Home() {
                                 </div>
                               </div>
                             )}
+
+                            {/* Card Details Overlay - Only display real names */}
+                            {item.name && item.name !== "URL Image" && item.name !== "Vidéo YouTube" && (
+                              <div className="absolute bottom-0 left-0 w-full p-4 md:p-6 transform translate-y-2 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                                <div className="bg-white/10 backdrop-blur-md border border-white/10 p-3 rounded-xl shadow-xl max-w-[240px]">
+                                  <h3 className="text-white font-serif text-sm md:text-base leading-tight truncate">
+                                    {item.name}
+                                  </h3>
+                                </div>
+                              </div>
+                            )}
                           </motion.div>
                         );
                       })}
-                      {/* Fill empty slots if currentItems.length < 5 to keep the layout consistent if needed */}
+                      {/* Fill empty slots to maintain layout consistency */}
                       {currentItems.length < 5 && Array.from({ length: 5 - currentItems.length }).map((_, i) => (
-                         <div key={`empty-${i}`} className="hidden md:block bg-text-black/[0.02] border border-dashed border-text-black/5 rounded-sm" />
+                         <div key={`empty-${i}`} className="hidden md:block bg-white/[0.02] border border-dashed border-white/10 rounded-3xl" />
                       ))}
                     </motion.div>
                   </AnimatePresence>
                 </div>
+
+                {/* Bullet Page Indicators */}
+                {totalPages > 1 && (
+                  <div className="flex justify-center gap-2 mt-8">
+                    {Array.from({ length: totalPages }).map((_, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setGalleryIndex(idx)}
+                        type="button"
+                        className={`h-2 rounded-full transition-all duration-500 ${
+                          galleryIndex === idx ? "w-8 bg-primary-red" : "w-2 bg-white/20 hover:bg-white/50"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
               </section>
             );
           }
 
           if (section.id === 'bento') return (
-            <section key="bento" className="relative z-10">
+            <section key="bento" id="bento" className="relative z-10 scroll-mt-28 md:scroll-mt-36">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-4">
                 <h2 className="font-serif text-6xl md:text-8xl tracking-tighter leading-none italic">{section.label}</h2>
                 <p className="text-xl md:text-2xl text-[var(--primary-red)] font-light italic">{section.subLabel}</p>
