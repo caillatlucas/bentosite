@@ -28,5 +28,5 @@ CREATE POLICY "Suppression par auteur ou admin"
 ON public.comments FOR DELETE 
 USING (
     auth.uid() = user_id 
-    OR (SELECT email FROM auth.users WHERE id = auth.uid()) = 'caillatlucas2304@gmail.com'
+    OR (auth.jwt() ->> 'email') = 'caillatlucas2304@gmail.com'
 );

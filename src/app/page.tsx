@@ -73,6 +73,7 @@ export default function Home() {
   const [isInboxExpanded, setIsInboxExpanded] = useState(false);
   const [ownerImage, setOwnerImage] = useState("");
   const [userProfileImage, setUserProfileImage] = useState("");
+  const [userPseudo, setUserPseudo] = useState("");
   const [show3DBackground, setShow3DBackground] = useState(false);
   const [replies, setReplies] = useState<Message[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -314,8 +315,10 @@ export default function Home() {
           console.log("✅ Profil créé/mis à jour avec succès pour l'utilisateur :", defaultName);
         }
         setUserProfileImage("");
+        setUserPseudo(defaultName);
       } else {
         setUserProfileImage(data.avatar_url || "");
+        setUserPseudo(data.full_name || "");
       }
     } catch (err) {
       console.warn("Profil non trouvé ou table inexistante:", err);
@@ -483,7 +486,7 @@ export default function Home() {
     const newComment = {
       user_id: user.id,
       user_email: user.email,
-      user_name: user.email.split('@')[0],
+      user_name: userPseudo || user.email.split('@')[0],
       avatar_url: userProfileImage || "",
       content: commentContent,
       image_url: commentImageUrl || null,
@@ -1074,6 +1077,25 @@ export default function Home() {
 
               {user && (
                 <div className="space-y-4 pt-4 border-t border-white/5">
+                  <div className="space-y-2">
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-white/30">Pseudo (Nom d'affichage)</p>
+                    <input 
+                      type="text" 
+                      placeholder="Votre pseudo..." 
+                      value={userPseudo}
+                      onChange={async (e) => {
+                        const newPseudo = e.target.value;
+                        setUserPseudo(newPseudo);
+                        await supabase.from('profiles').upsert({ 
+                          id: user.id, 
+                          avatar_url: userProfileImage, 
+                          full_name: newPseudo 
+                        });
+                      }}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-[10px] outline-none focus:border-primary-red transition-all text-white font-medium"
+                    />
+                  </div>
+
                   <p className="text-[9px] font-bold uppercase tracking-widest text-white/30">Photo de profil</p>
                   <div className="space-y-3">
                     <input 
@@ -1083,7 +1105,7 @@ export default function Home() {
                       onChange={async (e) => {
                         const newUrl = e.target.value;
                         setUserProfileImage(newUrl);
-                        await supabase.from('profiles').upsert({ id: user.id, avatar_url: newUrl, full_name: user.email.split('@')[0] });
+                        await supabase.from('profiles').upsert({ id: user.id, avatar_url: newUrl, full_name: userPseudo });
                         if (user.email === 'caillatlucas2304@gmail.com') {
                           setOwnerImage(newUrl);
                         }
