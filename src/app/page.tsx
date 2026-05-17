@@ -138,8 +138,9 @@ export default function Home() {
   const rotateY = useTransform(smoothX, [-0.5, 0.5], [-15, 15]);
   const textShadowX = useTransform(smoothX, [-0.5, 0.5], [20, -20]);
   const textShadowY = useTransform(smoothY, [-0.5, 0.5], [20, -20]);
-  const shadowColor = useTransform(scrollYProgress, [0, 0.15], ["rgba(255,255,255,0.3)", `${pColor}33`]);
-  const textShadow = useMotionTemplate`${textShadowX}px ${textShadowY}px 40px ${shadowColor}`;
+  const staticShadowColor = useTransform(scrollYProgress, [0, 0.15], ["rgba(0,0,0,0.55)", "rgba(0,0,0,0)"]);
+  const shadowColor = useTransform(scrollYProgress, [0, 0.15], ["rgba(0,0,0,0.65)", "rgba(0,0,0,0)"]);
+  const textShadow = useMotionTemplate`0 4px 15px ${staticShadowColor}, ${textShadowX}px ${textShadowY}px 30px ${shadowColor}`;
   
   const [statueColor, setStatueColor] = useState("#ffffff");
   useMotionValueEvent(scrollYProgress, "change", (latest) => {
@@ -807,7 +808,7 @@ export default function Home() {
     >
       {/* Center Category Floating Navigation Bar */}
       {navSections.length > 0 && (
-        <header className="fixed top-6 left-1/2 -translate-x-1/2 z-[250] flex items-center justify-center bg-black/45 backdrop-blur-xl border border-white/10 px-5 py-2 rounded-full shadow-2xl transition-all duration-300">
+        <header className="fixed top-4 md:top-6 left-1/2 -translate-x-1/2 z-[250] flex items-center justify-center bg-[#0c0c0c]/90 backdrop-blur-2xl border border-white/15 px-5 py-2.5 rounded-full shadow-2xl transition-all duration-300">
           <nav className="flex items-center gap-1 md:gap-2">
             {navSections.map((sec) => {
               const isActive = activeSection === sec.id;
@@ -818,10 +819,10 @@ export default function Home() {
                   key={sec.id}
                   onClick={() => scrollToSection(sec.id)}
                   type="button"
-                  className={`px-4 py-1.5 rounded-full text-[9px] md:text-xs font-bold tracking-wider uppercase transition-all duration-300 ${
+                  className={`px-4 py-1.5 rounded-full text-[10px] md:text-xs font-bold tracking-wider uppercase transition-all duration-300 ${
                     isActive 
                       ? "bg-primary-red text-white shadow-lg shadow-primary-red/30 scale-105" 
-                      : "text-white/60 hover:text-white hover:bg-white/5"
+                      : "text-white/85 hover:text-white hover:bg-white/10"
                   }`}
                 >
                   {displayLabel}
@@ -1377,7 +1378,8 @@ export default function Home() {
                 WebkitBackgroundClip: textBgClip as any,
                 backgroundClip: textBgClip as any,
                 backgroundSize: 'cover',
-                backgroundPosition: 'center'
+                backgroundPosition: 'center',
+                textShadow
               }} 
               className="font-serif italic text-5xl md:text-8xl lg:text-[140px] opacity-90 select-none"
             >
@@ -1396,13 +1398,13 @@ export default function Home() {
       <div className="max-w-[1600px] mx-auto w-full space-y-32 md:space-y-48">
         {(settings.sectionsConfig || []).filter(s => s.visible).map((section) => {
           if (section.id === 'projects') return (
-            <div key="projects" id="projects" className="scroll-mt-28 md:scroll-mt-36">
+            <div key="projects" id="projects" className="scroll-mt-36 md:scroll-mt-44">
               <Projects config={settings} label={section.label} subLabel={section.subLabel} textColor={textColor} secondaryTextColor={secondaryTextColor} />
             </div>
           );
           
           if (section.id === 'shop' && products.length > 0) return (
-            <section key="shop" id="shop" className="relative z-10 scroll-mt-28 md:scroll-mt-36">
+            <section key="shop" id="shop" className="relative z-10 scroll-mt-36 md:scroll-mt-44">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-4 pt-4">
                 <motion.h2 style={{ color: textColor }} className="font-serif text-6xl md:text-8xl tracking-tighter leading-tight italic pb-2">{section.label}</motion.h2>
                 <motion.p style={{ color: secondaryTextColor }} className="text-xl md:text-2xl font-light italic mb-4 md:mb-8">{section.subLabel}</motion.p>
@@ -1440,7 +1442,7 @@ export default function Home() {
             const currentItems = galleryMedia.slice(galleryIndex * itemsPerPage, (galleryIndex + 1) * itemsPerPage);
 
             return (
-              <section key="gallery" id="gallery" className="relative scroll-mt-28 md:scroll-mt-36">
+              <section key="gallery" id="gallery" className="relative scroll-mt-36 md:scroll-mt-44">
                 <div className="flex justify-between items-end mb-12 md:mb-16 border-b border-white/10 pb-6"> 
                   <div className="space-y-2">
                     <motion.h2 style={{ color: textColor }} className="font-serif text-3xl md:text-5xl lg:text-6xl">{section.label}</motion.h2> 
@@ -1550,7 +1552,7 @@ export default function Home() {
           }
 
           if (section.id === 'comments') return (
-            <section key="comments" id="comments" className="relative z-10 scroll-mt-28 md:scroll-mt-36">
+            <section key="comments" id="comments" className="relative z-10 scroll-mt-36 md:scroll-mt-44">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 md:mb-16 gap-4 border-b border-white/10 pb-6">
                 <div className="space-y-2">
                   <motion.h2 style={{ color: textColor }} className="font-serif text-3xl md:text-5xl lg:text-6xl">{section.label}</motion.h2>
@@ -1561,7 +1563,7 @@ export default function Home() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Submit comment form column */}
                 <div className="lg:col-span-1">
-                  <div className="bg-black/20 backdrop-blur-md border border-white/20 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden lg:sticky lg:top-32">
+                  <div className="bg-[#0c0c0c] border border-white/20 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden lg:sticky lg:top-36">
                     <h3 className="font-serif text-2xl text-white mb-6 italic">Partager un avis</h3>
                     
                     {user ? (
@@ -1585,7 +1587,7 @@ export default function Home() {
                           onChange={(e) => setCommentContent(e.target.value)}
                           placeholder="Écrivez un message ou laissez un commentaire..."
                           rows={4}
-                          className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red focus:bg-white/10 transition-all text-white resize-none"
+                          className="w-full bg-white/[0.04] border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red focus:bg-white/10 transition-all text-white placeholder-white/50 font-medium resize-none"
                           required
                         />
 
@@ -1625,7 +1627,7 @@ export default function Home() {
                               value={commentImageUrl}
                               onChange={(e) => setCommentImageUrl(e.target.value)}
                               placeholder="Coller l'URL de l'image..."
-                              className="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-[10px] outline-none focus:border-primary-red transition-all text-white"
+                              className="w-full bg-white/[0.04] border border-white/10 rounded-2xl p-3 text-[10px] outline-none focus:border-primary-red transition-all text-white placeholder-white/40 font-medium"
                             />
                           )}
 
@@ -1673,7 +1675,7 @@ export default function Home() {
                 {/* Comments list column */}
                 <div className="lg:col-span-2 space-y-6">
                   {comments.filter(c => !c.parent_id).length === 0 ? (
-                    <div className="bg-black/10 backdrop-blur-md border border-dashed border-white/10 rounded-3xl p-12 text-center text-white/30 italic">
+                    <div className="bg-[#0c0c0c] border border-dashed border-white/20 rounded-3xl p-12 text-center text-white/90 font-semibold italic shadow-2xl">
                       Aucun commentaire pour le moment. Soyez le premier à vous exprimer !
                     </div>
                   ) : (
@@ -1702,7 +1704,7 @@ export default function Home() {
                         return (
                           <div key={comment.id} className="space-y-4">
                             {/* Main Top-Level Comment */}
-                            <div className="bg-black/20 backdrop-blur-md border border-white/10 rounded-3xl p-6 md:p-8 flex gap-4 md:gap-5 shadow-2xl relative group hover:bg-black/30 transition-all">
+                            <div className="bg-[#0c0c0c] border border-white/10 rounded-3xl p-6 md:p-8 flex gap-4 md:gap-5 shadow-2xl relative group hover:bg-[#141414] hover:border-white/20 transition-all">
                               <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10 border border-white/20 overflow-hidden relative shrink-0 flex items-center justify-center">
                                 {comment.avatar_url ? (
                                   <Image src={comment.avatar_url} alt={comment.user_name} fill className="object-cover" unoptimized />
@@ -1722,7 +1724,7 @@ export default function Home() {
                                         </span>
                                       )}
                                     </h4>
-                                    <span className="text-[9px] uppercase tracking-widest text-white/30 block mt-1.5">
+                                    <span className="text-[9px] uppercase tracking-widest text-white/40 block mt-1.5">
                                       {dateFormatted}
                                     </span>
                                   </div>
@@ -1738,7 +1740,7 @@ export default function Home() {
                                   )}
                                 </div>
 
-                                <p className="text-sm text-white/80 font-normal leading-relaxed whitespace-pre-wrap">
+                                <p className="text-sm text-white font-medium leading-relaxed whitespace-pre-wrap">
                                   {comment.content}
                                 </p>
 
@@ -1784,15 +1786,15 @@ export default function Home() {
 
                             {/* Reply Input Form nested directly inside card container */}
                             {replyingToId === comment.id && (
-                              <div className="bg-black/10 border border-white/10 rounded-2xl p-5 ml-8 md:ml-12 space-y-4">
-                                <p className="text-[9px] font-bold uppercase tracking-widest text-white/40">Répondre à <span className="text-primary-red">{replyingToName}</span></p>
+                              <div className="bg-[#111111] border border-white/15 rounded-2xl p-5 ml-8 md:ml-12 space-y-4 shadow-2xl">
+                                <p className="text-[9px] font-bold uppercase tracking-widest text-white/70">Répondre à <span className="text-primary-red">{replyingToName}</span></p>
                                 <form onSubmit={(e) => handleReplySubmit(e, comment.id)} className="space-y-4">
                                   <textarea
                                     value={replyContent}
                                     onChange={(e) => setReplyContent(e.target.value)}
                                     placeholder="Écrivez votre réponse..."
                                     rows={2}
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs outline-none focus:border-primary-red focus:bg-white/10 transition-all text-white resize-none"
+                                    className="w-full bg-white/[0.04] border border-white/10 rounded-xl p-3 text-xs outline-none focus:border-primary-red focus:bg-white/10 transition-all text-white placeholder-white/50 font-medium resize-none"
                                     required
                                   />
 
@@ -1830,7 +1832,7 @@ export default function Home() {
                                           value={replyImageUrl}
                                           onChange={(e) => setReplyImageUrl(e.target.value)}
                                           placeholder="URL de l'image..."
-                                          className="w-full bg-white/5 border border-white/10 rounded-lg p-1.5 text-[9px] outline-none focus:border-primary-red text-white"
+                                          className="w-full bg-white/[0.04] border border-white/10 rounded-lg p-1.5 text-[9px] outline-none focus:border-primary-red text-white placeholder-white/40 font-medium"
                                         />
                                       )}
                                     </div>
@@ -1885,7 +1887,7 @@ export default function Home() {
                                   const hasReplyLiked = user ? replyLikes.includes(user.id) : false;
 
                                   return (
-                                    <div key={reply.id} className="bg-black/10 backdrop-blur-md border border-white/5 rounded-2xl p-5 md:p-6 flex gap-3.5 md:gap-4 shadow-xl relative group hover:bg-black/20 transition-all">
+                                    <div key={reply.id} className="bg-[#0c0c0c] border border-white/10 rounded-2xl p-5 md:p-6 flex gap-3.5 md:gap-4 shadow-xl relative group hover:bg-[#141414] hover:border-white/15 transition-all">
                                       <div className="w-8 h-8 rounded-full bg-white/10 border border-white/10 overflow-hidden relative shrink-0 flex items-center justify-center">
                                         {reply.avatar_url ? (
                                           <Image src={reply.avatar_url} alt={reply.user_name} fill className="object-cover" unoptimized />
@@ -1905,7 +1907,7 @@ export default function Home() {
                                                 </span>
                                               )}
                                             </h5>
-                                            <span className="text-[8px] uppercase tracking-widest text-white/30 block mt-1">
+                                            <span className="text-[8px] uppercase tracking-widest text-white/40 block mt-1">
                                               {replyDateFormatted}
                                             </span>
                                           </div>
@@ -1921,7 +1923,7 @@ export default function Home() {
                                           )}
                                         </div>
 
-                                        <p className="text-xs text-white/70 font-normal leading-relaxed whitespace-pre-wrap">
+                                        <p className="text-xs text-white font-medium leading-relaxed whitespace-pre-wrap">
                                           {reply.content}
                                         </p>
 

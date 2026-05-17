@@ -6,7 +6,7 @@ import {
   Plus, Settings, FileText, ImageIcon, 
   LogOut, Check, X as CloseIcon, X, Edit2, Trash2, Upload, AlertCircle, Link as LinkIcon,
   Share2, Mail, MessageSquare, Zap, User, Clock, Music, Play, Pause, Send, ArrowLeft,
-  Download, ExternalLink, Users, Phone
+  Download, ExternalLink, Users, Phone, Heart
 } from "lucide-react";
 import { FaLinkedin, FaGithub, FaTwitter, FaInstagram, FaYoutube, FaTiktok, FaGlobe, FaDiscord, FaPhone } from "react-icons/fa";
 import Link from "next/link";
@@ -79,6 +79,8 @@ export default function AdminDashboard() {
   const [replyText, setReplyText] = useState<{ [key: string]: string }>({});
   const [replyMedia, setReplyMedia] = useState<{ [key: string]: { url: string; type: 'image' | 'video' }[] }>({});
   const [messages, setMessages] = useState<Message[]>([]);
+  const [comments, setComments] = useState<any[]>([]);
+  const [selectedUserHistory, setSelectedUserHistory] = useState<any | null>(null);
   const [allProfiles, setAllProfiles] = useState<any[]>([]);
   const [selectedAttachment, setSelectedAttachment] = useState<string | null>(null);
   const router = useRouter();
@@ -214,13 +216,20 @@ export default function AdminDashboard() {
     fetchMfa();
 
     const msgChannel = supabase.channel('admin-msgs')
-      .on('postgres_changes', { event: 'INSERT', table: 'messages', schema: 'public' }, (payload) => {
-        setMessages(prev => [payload.new as Message, ...prev]);
+      .on('postgres_changes', { event: '*', table: 'messages', schema: 'public' }, () => {
+        fetchData();
+      })
+      .subscribe();
+
+    const commentsChannel = supabase.channel('admin-comments')
+      .on('postgres_changes', { event: '*', table: 'comments', schema: 'public' }, () => {
+        fetchComments();
       })
       .subscribe();
 
     return () => {
       supabase.removeChannel(msgChannel);
+      supabase.removeChannel(commentsChannel);
     };
   }, [router]);
 
@@ -231,7 +240,13 @@ export default function AdminDashboard() {
   };
   const getYoutubeThumbnail = (id: string) => `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
 
+  const fetchComments = async () => {
+    const { data: cData } = await supabase.from('comments').select('*').order('created_at', { ascending: false });
+    if (cData) setComments(cData);
+  };
+
   const fetchData = async () => {
+    fetchComments();
     const { data: pData } = await supabase.from('projects').select('*');
     const { data: prodData } = await supabase.from('products').select('*');
     const { data: msgData } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
@@ -402,6 +417,15 @@ export default function AdminDashboard() {
   const deleteProject = async (id: string) => { if (confirm("Supprimer?")) { await supabase.from('projects').delete().eq('id', id); setProjects(projects.filter(p => p.id !== id)); } };
   const deleteMedia = async (id: string) => { await supabase.from('media').delete().eq('id', id); setMediaItems(mediaItems.filter(m => m.id !== id)); };
   const deleteMessage = async (id: string) => { await supabase.from('messages').delete().eq('id', id); setMessages(messages.filter(m => m.id !== id)); };
+  const deleteComment = async (id: string) => {
+    if (!confirm("Voulez-vous vraiment supprimer ce commentaire ?")) return;
+    const { error } = await supabase.from('comments').delete().eq('id', id);
+    if (!error) {
+      setComments(prev => prev.filter(c => c.id !== id));
+    } else {
+      alert("Erreur de suppression : " + error.message);
+    }
+  };
 
   const handleMfaEnroll = async () => {
     setMfaError("");
@@ -571,6 +595,7 @@ export default function AdminDashboard() {
     { id: "media", label: "Médias", icon: ImageIcon },
     { id: "shop", label: "Boutique", icon: Zap },
     { id: "messages", label: "Messages", icon: MessageSquare },
+    { id: "comments", label: "Commentaires", icon: Heart },
     { id: "users", label: "Utilisateurs", icon: Users },
     { id: "social", label: "Social", icon: Share2 },
     { id: "settings", label: "Réglages", icon: Settings },
@@ -588,12 +613,13 @@ export default function AdminDashboard() {
           </Link>
           <nav className="space-y-3">
             {tabs.map((tab) => {
-              const Icon = tab.icon;
-              return (
+               const Icon = tab.icon;
+               return (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 ${activeTab === tab.id ? "bg-primary-red text-white shadow-2xl shadow-primary-red/20 translate-x-2" : "text-white/60 hover:bg-white/5 hover:text-white hover:translate-x-1"}`}>
                   <Icon size={20} strokeWidth={1.5} />
                   <span className="font-medium tracking-wide flex-1 text-left">{tab.label}</span>
                   {tab.id === "messages" && messages.length > 0 && <span className="bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-full">{messages.length}</span>}
+                  {tab.id === "comments" && comments.length > 0 && <span className="bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-full">{comments.length}</span>}
                 </button>
               );
             })}
@@ -803,6 +829,77 @@ export default function AdminDashboard() {
             </motion.div>
           )}
 
+          {activeTab === "comments" && (
+            <motion.div key="comments" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
+              <div className="bg-white/5 border border-white/10 p-4 rounded-2xl mb-6 shadow-lg flex justify-between items-center bg-white/5 backdrop-blur-xl">
+                <h3 className="text-white font-serif text-xl">Modération des Commentaires ({comments.length})</h3>
+                <span className="text-[10px] font-bold uppercase bg-primary-red/10 text-primary-red px-3 py-1 rounded-full border border-primary-red/20">Console Direct</span>
+              </div>
+
+              {comments.length === 0 ? (
+                <div className="bg-white/5 border border-dashed border-white/10 rounded-3xl p-12 text-center text-white/40 italic">
+                  Aucun commentaire publié pour le moment.
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {comments.map((comment) => {
+                    const isParent = !comment.parent_id;
+                    const dateFormatted = new Date(comment.created_at).toLocaleString("fr-FR");
+                    const commentLikesCount = (comment.likes || []).length;
+
+                    return (
+                      <div key={comment.id} className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-3xl p-6 md:p-8 space-y-6 shadow-2xl relative group">
+                        <button onClick={() => deleteComment(comment.id)} className="absolute top-6 right-6 text-white/20 hover:text-red-500 transition-colors" title="Supprimer ce commentaire">
+                          <Trash2 size={18} />
+                        </button>
+                        
+                        <div className="flex items-start gap-4">
+                          <div className="w-12 h-12 rounded-full bg-white/10 border border-white/10 overflow-hidden relative shrink-0 flex items-center justify-center">
+                            {comment.avatar_url ? (
+                              <Image src={comment.avatar_url} alt="Avatar" fill className="object-cover" unoptimized />
+                            ) : (
+                              <User size={20} className="text-white/40" />
+                            )}
+                          </div>
+                          
+                          <div className="flex-1 min-w-0 space-y-2">
+                            <div className="flex items-center gap-3 flex-wrap">
+                              <h4 className="text-lg font-bold text-white leading-none">{comment.user_name}</h4>
+                              <span className="text-xs text-white/30">{dateFormatted}</span>
+                              {!isParent && (
+                                <span className="bg-white/10 text-white/50 text-[8px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full">
+                                  Réponse
+                                </span>
+                              )}
+                              {comment.user_email === 'caillatlucas2304@gmail.com' && (
+                                <span className="bg-primary-red/20 text-primary-red text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border border-primary-red/20">
+                                  Admin
+                                </span>
+                              )}
+                            </div>
+                            
+                            <p className="text-base text-white/80 leading-relaxed whitespace-pre-wrap">{comment.content}</p>
+                            
+                            {comment.image_url && (
+                              <div className="relative max-w-xs aspect-video rounded-xl overflow-hidden border border-white/10 mt-3 shadow-md">
+                                <Image src={comment.image_url} alt="Media" fill className="object-cover" unoptimized />
+                              </div>
+                            )}
+
+                            <div className="flex items-center gap-4 pt-3 text-[10px] font-bold uppercase tracking-widest text-white/40">
+                              <span className="flex items-center gap-1.5"><Heart size={12} className="text-primary-red fill-primary-red animate-pulse" /> {commentLikesCount} likes</span>
+                              {comment.user_email && <span className="text-white/30 lowercase font-normal">{comment.user_email}</span>}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </motion.div>
+          )}
+
           {activeTab === "users" && (() => {
             // Création dynamique des fiches "Guest" à partir des messages sans user_id
             const guestMap = new Map();
@@ -835,39 +932,70 @@ export default function AdminDashboard() {
                       ? messages.filter(m => !m.user_id && (m.contact || m.name) === profile.id.replace('guest-', ''))
                       : messages.filter(m => m.user_id === profile.id);
                     
+                    const userComments = profile.is_guest
+                      ? []
+                      : comments.filter(c => c.user_id === profile.id);
+                    
                     return (
-                      <div key={profile.id} className={`bg-black/20 backdrop-blur-xl border ${profile.is_guest ? 'border-dashed border-white/20' : 'border-white/10'} rounded-3xl p-6 flex items-center gap-5 group hover:bg-black/30 transition-all shadow-xl relative overflow-hidden`}>
+                      <div key={profile.id} className={`bg-black/20 backdrop-blur-xl border ${profile.is_guest ? 'border-dashed border-white/20' : 'border-white/10'} rounded-3xl p-6 flex flex-col justify-between group hover:bg-black/30 transition-all shadow-xl relative overflow-hidden min-h-[220px]`}>
                         {profile.is_guest && <div className="absolute -right-4 -top-4 w-12 h-12 bg-white/5 rotate-45" />}
-                        <div className={`w-16 h-16 rounded-full ${profile.is_guest ? 'bg-white/5' : 'bg-white/10'} border border-white/20 overflow-hidden relative shrink-0`}>
-                          {profile.avatar_url ? (
-                            <Image src={profile.avatar_url} alt="Avatar" fill className="object-cover" unoptimized />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-white/20">
-                              <User size={32} />
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-lg font-bold text-white truncate flex items-center gap-2">
-                            {profile.full_name} 
-                            {profile.is_guest && <span className="text-[8px] bg-white/10 px-1.5 py-0.5 rounded text-white/50 uppercase tracking-widest">Invité</span>}
-                          </h4>
-                          <p className="text-[10px] text-white/40 uppercase tracking-widest mb-2 truncate">
-                            {profile.is_guest ? `Contact: ${profile.contact || 'Inconnu'}` : `ID: ${profile.id.substring(0, 8)}...`}
-                          </p>
-                          <div className="flex items-center gap-3">
-                            <span className="text-[10px] font-bold bg-primary-red/10 text-primary-red px-2 py-0.5 rounded-full border border-primary-red/20">
-                              {userMessages.length} message{userMessages.length > 1 ? 's' : ''}
-                            </span>
-                            {!profile.is_guest && (
-                              <button 
-                                onClick={() => fetchIpHistory(profile.id)}
-                                className="text-[10px] font-bold bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full border border-blue-500/20 hover:bg-blue-500/20 transition-colors"
-                              >
-                                Historique IP
-                              </button>
+                        
+                        <div className="flex items-center gap-4 w-full">
+                          <div className={`w-14 h-14 rounded-full ${profile.is_guest ? 'bg-white/5' : 'bg-white/10'} border border-white/20 overflow-hidden relative shrink-0`}>
+                            {profile.avatar_url ? (
+                              <Image src={profile.avatar_url} alt="Avatar" fill className="object-cover" unoptimized />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-white/20">
+                                <User size={28} />
+                              </div>
                             )}
                           </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-base font-bold text-white truncate flex items-center gap-1.5">
+                              {profile.full_name} 
+                              {profile.is_guest && <span className="text-[7px] bg-white/10 px-1.5 py-0.5 rounded text-white/50 uppercase tracking-widest font-sans">Invité</span>}
+                            </h4>
+                            <p className="text-[9px] text-white/40 uppercase tracking-widest mt-0.5 truncate">
+                              {profile.is_guest ? `Contact: ${profile.contact || 'Inconnu'}` : `ID: ${profile.id.substring(0, 8)}...`}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Stats badges */}
+                        <div className="flex flex-wrap items-center gap-2 mt-4">
+                          <span className="text-[9px] font-bold bg-primary-red/10 text-primary-red px-2.5 py-1 rounded-full border border-primary-red/20 shadow-md">
+                            {userMessages.length} msg{userMessages.length > 1 ? 's' : ''}
+                          </span>
+                          {!profile.is_guest && (
+                            <span className="text-[9px] font-bold bg-green-500/10 text-green-400 px-2.5 py-1 rounded-full border border-green-500/20 shadow-md">
+                              {userComments.length} com{userComments.length > 1 ? 's' : ''}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Administration actions footer buttons */}
+                        <div className="flex items-center gap-2 mt-5 pt-3 border-t border-white/5 w-full">
+                          <button
+                            onClick={() => {
+                              setSelectedUserHistory({
+                                profile,
+                                messages: userMessages,
+                                comments: userComments
+                              });
+                            }}
+                            className="text-[9px] font-bold uppercase tracking-widest bg-white/5 border border-white/10 hover:bg-primary-red hover:text-white transition-all text-white/70 px-3.5 py-2 rounded-xl flex-1 text-center shadow-lg animate-pulse hover:animate-none"
+                          >
+                            Historique
+                          </button>
+                          {!profile.is_guest && (
+                            <button 
+                              onClick={() => fetchIpHistory(profile.id)}
+                              className="text-[9px] font-bold uppercase tracking-widest bg-blue-500/10 text-blue-400 px-3.5 py-2 rounded-xl border border-blue-500/20 hover:bg-blue-500/20 transition-colors shadow-lg"
+                              title="Historique de connexion IP"
+                            >
+                              IP
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
@@ -916,6 +1044,53 @@ export default function AdminDashboard() {
                   <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Image d&apos;effet de texte (Remplace la couleur)</label>
                   <input type="text" value={textEffectImage} onChange={(e) => setTextEffectImage(e.target.value)} placeholder="URL Image (ex: grain, gradient...)" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" />
                 </div>
+
+                <div className="space-y-6 pt-6 border-t border-text-black/10">
+                  <h3 className="font-serif text-2xl">Informations de Profil</h3>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Nom d&apos;affichage</label>
+                      <input type="text" value={profileName} onChange={(e) => setProfileName(e.target.value)} placeholder="Ex: Lucas Caillat" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm text-text-black" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Profession / Rôle</label>
+                      <input type="text" value={profileProfession} onChange={(e) => setProfileProfession(e.target.value)} placeholder="Ex: Freelance Informatique" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm text-text-black" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Biographie (Bio)</label>
+                    <textarea value={profileBio} onChange={(e) => setProfileBio(e.target.value)} placeholder="Quelques mots sur vous..." rows={3} className="w-full bg-transparent border border-text-black/20 rounded-md p-3 outline-none text-sm resize-none focus:border-primary-red transition-all text-text-black" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Image de profil (Avatar)</label>
+                    <div className="flex gap-4 items-center">
+                      {profileImage && (
+                        <div className="relative w-12 h-12 rounded-full overflow-hidden border border-text-black/10 shrink-0">
+                          <Image src={profileImage} alt="Avatar Profile" fill className="object-cover" unoptimized />
+                        </div>
+                      )}
+                      <input type="text" value={profileImage} onChange={(e) => setProfileImage(e.target.value)} placeholder="URL de l'image de profil" className="flex-1 bg-transparent border-b border-text-black/20 py-2 outline-none text-sm text-text-black" />
+                      <label className="bg-text-black/5 border border-text-black/10 hover:bg-text-black/10 px-4 py-2 rounded text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 cursor-pointer transition-all text-text-black">
+                        <Upload size={12} /> Importer
+                        <input 
+                          type="file" 
+                          className="hidden" 
+                          accept="image/*" 
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              setProfileImage(reader.result as string);
+                            };
+                            reader.readAsDataURL(file);
+                          }} 
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="flex items-center gap-3">
                   <span className="text-[9px] font-bold uppercase tracking-widest opacity-40">Modèle 3D Arrière-plan</span>
                   <button onClick={() => setShow3DBackground(!show3DBackground)} className={`w-12 h-6 rounded-full transition-colors relative ${ show3DBackground ? "bg-primary-red" : "bg-text-black/10" }`}>
@@ -1384,6 +1559,102 @@ export default function AdminDashboard() {
                 <p className="text-[10px] text-primary-red mt-6 text-center leading-relaxed font-bold tracking-widest uppercase">
                   Attention: Ces données sont sensibles et privées.
                 </p>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {selectedUserHistory && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+              onClick={() => setSelectedUserHistory(null)}
+            >
+              <motion.div 
+                initial={{ scale: 0.95, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.95, y: 20 }}
+                className="bg-[#0c0c0c] border border-white/15 w-full max-w-2xl rounded-3xl overflow-hidden flex flex-col max-h-[80vh] shadow-2xl relative"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button 
+                  onClick={() => setSelectedUserHistory(null)}
+                  className="absolute top-6 right-6 p-2 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white rounded-full transition-colors z-10"
+                >
+                  <X size={16} />
+                </button>
+
+                {/* Header */}
+                <div className="bg-white/5 p-6 border-b border-white/10 flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-white/10 border border-white/10 overflow-hidden relative shrink-0 flex items-center justify-center">
+                    {selectedUserHistory.profile.avatar_url ? (
+                      <Image src={selectedUserHistory.profile.avatar_url} alt="Profile" fill className="object-cover" unoptimized />
+                    ) : (
+                      <User size={20} className="text-white/40" />
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="text-white font-serif text-xl font-bold leading-none">{selectedUserHistory.profile.full_name}</h4>
+                    <p className="text-[9px] text-white/40 uppercase tracking-widest mt-1.5">{selectedUserHistory.profile.is_guest ? "Invité" : `ID: ${selectedUserHistory.profile.id}`}</p>
+                  </div>
+                </div>
+
+                {/* Lists */}
+                <div className="p-6 overflow-y-auto space-y-8 flex-1 custom-scrollbar">
+                  {/* Messages Section */}
+                  <div className="space-y-4">
+                    <h5 className="text-[10px] font-bold uppercase tracking-widest text-primary-red flex items-center gap-2 border-b border-white/5 pb-2">
+                      <Mail size={12} /> Contact & Messages ({selectedUserHistory.messages.length})
+                    </h5>
+                    {selectedUserHistory.messages.length === 0 ? (
+                      <p className="text-xs text-white/30 italic">Aucun message de contact envoyé.</p>
+                    ) : (
+                      <div className="space-y-3 pl-2">
+                        {selectedUserHistory.messages.map((m: any) => (
+                          <div key={m.id} className="bg-white/[0.02] border border-white/5 p-4 rounded-2xl space-y-2">
+                            <div className="flex justify-between items-start gap-4">
+                              <span className="text-[10px] font-bold text-white/80 uppercase">{m.title || "Sans titre"}</span>
+                              <span className="text-[9px] text-white/30 uppercase">{new Date(m.created_at).toLocaleDateString()}</span>
+                            </div>
+                            <p className="text-xs text-white/60 leading-relaxed whitespace-pre-wrap">{m.content}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Comments Section */}
+                  <div className="space-y-4">
+                    <h5 className="text-[10px] font-bold uppercase tracking-widest text-green-400 flex items-center gap-2 border-b border-white/5 pb-2">
+                      <Heart size={12} className="fill-green-400/20" /> Commentaires ({selectedUserHistory.comments.length})
+                    </h5>
+                    {selectedUserHistory.comments.length === 0 ? (
+                      <p className="text-xs text-white/30 italic">Aucun commentaire publié.</p>
+                    ) : (
+                      <div className="space-y-3 pl-2">
+                        {selectedUserHistory.comments.map((c: any) => (
+                          <div key={c.id} className="bg-white/[0.02] border border-white/5 p-4 rounded-2xl space-y-2">
+                            <div className="flex justify-between items-start gap-4">
+                              <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest">
+                                {c.parent_id ? "Réponse" : "Commentaire"}
+                              </span>
+                              <span className="text-[8px] text-white/30 uppercase">{new Date(c.created_at).toLocaleDateString()}</span>
+                            </div>
+                            <p className="text-xs text-white/70 leading-relaxed whitespace-pre-wrap">{c.content}</p>
+                            {c.image_url && (
+                              <div className="relative w-20 aspect-video rounded-xl border border-white/10 overflow-hidden mt-2">
+                                <Image src={c.image_url} alt="Attached image" fill className="object-cover" unoptimized />
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </motion.div>
             </motion.div>
           )}
