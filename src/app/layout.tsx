@@ -13,7 +13,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Lucas Caillat | Freelance Informatique",
+  title: "CAILLAT.",
   description: "Portfolio de Lucas Caillat - Freelance Informatique",
   icons: {
     icon: "/bentosite/favicon.ico",

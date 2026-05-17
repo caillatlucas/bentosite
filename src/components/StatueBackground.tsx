@@ -116,12 +116,18 @@ function Statue({ color, textureUrl }: { color: string; textureUrl?: string }) {
     });
   }, [scene, color, isWhite, texture]);
 
+  const currentRotationY = useRef(0);
+
   useFrame((state) => {
     const t = state.clock.getElapsedTime();
     if (mesh.current) {
-      mesh.current.rotation.y = t * 0.15;
       const scrollY = typeof window !== 'undefined' ? window.scrollY : 0;
-      mesh.current.rotation.y += scrollY * 0.0015;
+      const targetRotation = t * 0.15 + scrollY * 0.0015;
+      
+      // Smooth linear interpolation (lerp) to prevent snapping/teleporting
+      currentRotationY.current += (targetRotation - currentRotationY.current) * 0.05;
+      
+      mesh.current.rotation.y = currentRotationY.current;
       mesh.current.position.y = Math.sin(t * 0.5) * 0.1 - 1.2;
     }
   });

@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useState, Suspense } from "react";
+import React, { useEffect, useState, Suspense, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, Calendar, Tag, User, Info, Maximize2 } from "lucide-react";
+import { ArrowLeft, Calendar, Tag, User, Info, Maximize2, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
@@ -89,6 +89,14 @@ function ProjectContent() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const [project, setProject] = useState<Project | null>(null);
+  const carouselRef = useRef<HTMLDivElement>(null);
+
+  const scrollCarousel = (direction: 'left' | 'right') => {
+    if (carouselRef.current) {
+      const offset = direction === 'left' ? -600 : 600;
+      carouselRef.current.scrollBy({ left: offset, behavior: 'smooth' });
+    }
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -169,37 +177,62 @@ function ProjectContent() {
             </div>
             
             {project.gallery && project.gallery.length > 0 && (
-              <div className="mt-16 space-y-6">
+              <div className="mt-16 space-y-6 relative group/carousel">
                 <div className="flex justify-between items-center border-b border-white/10 pb-6 mb-8">
                   <div className="inline-flex items-center gap-4 bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 px-6 py-3.5 rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.6)] transition-all duration-300">
                     <span className="w-2.5 h-2.5 bg-primary-red rounded-full animate-pulse shadow-[0_0_10px_var(--primary-red)]"></span>
                     <h3 className="font-serif text-xl md:text-2xl text-white tracking-tight leading-none italic">Galerie Media</h3>
                   </div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-white/30">Défilement horizontal →</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-white/30">Défilement horizontal ou boutons de navigation</p>
                 </div>
-                <div className="flex gap-6 overflow-x-auto pb-8 snap-x snap-mandatory no-scrollbar">
-                  {project.gallery.map((item, i) => {
-                    const isVideo = item.type === 'video';
-                    const ytId = isVideo ? item.url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/)?.[2] : null;
-                    
-                    return (
-                      <div key={i} className="min-w-[85vw] md:min-w-[700px] aspect-video relative rounded-sm overflow-hidden shadow-2xl bg-text-black/5 snap-center">
-                        {isVideo ? (
-                          <iframe 
-                            width="100%" 
-                            height="100%" 
-                            src={`https://www.youtube.com/embed/${ytId}`} 
-                            title={`Video ${i}`}
-                            frameBorder="0" 
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                            allowFullScreen
-                          />
-                        ) : (
-                          <Image src={item.url} alt={`Detail ${i}`} fill className="object-cover" unoptimized />
-                        )}
-                      </div>
-                    );
-                  })}
+                
+                <div className="relative">
+                  {/* Left Navigation Button */}
+                  <button 
+                    onClick={() => scrollCarousel('left')}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-4 rounded-full bg-black/60 backdrop-blur-xl border border-white/15 text-white hover:bg-primary-red hover:border-primary-red transition-all shadow-2xl opacity-0 group-hover/carousel:opacity-100 duration-300"
+                    aria-label="Précédent"
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+
+                  {/* Right Navigation Button */}
+                  <button 
+                    onClick={() => scrollCarousel('right')}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-4 rounded-full bg-black/60 backdrop-blur-xl border border-white/15 text-white hover:bg-primary-red hover:border-primary-red transition-all shadow-2xl opacity-0 group-hover/carousel:opacity-100 duration-300"
+                    aria-label="Suivant"
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+
+                  <div 
+                    ref={carouselRef}
+                    className="flex gap-6 overflow-x-auto pb-8 snap-x snap-mandatory scroll-smooth"
+                  >
+                    {project.gallery.map((item, i) => {
+                      const isVideo = item.type === 'video';
+                      const ytId = isVideo ? item.url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/)?.[2] : null;
+                      
+                      return (
+                        <div key={i} className="min-w-[85vw] md:min-w-[700px] aspect-video relative rounded-xl overflow-hidden shadow-2xl bg-text-black/5 snap-center border border-white/10 hover:border-primary-red/30 transition-all duration-300">
+                          {isVideo ? (
+                            <iframe 
+                              width="100%" 
+                              height="100%" 
+                              src={`https://www.youtube.com/embed/${ytId}`} 
+                              title={`Video ${i}`}
+                              frameBorder="0" 
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                              allowFullScreen
+                              className="rounded-xl"
+                            />
+                          ) : (
+                            <Image src={item.url} alt={`Detail ${i}`} fill className="object-cover rounded-xl" unoptimized />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             )}
