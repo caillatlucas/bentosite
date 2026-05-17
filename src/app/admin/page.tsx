@@ -242,7 +242,25 @@ export default function AdminDashboard() {
 
   const fetchComments = async () => {
     const { data: cData } = await supabase.from('comments').select('*').order('created_at', { ascending: false });
-    if (cData) setComments(cData);
+    if (cData) {
+      const userIds = Array.from(new Set(cData.map((c: any) => c.user_id).filter(Boolean)));
+      if (userIds.length > 0) {
+        const { data: profData } = await supabase.from('profiles').select('id, avatar_url, full_name').in('id', userIds);
+        if (profData) {
+          const enriched = cData.map((c: any) => {
+            const p = profData.find(prof => prof.id === c.user_id);
+            return {
+              ...c,
+              user_name: p?.full_name || c.user_name,
+              avatar_url: p?.avatar_url || c.avatar_url
+            };
+          });
+          setComments(enriched);
+          return;
+        }
+      }
+      setComments(cData);
+    }
   };
 
   const fetchData = async () => {
@@ -848,11 +866,7 @@ export default function AdminDashboard() {
                     const commentLikesCount = (comment.likes || []).length;
 
                     return (
-                      <div key={comment.id} className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-3xl p-6 md:p-8 space-y-6 shadow-2xl relative group">
-                        <button onClick={() => deleteComment(comment.id)} className="absolute top-6 right-6 text-white/20 hover:text-red-500 transition-colors" title="Supprimer ce commentaire">
-                          <Trash2 size={18} />
-                        </button>
-                        
+                      <div key={comment.id} className={`bg-black/20 backdrop-blur-xl border ${comment.deleted_by_user ? 'border-red-500/30 bg-red-500/[0.02]' : 'border-white/10'} rounded-3xl p-6 md:p-8 space-y-6 shadow-2xl relative group transition-all`}>
                         <div className="flex items-start gap-4">
                           <div className="w-12 h-12 rounded-full bg-white/10 border border-white/10 overflow-hidden relative shrink-0 flex items-center justify-center">
                             {comment.avatar_url ? (
@@ -876,6 +890,11 @@ export default function AdminDashboard() {
                                   Admin
                                 </span>
                               )}
+                              {comment.deleted_by_user && (
+                                <span className="bg-red-500/20 text-red-400 text-[8px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full border border-red-500/20 shadow-md">
+                                  Supprimé par l'utilisateur
+                                </span>
+                              )}
                             </div>
                             
                             <p className="text-base text-white/80 leading-relaxed whitespace-pre-wrap">{comment.content}</p>
@@ -886,9 +905,22 @@ export default function AdminDashboard() {
                               </div>
                             )}
 
-                            <div className="flex items-center gap-4 pt-3 text-[10px] font-bold uppercase tracking-widest text-white/40">
-                              <span className="flex items-center gap-1.5"><Heart size={12} className="text-primary-red fill-primary-red animate-pulse" /> {commentLikesCount} likes</span>
-                              {comment.user_email && <span className="text-white/30 lowercase font-normal">{comment.user_email}</span>}
+                            <div className="flex justify-between items-center pt-4 border-t border-white/5 mt-4">
+                              <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest text-white/40">
+                                <span className="flex items-center gap-1.5"><Heart size={12} className="text-primary-red fill-primary-red animate-pulse" /> {commentLikesCount} likes</span>
+                                {comment.user_email && <span className="text-white/30 lowercase font-normal">{comment.user_email}</span>}
+                              </div>
+                              <button 
+                                onClick={() => deleteComment(comment.id)} 
+                                className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all flex items-center gap-1.5 shadow-lg border ${
+                                  comment.deleted_by_user 
+                                    ? "bg-red-600 text-white hover:bg-red-700 border-red-600/20" 
+                                    : "bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white border-red-500/20"
+                                }`}
+                                title="Supprimer définitivement de la base de données (Archiver)"
+                              >
+                                <Trash2 size={12} /> {comment.deleted_by_user ? "Archiver définitivement" : "Archiver (Supprimer def)"}
+                              </button>
                             </div>
                           </div>
                         </div>

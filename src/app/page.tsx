@@ -240,6 +240,22 @@ export default function Home() {
     try {
       const { data: cData, error: cErr } = await supabase.from('comments').select('*').order('created_at', { ascending: false });
       if (!cErr && cData) {
+        const userIds = Array.from(new Set(cData.map(c => c.user_id).filter(Boolean)));
+        if (userIds.length > 0) {
+          const { data: profData } = await supabase.from('profiles').select('id, avatar_url, full_name').in('id', userIds);
+          if (profData) {
+            const enriched = cData.map(c => {
+              const p = profData.find(prof => prof.id === c.user_id);
+              return {
+                ...c,
+                user_name: p?.full_name || c.user_name,
+                avatar_url: p?.avatar_url || c.avatar_url
+              };
+            });
+            setComments(enriched);
+            return;
+          }
+        }
         setComments(cData);
       }
     } catch (e) {
@@ -573,11 +589,11 @@ export default function Home() {
 
   const handleCommentDelete = async (commentId: string) => {
     if (!confirm("Voulez-vous vraiment supprimer ce commentaire ?")) return;
-    const { error } = await supabase.from('comments').delete().eq('id', commentId);
+    const { error } = await supabase.from('comments').update({ deleted_by_user: true }).eq('id', commentId);
     if (!error) {
-      setComments(prev => prev.filter(c => c.id !== commentId));
+      setComments(prev => prev.map(c => c.id === commentId ? { ...c, deleted_by_user: true } : c));
     } else {
-      console.error("Error deleting comment:", error);
+      console.error("Error soft-deleting comment:", error);
       alert("Erreur de suppression : " + error.message);
     }
   };
@@ -1674,13 +1690,13 @@ export default function Home() {
 
                 {/* Comments list column */}
                 <div className="lg:col-span-2 space-y-6">
-                  {comments.filter(c => !c.parent_id).length === 0 ? (
+                  {comments.filter(c => !c.parent_id && !c.deleted_by_user).length === 0 ? (
                     <div className="bg-[#0c0c0c] border border-dashed border-white/20 rounded-3xl p-12 text-center text-white/90 font-semibold italic shadow-2xl">
                       Aucun commentaire pour le moment. Soyez le premier à vous exprimer !
                     </div>
                   ) : (
                     comments
-                      .filter(c => !c.parent_id)
+                      .filter(c => !c.parent_id && !c.deleted_by_user)
                       .map((comment) => {
                         const isAuthor = user?.id === comment.user_id;
                         const isAdmin = user?.email === 'caillatlucas2304@gmail.com';
@@ -1698,7 +1714,7 @@ export default function Home() {
 
                         // Fetch replies for this specific comment
                         const commentReplies = comments
-                          .filter(c => c.parent_id === comment.id)
+                          .filter(c => c.parent_id === comment.id && !c.deleted_by_user)
                           .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
                         return (

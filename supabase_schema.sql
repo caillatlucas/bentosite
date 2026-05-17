@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS public.comments (
     content TEXT NOT NULL,
     image_url TEXT,
     likes UUID[] DEFAULT '{}'::UUID[] NOT NULL,
+    deleted_by_user BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -48,6 +49,7 @@ USING (
 -- ==========================================
 -- ALTER TABLE public.comments ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES public.comments(id) ON DELETE CASCADE;
 -- ALTER TABLE public.comments ADD COLUMN IF NOT EXISTS likes UUID[] DEFAULT '{}'::UUID[] NOT NULL;
+-- ALTER TABLE public.comments ADD COLUMN IF NOT EXISTS deleted_by_user BOOLEAN DEFAULT FALSE;
 -- ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
 -- DROP POLICY IF EXISTS "Mise a jour pour les connectes" ON public.comments;
 -- CREATE POLICY "Mise a jour pour les connectes" ON public.comments FOR UPDATE USING (auth.role() = 'authenticated');
