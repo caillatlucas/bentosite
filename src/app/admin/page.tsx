@@ -292,15 +292,28 @@ export default function AdminDashboard() {
         setShow3DBackground(global.show3DBackground ?? false);
         setMusicRotationEnabled(global.musicRotationEnabled ?? true);
         if (global.sectionsConfig) {
-          const migratedSections = global.sectionsConfig.map((s: { id: string; label: string; subLabel?: string; visible: boolean }) => {
+          const hasComments = global.sectionsConfig.some((s: any) => s.id === 'comments');
+          let migratedSections = global.sectionsConfig.map((s: { id: string; label: string; subLabel?: string; visible: boolean }) => {
             if (s.id === 'projects' && s.subLabel === undefined) return { ...s, subLabel: global.projectsTitle || "Sélection 2024", label: global.recentProjectsTitle || "Postes" };
             if (s.id === 'gallery' && s.subLabel === undefined) return { ...s, subLabel: "Galerie Photo/Vidéo", label: global.galleryTitle || s.label };
             if (s.id === 'shop' && s.subLabel === undefined) return { ...s, subLabel: "Nos Produits" };
+            if (s.id === 'comments' && s.subLabel === undefined) return { ...s, subLabel: "Vos Retours" };
             if (s.id === 'bento' && s.subLabel === undefined) return { ...s, subLabel: "Bento Grid", label: global.bentoGridTitle || s.label };
             if (s.id === 'projects' && s.label === 'Projets') return { ...s, label: 'Postes' };
             return s;
           });
+          if (!hasComments) {
+            migratedSections.push({ id: 'comments', label: 'Commentaires', subLabel: 'Vos Retours', visible: true });
+          }
           setSectionsConfig(migratedSections);
+        } else {
+          setSectionsConfig([
+            { id: 'projects', label: 'Postes', subLabel: 'Sélection 2024', visible: true },
+            { id: 'shop', label: 'Boutique', subLabel: 'Nos Produits', visible: true },
+            { id: 'gallery', label: 'Galerie', subLabel: 'Galerie Photo/Vidéo', visible: true },
+            { id: 'comments', label: 'Commentaires', subLabel: 'Vos Retours', visible: true },
+            { id: 'bento', label: 'À propos', subLabel: 'Bento Grid', visible: true }
+          ]);
         }
       }
       const soc = sData.find(s => s.key === 'socials')?.value;

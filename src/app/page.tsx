@@ -97,6 +97,11 @@ export default function Home() {
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [isCompressing, setIsCompressing] = useState(false);
   const [activeSection, setActiveSection] = useState("");
+  const [comments, setComments] = useState<any[]>([]);
+  const [commentContent, setCommentContent] = useState("");
+  const [commentImageUrl, setCommentImageUrl] = useState("");
+  const [commentImgMode, setCommentImgMode] = useState<'url' | 'upload'>('upload');
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
   const [isMuted, setIsMuted] = useState(true);
   const mouseX = useMotionValue(0);
@@ -150,7 +155,7 @@ export default function Home() {
     }
 
     const handleScroll = () => {
-      const sections = ['projects', 'shop', 'gallery', 'bento'];
+      const sections = ['projects', 'shop', 'gallery', 'comments', 'bento'];
       let currentSection = "";
       for (const id of sections) {
         const el = document.getElementById(id);
@@ -231,14 +236,28 @@ export default function Home() {
       if (global) {
         setOwnerImage(global.profileImage || "");
         if (global.sectionsConfig) {
-          global.sectionsConfig = global.sectionsConfig.map((s: { id: string; label: string; subLabel?: string; visible: boolean }) => {
+          const hasComments = global.sectionsConfig.some((s: any) => s.id === 'comments');
+          let migrated = global.sectionsConfig.map((s: { id: string; label: string; subLabel?: string; visible: boolean }) => {
             if (s.id === 'projects' && s.subLabel === undefined) return { ...s, subLabel: global.projectsTitle || "Sélection 2024", label: global.recentProjectsTitle || "Postes" };
             if (s.id === 'gallery' && s.subLabel === undefined) return { ...s, subLabel: "Galerie Photo/Vidéo", label: global.galleryTitle || s.label };
             if (s.id === 'shop' && s.subLabel === undefined) return { ...s, subLabel: "Nos Produits" };
+            if (s.id === 'comments' && s.subLabel === undefined) return { ...s, subLabel: "Vos Retours" };
             if (s.id === 'bento' && s.subLabel === undefined) return { ...s, subLabel: "Bento Grid", label: global.bentoGridTitle || s.label };
             if (s.id === 'projects' && s.label === 'Projets') return { ...s, label: 'Postes' };
             return s;
           });
+          if (!hasComments) {
+            migrated.push({ id: 'comments', label: 'Commentaires', subLabel: 'Vos Retours', visible: true });
+          }
+          global.sectionsConfig = migrated;
+        } else {
+          global.sectionsConfig = [
+            { id: 'projects', label: 'Postes', subLabel: global.projectsTitle || 'Sélection 2024', visible: true },
+            { id: 'shop', label: 'Boutique', subLabel: 'Nos Produits', visible: true },
+            { id: 'gallery', label: 'Galerie', subLabel: 'Galerie Photo/Vidéo', visible: true },
+            { id: 'comments', label: 'Commentaires', subLabel: 'Vos Retours', visible: true },
+            { id: 'bento', label: 'À propos', subLabel: 'Bento Grid', visible: true }
+          ];
         }
         setOwnerImage(global.profileImage || "");
         setShow3DBackground(global.show3DBackground ?? false);
@@ -267,6 +286,16 @@ export default function Home() {
     }
     const { data: pData } = await supabase.from('products').select('*').order('created_at', { ascending: false });
     if (pData) setProducts(pData);
+
+    // Fetch Comments with Graceful Fallback
+    try {
+      const { data: cData, error: cErr } = await supabase.from('comments').select('*').order('created_at', { ascending: false });
+      if (!cErr && cData) {
+        setComments(cData);
+      }
+    } catch (e) {
+      console.warn("Table public.comments non configurée ou inaccessible :", e);
+    }
   };
 
   const fetchUserProfile = async (userId: string, email?: string) => {
@@ -396,6 +425,147 @@ export default function Home() {
     };
     reader.onerror = () => setIsCompressing(false);
     reader.readAsDataURL(file);
+  };
+
+  const handleProfileImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new window.Image();
+      img.onload = async () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const maxDim = 400;
+
+        if (width > height && width > maxDim) {
+          height *= maxDim / width;
+          width = maxDim;
+        } else if (height > maxDim) {
+          width *= maxDim / height;
+          height = maxDim;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+          setUserProfileImage(compressedBase64);
+          await supabase.from('profiles').upsert({ 
+            id: user.id, 
+            avatar_url: compressedBase64, 
+            full_name: user.email.split('@')[0] 
+          });
+          if (user.email === 'caillatlucas2304@gmail.com') {
+            setOwnerImage(compressedBase64);
+          }
+        }
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCommentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    if (!commentContent.trim() && !commentImageUrl) return;
+
+    setIsSubmittingComment(true);
+
+    const newComment = {
+      user_id: user.id,
+      user_email: user.email,
+      user_name: user.email.split('@')[0],
+      avatar_url: userProfileImage || "",
+      content: commentContent,
+      image_url: commentImageUrl || null,
+      created_at: new Date().toISOString()
+    };
+
+    try {
+      const { data: profile } = await supabase.from('profiles').select('full_name, avatar_url').eq('id', user.id).single();
+      if (profile) {
+        newComment.user_name = profile.full_name || newComment.user_name;
+        newComment.avatar_url = profile.avatar_url || newComment.avatar_url;
+      }
+    } catch (err) {
+      console.warn("Could not load user profile details for comment:", err);
+    }
+
+    const { data, error } = await supabase.from('comments').insert(newComment).select('*');
+
+    setIsSubmittingComment(false);
+
+    if (error) {
+      console.error("Error posting comment:", error);
+      alert("Erreur lors de l'envoi du commentaire : " + error.message);
+    } else {
+      setCommentContent("");
+      setCommentImageUrl("");
+      if (data && data[0]) {
+        setComments(prev => [data[0], ...prev]);
+      } else {
+        fetchData();
+      }
+    }
+  };
+
+  const handleCommentImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsCompressing(true);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new window.Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const maxDim = 800;
+
+        if (width > height && width > maxDim) {
+          height *= maxDim / width;
+          width = maxDim;
+        } else if (height > maxDim) {
+          width *= maxDim / height;
+          height = maxDim;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+          setCommentImageUrl(compressedBase64);
+          setIsCompressing(false);
+        }
+      };
+      img.onerror = () => setIsCompressing(false);
+      img.src = event.target?.result as string;
+    };
+    reader.onerror = () => setIsCompressing(false);
+    reader.readAsDataURL(file);
+  };
+
+  const handleCommentDelete = async (commentId: string) => {
+    if (!confirm("Voulez-vous vraiment supprimer ce commentaire ?")) return;
+    const { error } = await supabase.from('comments').delete().eq('id', commentId);
+    if (!error) {
+      setComments(prev => prev.filter(c => c.id !== commentId));
+    } else {
+      console.error("Error deleting comment:", error);
+      alert("Erreur de suppression : " + error.message);
+    }
   };
 
   const copyEmail = () => { navigator.clipboard.writeText(settings.email || "contact@lucascaillat.fr"); setCopied(true); setTimeout(() => setCopied(false), 2000); };
@@ -905,7 +1075,7 @@ export default function Home() {
               {user && (
                 <div className="space-y-4 pt-4 border-t border-white/5">
                   <p className="text-[9px] font-bold uppercase tracking-widest text-white/30">Photo de profil</p>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <input 
                       type="text" 
                       placeholder="URL de l'image..." 
@@ -920,6 +1090,14 @@ export default function Home() {
                       }}
                       className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-[10px] outline-none focus:border-primary-red transition-all text-white"
                     />
+                    
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-[8px] font-bold uppercase tracking-widest text-white/30">Ou local</span>
+                      <label className="cursor-pointer text-[10px] font-bold text-primary-red uppercase tracking-widest flex items-center gap-1.5 hover:text-red-400 transition-colors">
+                        <Upload size={12} /> Importer un fichier
+                        <input type="file" className="hidden" accept="image/*" onChange={handleProfileImageUpload} />
+                      </label>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1124,22 +1302,23 @@ export default function Home() {
                     <motion.h2 style={{ color: textColor }} className="font-serif text-3xl md:text-5xl lg:text-6xl">{section.label}</motion.h2> 
                     <motion.span style={{ color: secondaryTextColor }} className="text-[10px] md:text-sm tracking-widest uppercase">{section.subLabel}</motion.span>
                   </div>
-                  {/* Custom Premium Arrows */}
+                  {/* Custom Premium Arrows - Capsule Style like the Category Bar! */}
                   {totalPages > 1 && (
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center bg-black/45 backdrop-blur-xl border border-white/10 px-2.5 py-1.5 rounded-full shadow-2xl transition-all duration-300">
                       <button 
                         onClick={() => setGalleryIndex(prev => (prev - 1 + totalPages) % totalPages)}
                         type="button"
-                        className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center hover:bg-primary-red hover:text-white transition-all text-white bg-white/5 shadow-lg shadow-black/10"
+                        className="px-3 py-1 text-white/60 hover:text-white hover:bg-white/5 rounded-full transition-all"
                       >
-                        <ArrowUpRight size={18} style={{ transform: 'rotate(-135deg)' }} />
+                        <ArrowUpRight size={16} style={{ transform: 'rotate(-135deg)' }} />
                       </button>
+                      <div className="w-[1px] h-4 bg-white/10 mx-1.5" />
                       <button 
                         onClick={() => setGalleryIndex(prev => (prev + 1) % totalPages)}
                         type="button"
-                        className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center hover:bg-primary-red hover:text-white transition-all text-white bg-white/5 shadow-lg shadow-black/10"
+                        className="px-3 py-1 text-white/60 hover:text-white hover:bg-white/5 rounded-full transition-all"
                       >
-                        <ArrowUpRight size={18} style={{ transform: 'rotate(45deg)' }} />
+                        <ArrowUpRight size={16} style={{ transform: 'rotate(45deg)' }} />
                       </button>
                     </div>
                   )}
@@ -1225,6 +1404,208 @@ export default function Home() {
               </section>
             );
           }
+
+          if (section.id === 'comments') return (
+            <section key="comments" id="comments" className="relative z-10 scroll-mt-28 md:scroll-mt-36">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 md:mb-16 gap-4 border-b border-white/10 pb-6">
+                <div className="space-y-2">
+                  <motion.h2 style={{ color: textColor }} className="font-serif text-3xl md:text-5xl lg:text-6xl">{section.label}</motion.h2>
+                  <motion.span style={{ color: secondaryTextColor }} className="text-[10px] md:text-sm tracking-widest uppercase">{section.subLabel}</motion.span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Submit comment form column */}
+                <div className="lg:col-span-1">
+                  <div className="bg-black/20 backdrop-blur-md border border-white/20 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden lg:sticky lg:top-32">
+                    <h3 className="font-serif text-2xl text-white mb-6 italic">Partager un avis</h3>
+                    
+                    {user ? (
+                      <form onSubmit={handleCommentSubmit} className="space-y-5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-white/10 border border-white/20 overflow-hidden relative shrink-0">
+                            {userProfileImage ? (
+                              <Image src={userProfileImage} alt="Profile" fill className="object-cover" unoptimized />
+                            ) : (
+                              <User size={14} className="m-auto mt-2 text-white/40" />
+                            )}
+                          </div>
+                          <div className="overflow-hidden">
+                            <p className="text-[9px] font-bold uppercase tracking-widest text-primary-red">Connecté</p>
+                            <p className="text-xs text-white/60 truncate">{user.email}</p>
+                          </div>
+                        </div>
+
+                        <textarea
+                          value={commentContent}
+                          onChange={(e) => setCommentContent(e.target.value)}
+                          placeholder="Écrivez un message ou laissez un commentaire..."
+                          rows={4}
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red focus:bg-white/10 transition-all text-white resize-none"
+                          required
+                        />
+
+                        {/* Image Attachment System */}
+                        <div className="space-y-3 pt-2">
+                          <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                            <span className="text-[9px] font-bold uppercase tracking-widest text-white/40">Image Jointe</span>
+                            <div className="flex bg-white/5 rounded-lg p-0.5 border border-white/10">
+                              <button
+                                type="button"
+                                onClick={() => setCommentImgMode('upload')}
+                                className={`text-[8px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md transition-all ${commentImgMode === 'upload' ? 'bg-primary-red text-white' : 'text-white/40 hover:text-white'}`}
+                              >
+                                Importer
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setCommentImgMode('url')}
+                                className={`text-[8px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md transition-all ${commentImgMode === 'url' ? 'bg-primary-red text-white' : 'text-white/40 hover:text-white'}`}
+                              >
+                                URL
+                              </button>
+                            </div>
+                          </div>
+
+                          {commentImgMode === 'upload' ? (
+                            <div className="flex justify-between items-center bg-white/5 p-3 rounded-2xl border border-white/5">
+                              <span className="text-[10px] text-white/40">Fichier local</span>
+                              <label className="cursor-pointer text-[10px] font-bold text-primary-red uppercase tracking-widest flex items-center gap-1.5 hover:text-red-400 transition-colors">
+                                <Upload size={12} /> Choisir une image
+                                <input type="file" className="hidden" accept="image/*" onChange={handleCommentImageUpload} />
+                              </label>
+                            </div>
+                          ) : (
+                            <input
+                              type="text"
+                              value={commentImageUrl}
+                              onChange={(e) => setCommentImageUrl(e.target.value)}
+                              placeholder="Coller l'URL de l'image..."
+                              className="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-[10px] outline-none focus:border-primary-red transition-all text-white"
+                            />
+                          )}
+
+                          {commentImageUrl && (
+                            <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-white/20 group mt-2">
+                              <Image src={commentImageUrl} alt="Attachment Preview" fill className="object-cover" unoptimized />
+                              <button
+                                type="button"
+                                onClick={() => setCommentImageUrl("")}
+                                className="absolute inset-0 bg-red-600/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white"
+                              >
+                                <X size={16} />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        <button
+                          type="submit"
+                          disabled={isSubmittingComment || isCompressing}
+                          className="w-full bg-white text-black font-bold uppercase tracking-widest text-[10px] py-4 rounded-2xl hover:bg-primary-red hover:text-white transition-all shadow-xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isSubmittingComment ? "ENVOI..." : isCompressing ? "COMPRESSION..." : <>PUBLIER <Send size={12} /></>}
+                        </button>
+                      </form>
+                    ) : (
+                      <div className="text-center py-6 space-y-4">
+                        <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-full flex items-center justify-center mx-auto text-white/30">
+                          <MessageSquare size={20} />
+                        </div>
+                        <p className="text-xs text-white/60 leading-relaxed">
+                          Connectez-vous ou créez un compte pour laisser un avis et partager des images sur le portfolio.
+                        </p>
+                        <button
+                          onClick={() => { setIsSignUp(false); setIsAuthModalOpen(true); }}
+                          className="w-full bg-primary-red hover:bg-red-600 text-white font-bold uppercase tracking-widest text-[10px] py-3.5 rounded-2xl transition-all shadow-lg"
+                        >
+                          SE CONNECTER
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Comments list column */}
+                <div className="lg:col-span-2 space-y-6">
+                  {comments.length === 0 ? (
+                    <div className="bg-black/10 backdrop-blur-md border border-dashed border-white/10 rounded-3xl p-12 text-center text-white/30 italic">
+                      Aucun commentaire pour le moment. Soyez le premier à vous exprimer !
+                    </div>
+                  ) : (
+                    comments.map((comment) => {
+                      const isAuthor = user?.id === comment.user_id;
+                      const isAdmin = user?.email === 'caillatlucas2304@gmail.com';
+                      const canDelete = isAuthor || isAdmin;
+                      const dateFormatted = new Date(comment.created_at).toLocaleDateString("fr-FR", {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      });
+
+                      return (
+                        <div key={comment.id} className="bg-black/20 backdrop-blur-md border border-white/10 rounded-3xl p-6 md:p-8 flex gap-4 md:gap-5 shadow-2xl relative group hover:bg-black/30 transition-all">
+                          <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10 border border-white/20 overflow-hidden relative shrink-0 flex items-center justify-center">
+                            {comment.avatar_url ? (
+                              <Image src={comment.avatar_url} alt={comment.user_name} fill className="object-cover" unoptimized />
+                            ) : (
+                              <User size={18} className="text-white/40" />
+                            )}
+                          </div>
+
+                          <div className="flex-1 min-w-0 space-y-2">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h4 className="text-sm font-bold text-white leading-none flex items-center gap-2">
+                                  {comment.user_name}
+                                  {comment.user_email === 'caillatlucas2304@gmail.com' && (
+                                    <span className="text-[8px] bg-primary-red/20 text-primary-red px-2 py-0.5 rounded-full border border-primary-red/20 font-bold uppercase tracking-widest">
+                                      Admin
+                                    </span>
+                                  )}
+                                </h4>
+                                <span className="text-[9px] uppercase tracking-widest text-white/30 block mt-1.5">
+                                  {dateFormatted}
+                                </span>
+                              </div>
+
+                              {canDelete && (
+                                <button
+                                  onClick={() => handleCommentDelete(comment.id)}
+                                  className="p-2 bg-white/5 hover:bg-red-500/20 text-white/40 hover:text-red-500 rounded-full transition-all opacity-0 group-hover:opacity-100"
+                                  title="Supprimer ce commentaire"
+                                >
+                                  <Trash2 size={12} />
+                                </button>
+                              )}
+                            </div>
+
+                            <p className="text-sm text-white/80 font-normal leading-relaxed whitespace-pre-wrap">
+                              {comment.content}
+                            </p>
+
+                            {comment.image_url && (
+                              <div
+                                onClick={() => setSelectedImage({ url: comment.image_url, name: `Image de ${comment.user_name}` } as any)}
+                                className="relative max-w-sm aspect-video rounded-2xl overflow-hidden border border-white/10 group cursor-zoom-in mt-3 shadow-lg"
+                              >
+                                <Image src={comment.image_url} alt="Attached Media" fill className="object-cover group-hover:scale-102 transition-transform" unoptimized />
+                                <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                  <Maximize2 size={20} className="text-white drop-shadow-md" />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </section>
+          );
 
           if (section.id === 'bento') return (
             <section key="bento" id="bento" className="relative z-10 scroll-mt-28 md:scroll-mt-36">
