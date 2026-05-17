@@ -235,11 +235,16 @@ export default function Home() {
       const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
       if (error || !data) {
         const defaultName = email ? email.split('@')[0] : "Utilisateur";
-        await supabase.from('profiles').upsert({ 
+        const { error: upsertError } = await supabase.from('profiles').upsert({ 
           id: userId, 
           avatar_url: "", 
           full_name: defaultName 
         });
+        if (upsertError) {
+          console.error("❌ Erreur lors de la création automatique du profil :", upsertError.message);
+        } else {
+          console.log("✅ Profil créé/mis à jour avec succès pour l'utilisateur :", defaultName);
+        }
         setUserProfileImage("");
       } else {
         setUserProfileImage(data.avatar_url || "");
@@ -830,6 +835,9 @@ export default function Home() {
                       onChange={async (e) => {
                         const newUrl = e.target.value;
                         setUserProfileImage(newUrl);
+                        if (newUrl.includes("discordapp.com") || newUrl.includes("discord.com")) {
+                          alert("⚠️ Attention : Les liens d'images Discord expirent après 24 heures.\nVeuillez utiliser un lien d'image permanent ou hébergé ailleurs.");
+                        }
                         await supabase.from('profiles').upsert({ id: user.id, avatar_url: newUrl, full_name: user.email.split('@')[0] });
                         if (user.email === 'caillatlucas2304@gmail.com') {
                           setOwnerImage(newUrl);
