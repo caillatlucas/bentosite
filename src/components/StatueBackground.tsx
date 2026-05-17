@@ -12,6 +12,45 @@ const PointLight = 'pointLight' as any;
 const DirectionalLight = 'directionalLight' as any;
 const ScenePrimitive = 'primitive' as any;
 
+function assignCylindricalUVs(geometry: THREE.BufferGeometry) {
+  geometry.computeBoundingBox();
+  const bbox = geometry.boundingBox;
+  if (!bbox) return;
+
+  const min = bbox.min;
+  const max = bbox.max;
+  const rangeY = (max.y - min.y) || 1;
+
+  // Calculate the physical center of the mesh to center the cylinder wrapping axis!
+  const centerX = (min.x + max.x) / 2;
+  const centerZ = (min.z + max.z) / 2;
+
+  const positions = geometry.attributes.position;
+  const count = positions.count;
+  const uvs = new Float32Array(count * 2);
+
+  for (let i = 0; i < count; i++) {
+    const x = positions.getX(i);
+    const y = positions.getY(i);
+    const z = positions.getZ(i);
+
+    // Project coordinates relative to the mesh's physical center
+    const dx = x - centerX;
+    const dz = z - centerZ;
+
+    const u = 0.5 + Math.atan2(dz, dx) / (2 * Math.PI);
+    const v = (y - min.y) / rangeY;
+
+    uvs[i * 2] = u;
+    uvs[i * 2 + 1] = v;
+  }
+
+  geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+  if (geometry.index) {
+    geometry.computeVertexNormals();
+  }
+}
+
 function Statue({ color, textureUrl }: { color: string; textureUrl?: string }) {
   const mesh = useRef<THREE.Group>(null);
   const { scene } = useGLTF('models/model.glb');
@@ -30,13 +69,14 @@ function Statue({ color, textureUrl }: { color: string; textureUrl?: string }) {
     }
 
     const loader = new THREE.TextureLoader();
+    loader.setCrossOrigin('anonymous');
     
     loader.load(
       textureUrl,
       (tex) => {
-        tex.wrapS = THREE.RepeatWrapping;
-        tex.wrapT = THREE.RepeatWrapping;
-        tex.repeat.set(2, 2);
+        tex.wrapS = THREE.ClampToEdgeWrapping;
+        tex.wrapT = THREE.ClampToEdgeWrapping;
+        tex.repeat.set(1, 1);
         tex.needsUpdate = true;
         setTexture(tex);
       },
@@ -48,16 +88,30 @@ function Statue({ color, textureUrl }: { color: string; textureUrl?: string }) {
   }, [textureUrl]);
 
   useMemo(() => {
-    const toonMaterial = new THREE.MeshToonMaterial({
-      color: texture ? '#ffffff' : color, // Use white if texture is present, so the texture renders in its true colors!
-      map: texture, // Defined from the start when the texture state is loaded!
-      emissive: isWhite ? '#ff0000' : color, // Red glow when white
-      emissiveIntensity: isWhite ? 0.3 : 0.1,
-    });
+    // If a texture is loaded, use MeshStandardMaterial to render photorealistic marble details.
+    // Otherwise, use the stylized cell-shaded MeshToonMaterial.
+    const material = texture
+      ? new THREE.MeshStandardMaterial({
+          color: '#ffffff',
+          map: texture,
+          roughness: 0.7,
+          metalness: 0.15,
+        })
+      : new THREE.MeshToonMaterial({
+          color: color,
+          emissive: isWhite ? '#ff0000' : color, // Red glow when white
+          emissiveIntensity: isWhite ? 0.3 : 0.1,
+        });
 
     scene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
-        child.material = toonMaterial;
+        if (!child.geometry.attributes.uv) {
+          console.log("Three.js - Mesh name:", child.name, "lacks UV mapping. Generating cylindrical mapping...");
+          assignCylindricalUVs(child.geometry);
+        } else {
+          console.log("Three.js - Mesh name:", child.name, "already has UV mapping.");
+        }
+        child.material = material;
       }
     });
   }, [scene, color, isWhite, texture]);
