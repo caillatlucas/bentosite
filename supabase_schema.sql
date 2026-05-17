@@ -53,3 +53,10 @@ USING (
 -- ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
 -- DROP POLICY IF EXISTS "Mise a jour pour les connectes" ON public.comments;
 -- CREATE POLICY "Mise a jour pour les connectes" ON public.comments FOR UPDATE USING (auth.role() = 'authenticated');
+
+-- ==========================================
+-- POUR LES PROJETS (BLOGS) : AJOUT DE LA COLONNE DETAILS
+-- EXECUTEZ CETTE COMMANDE DANS VOTRE SUPABASE SQL EDITOR :
+-- ==========================================
+-- ALTER TABLE public.projects ADD COLUMN IF NOT EXISTS details TEXT;
+

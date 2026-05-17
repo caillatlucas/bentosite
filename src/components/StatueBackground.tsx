@@ -12,7 +12,7 @@ const PointLight = 'pointLight' as any;
 const DirectionalLight = 'directionalLight' as any;
 const ScenePrimitive = 'primitive' as any;
 
-function Statue({ color }: { color: string }) {
+function Statue({ color, textureUrl }: { color: string; textureUrl?: string }) {
   const mesh = useRef<THREE.Group>(null);
   const { scene } = useGLTF('models/model.glb');
   
@@ -20,8 +20,17 @@ function Statue({ color }: { color: string }) {
   const isWhite = color.toLowerCase() === '#ffffff' || color.toLowerCase() === 'white';
 
   useMemo(() => {
+    let texture: THREE.Texture | null = null;
+    if (textureUrl) {
+      texture = new THREE.TextureLoader().load(textureUrl);
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      texture.repeat.set(2, 2);
+    }
+
     const toonMaterial = new THREE.MeshToonMaterial({
       color: color,
+      map: texture,
       emissive: isWhite ? '#ff0000' : color, // Red glow when white
       emissiveIntensity: isWhite ? 0.3 : 0.1,
     });
@@ -31,7 +40,7 @@ function Statue({ color }: { color: string }) {
         child.material = toonMaterial;
       }
     });
-  }, [scene, color, isWhite]);
+  }, [scene, color, isWhite, textureUrl]);
 
   useFrame((state) => {
     const t = state.clock.getElapsedTime();
@@ -66,7 +75,7 @@ function Statue({ color }: { color: string }) {
   );
 }
 
-export default function StatueBackground({ color }: { color: string }) {
+export default function StatueBackground({ color, textureUrl }: { color: string; textureUrl?: string }) {
   const isWhite = color.toLowerCase() === '#ffffff' || color.toLowerCase() === 'white';
 
   return (
@@ -81,7 +90,7 @@ export default function StatueBackground({ color }: { color: string }) {
         <PointLight position={[10, 10, 10]} intensity={1} />
         <DirectionalLight position={[-5, 5, 5]} intensity={1.5} />
         <React.Suspense fallback={null}>
-          <Statue color={color} />
+          <Statue color={color} textureUrl={textureUrl} />
         </React.Suspense>
         </Canvas>
       </div>

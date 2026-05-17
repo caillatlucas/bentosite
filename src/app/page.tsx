@@ -120,6 +120,7 @@ export default function Home() {
     primaryColor: "#ff3131",
     show3DBackground: false,
     musicRotationEnabled: true,
+    statueTextureUrl: "",
     sectionsConfig: [
       { id: 'projects', label: 'Postes', subLabel: 'Sélection 2024', visible: true },
       { id: 'shop', label: 'Boutique', subLabel: 'Nos Produits', visible: true },
@@ -1055,7 +1056,7 @@ export default function Home() {
 
       {show3DBackground && (
         <div className="fixed inset-0 z-[-5]">
-          <StatueBackground color={statueColor} />
+          <StatueBackground color={statueColor} textureUrl={settings.statueTextureUrl} />
         </div>
       )}
       {/* Dynamic Theme Styles */}
