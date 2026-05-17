@@ -2,7 +2,7 @@
 
 import { motion, useMotionValue, useSpring, useTransform, useScroll, useMotionTemplate, AnimatePresence, useMotionValueEvent } from "framer-motion";
 import { useEffect, useState } from "react";
-import { ArrowUpRight, ArrowLeft, Zap, X, Send, User, MessageSquare, CheckCircle2, Mail, Music, Volume2, VolumeX, Copy, Check, Bell, Play, Upload, Maximize2, Minimize2, Settings, LogOut, Trash2, Heart } from "lucide-react";
+import { ArrowUpRight, ArrowLeft, Zap, X, Send, User, MessageSquare, CheckCircle2, Mail, Music, Volume2, VolumeX, Copy, Check, Bell, Play, Upload, Maximize2, Minimize2, Settings, LogOut, Trash2, Heart, Plus, ChevronDown, SkipBack, SkipForward, Pause, Share2 } from "lucide-react";
 import Projects from "@/components/Projects";
 import Socials from "@/components/Socials";
 import Link from "next/link";
@@ -84,6 +84,8 @@ export default function Home() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [authError, setAuthError] = useState("");
   const [isAuthLoading, setIsAuthLoading] = useState(false);
+  const [isMusicExpanded, setIsMusicExpanded] = useState(false);
+  const [playerProgress, setPlayerProgress] = useState(35);
 
   // Form State
   const [formName, setFormName] = useState("");
@@ -722,6 +724,19 @@ export default function Home() {
     return (match && match[2].length === 11) ? match[2] : null; 
   };
   const getYoutubeThumbnail = (id: string) => `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
+  const formatTime = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
+  useEffect(() => {
+    if (isMuted || !settings.musicEnabled) return;
+    const interval = setInterval(() => {
+      setPlayerProgress(prev => (prev >= 100 ? 0 : prev + 0.5));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isMuted, settings.musicEnabled]);
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1362,17 +1377,119 @@ export default function Home() {
       <section className="flex-1 flex flex-col justify-center min-h-[85vh] relative z-10 mt-24 md:mt-0 max-w-[1600px] mx-auto w-full">
         <div className="relative" style={{ perspective: 1000 }}>
           {settings.musicEnabled && musicId && (
-            <motion.div style={{ rotateX, rotateY, transformStyle: "preserve-3d" }} className="absolute -top-24 right-0 md:-top-16 md:-right-12 z-30 scale-90 md:scale-100 origin-right">
-              <div className="bg-white/10 backdrop-blur-md border border-white/20 p-2 md:p-3 rounded-2xl flex items-center gap-3 md:gap-4 shadow-2xl group hover:bg-white/20 transition-all">
-              <div className={`relative w-10 h-10 md:w-16 md:h-16 overflow-hidden rounded-xl shadow-lg flex-shrink-0 ${settings.musicRotationEnabled ? "animate-spin-slow" : ""}`}> 
-                {settings.musicCover ? <Image src={settings.musicCover} alt="Cover" fill className="object-cover" unoptimized /> : <div className="w-full h-full bg-primary-red flex items-center justify-center"><Music size={20} className="text-white" /></div>} 
-              </div>
-                <div className="pr-2 md:pr-4">
-                  <div className="flex items-center gap-1.5 mb-0.5 md:mb-1"> <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> <p className="text-[8px] md:text-[9px] font-bold uppercase tracking-[0.2em] text-white/60">Live</p> </div>
-                  <button onClick={() => setIsMuted(!isMuted)} className="text-white hover:text-primary-red transition-colors flex items-center gap-2"> {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />} <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest">{isMuted ? "Unmute" : "Mute"}</span> </button>
+            <motion.div style={{ rotateX, rotateY, transformStyle: "preserve-3d" }} className="absolute -top-28 right-0 md:-top-16 md:-right-12 z-30 origin-right">
+              {isMusicExpanded ? (
+                /* Expanded Smartphone Music Player Card */
+                <div className="bg-[#0c0c0c]/90 backdrop-blur-2xl border border-white/15 p-5 rounded-[32px] w-72 flex flex-col shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_20px_50px_rgba(0,0,0,0.8)] transition-all duration-500 scale-90 md:scale-100 origin-top-right">
+                  {/* Header */}
+                  <div className="flex justify-between items-center pb-4 border-b border-white/5">
+                    <button onClick={() => setIsMusicExpanded(false)} className="text-white/40 hover:text-white transition-colors p-1 rounded-full hover:bg-white/5">
+                      <ChevronDown size={18} />
+                    </button>
+                    <span className="text-[8px] font-bold uppercase tracking-[0.25em] text-white/50 font-sans">
+                      {settings.musicCover ? "MUSIQUE EN COURS" : "BENTO PLAYER"}
+                    </span>
+                    <div className="w-6 h-6 flex items-center justify-center">
+                      <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#22c55e]" />
+                    </div>
+                  </div>
+
+                  {/* Cover Art */}
+                  <div className="relative w-full aspect-square rounded-2xl overflow-hidden shadow-2xl border border-white/10 mt-4 bg-black/40">
+                    {settings.musicCover ? (
+                      <Image src={settings.musicCover} alt="Cover Art" fill className={`object-cover ${!isMuted && settings.musicRotationEnabled ? "animate-spin-slow" : ""}`} unoptimized />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-tr from-[#111] to-[#333] flex items-center justify-center">
+                        <Music size={48} className="text-white/20" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Song Info */}
+                  <div className="flex justify-between items-center mt-5">
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-sm font-bold text-white truncate font-sans">
+                        {settings.heroTitleMain || "BENTO TRACK"}
+                      </h4>
+                      <p className="text-xs text-white/50 truncate font-sans">
+                        {settings.heroTitleSub || "Lucas Caillat"}
+                      </p>
+                    </div>
+                    <button className="w-8 h-8 rounded-full border border-white/10 hover:border-white/30 text-white/60 hover:text-white flex items-center justify-center transition-all bg-white/5 hover:bg-white/10 ml-2">
+                      <Plus size={14} />
+                    </button>
+                  </div>
+
+                  {/* Scrubber / Progress Bar */}
+                  <div className="space-y-1.5 mt-5">
+                    <div className="relative w-full h-1 bg-white/10 rounded-full overflow-hidden cursor-pointer" onClick={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      const clickX = e.clientX - rect.left;
+                      const percentage = Math.round((clickX / rect.width) * 100);
+                      setPlayerProgress(percentage);
+                    }}>
+                      <div 
+                        className="absolute left-0 top-0 h-full bg-primary-red rounded-full shadow-[0_0_8px_var(--primary-red)]" 
+                        style={{ width: `${playerProgress}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-[9px] font-bold text-white/40 uppercase tracking-widest font-sans">
+                      <span>{formatTime(Math.round((playerProgress / 100) * 202))}</span>
+                      <span>3:22</span>
+                    </div>
+                  </div>
+
+                  {/* Controls */}
+                  <div className="flex justify-center items-center gap-6 mt-4 pb-2">
+                    <button className="text-white/60 hover:text-white transition-colors" onClick={() => setPlayerProgress(prev => Math.max(0, prev - 10))}>
+                      <SkipBack size={18} fill="currentColor" />
+                    </button>
+                    
+                    <button 
+                      onClick={() => setIsMuted(!isMuted)} 
+                      className="w-12 h-12 bg-white text-black hover:bg-white/90 rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-105 active:scale-95"
+                    >
+                      {isMuted ? (
+                        <Play size={18} fill="currentColor" className="ml-0.5 text-black" />
+                      ) : (
+                        <Pause size={18} fill="currentColor" className="text-black" />
+                      )}
+                    </button>
+
+                    <button className="text-white/60 hover:text-white transition-colors" onClick={() => setPlayerProgress(prev => Math.min(100, prev + 10))}>
+                      <SkipForward size={18} fill="currentColor" />
+                    </button>
+                  </div>
+
+                  {/* Bottom Accessories */}
+                  <div className="flex justify-between items-center pt-4 border-t border-white/5 mt-4 text-white/40">
+                    <button className="hover:text-white transition-colors" onClick={() => setIsMuted(!isMuted)}>
+                      {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                    </button>
+                    <button onClick={() => { navigator.clipboard.writeText(settings.musicUrl); alert("Lien de la musique copié !"); }} className="hover:text-white transition-colors" title="Copier le lien YouTube">
+                      <Share2 size={14} />
+                    </button>
+                  </div>
                 </div>
-                <iframe width="0" height="0" src={`https://www.youtube.com/embed/${musicId}?autoplay=1&mute=${isMuted ? 1 : 0}&loop=1&playlist=${musicId}`} allow="autoplay" className="hidden" />
-              </div>
+              ) : (
+                /* Collapsed compact pill */
+                <div 
+                  onClick={() => setIsMusicExpanded(true)}
+                  className="cursor-pointer bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 p-2 md:p-3 rounded-full flex items-center gap-3 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.6)] group hover:bg-[#0c0c0c]/95 transition-all duration-300 scale-90 md:scale-100 origin-right"
+                >
+                  <div className={`relative w-8 h-8 rounded-full overflow-hidden shadow-lg shrink-0 ${!isMuted && settings.musicRotationEnabled ? "animate-spin-slow" : ""}`}>
+                    {settings.musicCover ? <Image src={settings.musicCover} alt="Cover" fill className="object-cover" unoptimized /> : <div className="w-full h-full bg-primary-red flex items-center justify-center"><Music size={14} className="text-white" /></div>}
+                  </div>
+                  <div className="pr-3 flex items-center gap-2">
+                    <div className="flex flex-col">
+                      <span className="text-[7px] font-bold uppercase tracking-[0.2em] text-primary-red leading-none mb-0.5">Lecteur</span>
+                      <span className="text-[9px] font-bold text-white uppercase tracking-wider max-w-[80px] truncate leading-none">{settings.heroTitleMain || "Musique"}</span>
+                    </div>
+                    <ChevronDown size={14} className="text-white/40 group-hover:text-white transition-colors rotate-180" />
+                  </div>
+                </div>
+              )}
+              <iframe width="0" height="0" src={`https://www.youtube.com/embed/${musicId}?autoplay=1&mute=${isMuted ? 1 : 0}&loop=1&playlist=${musicId}`} allow="autoplay" className="hidden" />
             </motion.div>
           )}
 
@@ -1426,9 +1543,13 @@ export default function Home() {
           
           if (section.id === 'shop' && products.length > 0) return (
             <section key="shop" id="shop" className="relative z-10 scroll-mt-36 md:scroll-mt-44">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-4 pt-4">
-                <motion.h2 style={{ color: textColor }} className="font-serif text-6xl md:text-8xl tracking-tighter leading-tight italic pb-2">{section.label}</motion.h2>
-                <motion.p style={{ color: secondaryTextColor }} className="text-xl md:text-2xl font-light italic mb-4 md:mb-8">{section.subLabel}</motion.p>
+              <div className="flex justify-center md:justify-start mb-16">
+                <div className="inline-flex items-center gap-4 bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 px-6 py-3.5 rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.6)] transition-all duration-300">
+                  <span className="w-2.5 h-2.5 bg-primary-red rounded-full animate-pulse shadow-[0_0_10px_var(--primary-red)]"></span>
+                  <motion.h2 style={{ color: textColor }} className="font-serif text-xl md:text-2xl tracking-tight leading-none italic">{section.label}</motion.h2>
+                  <div className="w-[1px] h-5 bg-white/15" />
+                  <motion.p style={{ color: secondaryTextColor }} className="text-[10px] font-bold uppercase tracking-[0.2em]">{section.subLabel}</motion.p>
+                </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {products.map((product) => (
@@ -1464,10 +1585,12 @@ export default function Home() {
 
             return (
               <section key="gallery" id="gallery" className="relative scroll-mt-36 md:scroll-mt-44">
-                <div className="flex justify-between items-end mb-12 md:mb-16 border-b border-white/10 pb-6"> 
-                  <div className="space-y-2">
-                    <motion.h2 style={{ color: textColor }} className="font-serif text-3xl md:text-5xl lg:text-6xl">{section.label}</motion.h2> 
-                    <motion.span style={{ color: secondaryTextColor }} className="text-[10px] md:text-sm tracking-widest uppercase">{section.subLabel}</motion.span>
+                <div className="flex justify-between items-center mb-16 gap-4"> 
+                  <div className="inline-flex items-center gap-4 bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 px-6 py-3.5 rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.6)] transition-all duration-300">
+                    <span className="w-2.5 h-2.5 bg-primary-red rounded-full animate-pulse shadow-[0_0_10px_var(--primary-red)]"></span>
+                    <motion.h2 style={{ color: textColor }} className="font-serif text-xl md:text-2xl tracking-tight leading-none italic">{section.label}</motion.h2>
+                    <div className="w-[1px] h-5 bg-white/15" />
+                    <motion.span style={{ color: secondaryTextColor }} className="text-[10px] font-bold uppercase tracking-[0.2em]">{section.subLabel}</motion.span>
                   </div>
                   {/* Custom Premium Arrows - Capsule Style like the Category Bar! */}
                   {totalPages > 1 && (
@@ -1574,17 +1697,19 @@ export default function Home() {
 
           if (section.id === 'comments') return (
             <section key="comments" id="comments" className="relative z-10 scroll-mt-36 md:scroll-mt-44">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 md:mb-16 gap-4 border-b border-white/10 pb-6">
-                <div className="space-y-2">
-                  <motion.h2 style={{ color: textColor }} className="font-serif text-3xl md:text-5xl lg:text-6xl">{section.label}</motion.h2>
-                  <motion.span style={{ color: secondaryTextColor }} className="text-[10px] md:text-sm tracking-widest uppercase">{section.subLabel}</motion.span>
+              <div className="flex justify-center md:justify-start mb-16">
+                <div className="inline-flex items-center gap-4 bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 px-6 py-3.5 rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.6)] transition-all duration-300">
+                  <span className="w-2.5 h-2.5 bg-primary-red rounded-full animate-pulse shadow-[0_0_10px_var(--primary-red)]"></span>
+                  <motion.h2 style={{ color: textColor }} className="font-serif text-xl md:text-2xl tracking-tight leading-none italic">{section.label}</motion.h2>
+                  <div className="w-[1px] h-5 bg-white/15" />
+                  <motion.p style={{ color: secondaryTextColor }} className="text-[10px] font-bold uppercase tracking-[0.2em]">{section.subLabel}</motion.p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Submit comment form column */}
                 <div className="lg:col-span-1">
-                  <div className="bg-[#0c0c0c] border border-white/20 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden lg:sticky lg:top-36">
+                  <div className="bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 rounded-3xl p-6 md:p-8 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.6)] relative overflow-hidden lg:sticky lg:top-36">
                     <h3 className="font-serif text-2xl text-white mb-6 italic">Partager un avis</h3>
                     
                     {user ? (
@@ -1725,7 +1850,7 @@ export default function Home() {
                         return (
                           <div key={comment.id} className="space-y-4">
                             {/* Main Top-Level Comment */}
-                            <div className="bg-[#0c0c0c] border border-white/10 rounded-3xl p-6 md:p-8 flex gap-4 md:gap-5 shadow-2xl relative group hover:bg-[#141414] hover:border-white/20 transition-all">
+                            <div className="bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 rounded-3xl p-6 md:p-8 flex gap-4 md:gap-5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.6)] relative group hover:bg-[#0c0c0c]/95 transition-all duration-300">
                               <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10 border border-white/20 overflow-hidden relative shrink-0 flex items-center justify-center">
                                 {comment.avatar_url ? (
                                   <Image src={comment.avatar_url} alt={comment.user_name} fill className="object-cover" unoptimized />
@@ -1908,7 +2033,7 @@ export default function Home() {
                                   const hasReplyLiked = user ? replyLikes.includes(user.id) : false;
 
                                   return (
-                                    <div key={reply.id} className="bg-[#0c0c0c] border border-white/10 rounded-2xl p-5 md:p-6 flex gap-3.5 md:gap-4 shadow-xl relative group hover:bg-[#141414] hover:border-white/15 transition-all">
+                                    <div key={reply.id} className="bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 rounded-2xl p-5 md:p-6 flex gap-3.5 md:gap-4 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_8px_32px_rgba(0,0,0,0.5)] relative group hover:bg-[#0c0c0c]/95 transition-all duration-300">
                                       <div className="w-8 h-8 rounded-full bg-white/10 border border-white/10 overflow-hidden relative shrink-0 flex items-center justify-center">
                                         {reply.avatar_url ? (
                                           <Image src={reply.avatar_url} alt={reply.user_name} fill className="object-cover" unoptimized />
@@ -1987,9 +2112,13 @@ export default function Home() {
 
           if (section.id === 'bento') return (
             <section key="bento" id="bento" className="relative z-10 scroll-mt-28 md:scroll-mt-36">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-4">
-                <h2 className="font-serif text-6xl md:text-8xl tracking-tighter leading-none italic">{section.label}</h2>
-                <p className="text-xl md:text-2xl text-[var(--primary-red)] font-light italic">{section.subLabel}</p>
+              <div className="flex justify-center md:justify-start mb-16">
+                <div className="inline-flex items-center gap-4 bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 px-6 py-3.5 rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.6)] transition-all duration-300">
+                  <span className="w-2.5 h-2.5 bg-primary-red rounded-full animate-pulse shadow-[0_0_10px_var(--primary-red)]"></span>
+                  <motion.h2 className="font-serif text-xl md:text-2xl text-white tracking-tight leading-none italic">{section.label}</motion.h2>
+                  <div className="w-[1px] h-5 bg-white/15" />
+                  <motion.p style={{ color: secondaryTextColor }} className="text-[10px] font-bold uppercase tracking-[0.2em]">{section.subLabel}</motion.p>
+                </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="md:col-span-2 aspect-square md:aspect-video bg-black/20 backdrop-blur-md border border-white/20 rounded-2xl p-12 flex flex-col justify-between group overflow-hidden relative shadow-2xl hover:bg-black/30 transition-all">

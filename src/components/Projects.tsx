@@ -59,9 +59,13 @@ export default function Projects({ config, label, subLabel, textColor, secondary
 
   return (
     <section>
-      <div className="flex justify-between items-end mb-12 md:mb-16 border-b border-text-black/10 pb-6">
-        <motion.h2 style={{ color: textColor }} className="font-serif text-3xl md:text-5xl lg:text-6xl">{label || config.recentProjectsTitle || "Projets Récents"}</motion.h2>
-        <motion.span style={{ color: secondaryTextColor }} className="text-[10px] md:text-sm tracking-widest uppercase hidden md:block">{subLabel || config.projectsTitle}</motion.span>
+      <div className="flex justify-center md:justify-start mb-16">
+        <div className="inline-flex items-center gap-4 bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 px-6 py-3.5 rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.6)] transition-all duration-300">
+          <span className="w-2.5 h-2.5 bg-primary-red rounded-full animate-pulse shadow-[0_0_10px_var(--primary-red)]"></span>
+          <motion.h2 style={{ color: textColor }} className="font-serif text-xl md:text-2xl tracking-tight leading-none italic">{label || config.recentProjectsTitle || "Projets Récents"}</motion.h2>
+          <div className="w-[1px] h-5 bg-white/15" />
+          <motion.span style={{ color: secondaryTextColor }} className="text-[10px] font-bold uppercase tracking-[0.2em]">{subLabel || config.projectsTitle}</motion.span>
+        </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">
         {projects.map((project, index) => {
