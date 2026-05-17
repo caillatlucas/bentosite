@@ -312,8 +312,8 @@ export default function AdminDashboard() {
           });
         }
         setProfileName(global.profileName || "Lucas Caillat");
-        setProfileProfession(global.profileProfession || "Freelance Informatique");
-        setProfileBio(global.profileBio || "");
+        setProfileProfession(global.profileProfession || global.profession || "Freelance Informatique");
+        setProfileBio(global.profileBio || global.bio || "");
         setProfileImage(global.profileImage || "");
         setHeroTitleMain(global.heroTitleMain || "CAILLAT");
         setHeroTitleSub(global.heroTitleSub || "Lucas");

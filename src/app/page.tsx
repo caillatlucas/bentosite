@@ -298,7 +298,12 @@ export default function Home() {
         }
         setOwnerImage(global.profileImage || "");
         setShow3DBackground(global.show3DBackground ?? false);
-        setSettings(prev => ({ ...prev, ...global }));
+        setSettings(prev => ({ 
+          ...prev, 
+          ...global,
+          bio: global.profileBio ?? global.bio ?? "",
+          profession: global.profileProfession ?? global.profession ?? "Freelance informatique"
+        }));
       }
       
       if (soc) {
