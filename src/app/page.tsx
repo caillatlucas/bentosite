@@ -2,7 +2,7 @@
 
 import { motion, useMotionValue, useSpring, useTransform, useScroll, useMotionTemplate, AnimatePresence, useMotionValueEvent } from "framer-motion";
 import { useEffect, useState } from "react";
-import { ArrowUpRight, ArrowLeft, Zap, X, Send, User, MessageSquare, CheckCircle2, Mail, Music, Volume2, VolumeX, Copy, Check, Bell, Play, Upload, Maximize2, Minimize2, Settings, LogOut, Trash2 } from "lucide-react";
+import { ArrowUpRight, ArrowLeft, Zap, X, Send, User, MessageSquare, CheckCircle2, Mail, Music, Volume2, VolumeX, Copy, Check, Bell, Play, Upload, Maximize2, Minimize2, Settings, LogOut, Trash2, Heart } from "lucide-react";
 import Projects from "@/components/Projects";
 import Socials from "@/components/Socials";
 import Link from "next/link";
@@ -103,6 +103,11 @@ export default function Home() {
   const [commentImageUrl, setCommentImageUrl] = useState("");
   const [commentImgMode, setCommentImgMode] = useState<'url' | 'upload'>('upload');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [replyingToId, setReplyingToId] = useState<string | null>(null);
+  const [replyContent, setReplyContent] = useState("");
+  const [replyImageUrl, setReplyImageUrl] = useState("");
+  const [replyImgMode, setReplyImgMode] = useState<'url' | 'upload'>('upload');
+  const [replyingToName, setReplyingToName] = useState("");
 
   const [isMuted, setIsMuted] = useState(true);
   const mouseX = useMotionValue(0);
@@ -193,6 +198,7 @@ export default function Home() {
     const msgChannel = supabase.channel('msg-realtime').on('postgres_changes', { event: '*', table: 'messages', schema: 'public' }, () => { checkReplies(); }).subscribe();
     const settingsChannel = supabase.channel('settings-realtime').on('postgres_changes', { event: '*', table: 'settings', schema: 'public' }, () => { fetchData(); }).subscribe();
     const mediaChannel = supabase.channel('media-realtime').on('postgres_changes', { event: '*', table: 'media', schema: 'public' }, () => { fetchData(); }).subscribe();
+    const commentsChannel = supabase.channel('comments-realtime').on('postgres_changes', { event: '*', table: 'comments', schema: 'public' }, () => { fetchComments(); }).subscribe();
     
     // Log silencieux de la visite globale (IP)
     const logVisit = async () => {
@@ -218,6 +224,7 @@ export default function Home() {
       supabase.removeChannel(msgChannel);
       supabase.removeChannel(settingsChannel);
       supabase.removeChannel(mediaChannel);
+      supabase.removeChannel(commentsChannel);
       subscription.unsubscribe();
     };
   }, [mouseX, mouseY]);
@@ -228,7 +235,19 @@ export default function Home() {
     }
   }, [user, formContact]);
 
+  const fetchComments = async () => {
+    try {
+      const { data: cData, error: cErr } = await supabase.from('comments').select('*').order('created_at', { ascending: false });
+      if (!cErr && cData) {
+        setComments(cData);
+      }
+    } catch (e) {
+      console.warn("Table public.comments non configurée ou inaccessible :", e);
+    }
+  };
+
   const fetchData = async () => {
+    fetchComments();
     const { data: sData } = await supabase.from('settings').select('*');
     if (sData) {
       const global = sData.find(s => s.key === 'global')?.value;
@@ -288,15 +307,6 @@ export default function Home() {
     const { data: pData } = await supabase.from('products').select('*').order('created_at', { ascending: false });
     if (pData) setProducts(pData);
 
-    // Fetch Comments with Graceful Fallback
-    try {
-      const { data: cData, error: cErr } = await supabase.from('comments').select('*').order('created_at', { ascending: false });
-      if (!cErr && cData) {
-        setComments(cData);
-      }
-    } catch (e) {
-      console.warn("Table public.comments non configurée ou inaccessible :", e);
-    }
   };
 
   const fetchUserProfile = async (userId: string, email?: string) => {
@@ -569,6 +579,118 @@ export default function Home() {
       console.error("Error deleting comment:", error);
       alert("Erreur de suppression : " + error.message);
     }
+  };
+
+  const handleCommentLike = async (comment: any) => {
+    if (!user) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    const currentLikes = comment.likes || [];
+    const alreadyLiked = currentLikes.includes(user.id);
+    let newLikes: string[];
+    if (alreadyLiked) {
+      newLikes = currentLikes.filter((id: string) => id !== user.id);
+    } else {
+      newLikes = [...currentLikes, user.id];
+    }
+    
+    // Optimistic update
+    setComments(prev => prev.map(c => c.id === comment.id ? { ...c, likes: newLikes } : c));
+    
+    const { error } = await supabase.from('comments').update({ likes: newLikes }).eq('id', comment.id);
+    if (error) {
+      console.error("Error updating likes:", error);
+      fetchComments();
+    }
+  };
+
+  const handleReplySubmit = async (e: React.FormEvent, parentId: string) => {
+    e.preventDefault();
+    if (!user) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    if (!replyContent.trim() && !replyImageUrl) return;
+    setIsSubmittingComment(true);
+
+    const newReply = {
+      parent_id: parentId,
+      user_id: user.id,
+      user_email: user.email,
+      user_name: userPseudo || user.email.split('@')[0],
+      avatar_url: userProfileImage || "",
+      content: replyContent,
+      image_url: replyImageUrl || null,
+      likes: [],
+      created_at: new Date().toISOString()
+    };
+
+    try {
+      const { data: profile } = await supabase.from('profiles').select('full_name, avatar_url').eq('id', user.id).single();
+      if (profile) {
+        newReply.user_name = profile.full_name || newReply.user_name;
+        newReply.avatar_url = profile.avatar_url || newReply.avatar_url;
+      }
+    } catch (err) {
+      console.warn("Could not load user profile details for reply:", err);
+    }
+
+    const { data, error } = await supabase.from('comments').insert(newReply).select('*');
+    setIsSubmittingComment(false);
+
+    if (error) {
+      console.error("Error posting reply:", error);
+      alert("Erreur lors de l'envoi de la réponse : " + error.message);
+    } else {
+      setReplyContent("");
+      setReplyImageUrl("");
+      setReplyingToId(null);
+      if (data && data[0]) {
+        setComments(prev => [...prev, data[0]]);
+      } else {
+        fetchComments();
+      }
+    }
+  };
+
+  const handleReplyImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsCompressing(true);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new window.Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const maxDim = 800;
+
+        if (width > height && width > maxDim) {
+          height *= maxDim / width;
+          width = maxDim;
+        } else if (height > maxDim) {
+          width *= maxDim / height;
+          height = maxDim;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+          setReplyImageUrl(compressedBase64);
+          setIsCompressing(false);
+        }
+      };
+      img.onerror = () => setIsCompressing(false);
+      img.src = event.target?.result as string;
+    };
+    reader.onerror = () => setIsCompressing(false);
+    reader.readAsDataURL(file);
   };
 
   const copyEmail = () => { navigator.clipboard.writeText(settings.email || "contact@lucascaillat.fr"); setCopied(true); setTimeout(() => setCopied(false), 2000); };
@@ -1550,79 +1672,290 @@ export default function Home() {
 
                 {/* Comments list column */}
                 <div className="lg:col-span-2 space-y-6">
-                  {comments.length === 0 ? (
+                  {comments.filter(c => !c.parent_id).length === 0 ? (
                     <div className="bg-black/10 backdrop-blur-md border border-dashed border-white/10 rounded-3xl p-12 text-center text-white/30 italic">
                       Aucun commentaire pour le moment. Soyez le premier à vous exprimer !
                     </div>
                   ) : (
-                    comments.map((comment) => {
-                      const isAuthor = user?.id === comment.user_id;
-                      const isAdmin = user?.email === 'caillatlucas2304@gmail.com';
-                      const canDelete = isAuthor || isAdmin;
-                      const dateFormatted = new Date(comment.created_at).toLocaleDateString("fr-FR", {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      });
+                    comments
+                      .filter(c => !c.parent_id)
+                      .map((comment) => {
+                        const isAuthor = user?.id === comment.user_id;
+                        const isAdmin = user?.email === 'caillatlucas2304@gmail.com';
+                        const canDelete = isAuthor || isAdmin;
+                        const dateFormatted = new Date(comment.created_at).toLocaleDateString("fr-FR", {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        });
 
-                      return (
-                        <div key={comment.id} className="bg-black/20 backdrop-blur-md border border-white/10 rounded-3xl p-6 md:p-8 flex gap-4 md:gap-5 shadow-2xl relative group hover:bg-black/30 transition-all">
-                          <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10 border border-white/20 overflow-hidden relative shrink-0 flex items-center justify-center">
-                            {comment.avatar_url ? (
-                              <Image src={comment.avatar_url} alt={comment.user_name} fill className="object-cover" unoptimized />
-                            ) : (
-                              <User size={18} className="text-white/40" />
-                            )}
-                          </div>
+                        const commentLikes = comment.likes || [];
+                        const hasLiked = user ? commentLikes.includes(user.id) : false;
 
-                          <div className="flex-1 min-w-0 space-y-2">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <h4 className="text-sm font-bold text-white leading-none flex items-center gap-2">
-                                  {comment.user_name}
-                                  {comment.user_email === 'caillatlucas2304@gmail.com' && (
-                                    <span className="text-[8px] bg-primary-red/20 text-primary-red px-2 py-0.5 rounded-full border border-primary-red/20 font-bold uppercase tracking-widest">
-                                      Admin
-                                    </span>
-                                  )}
-                                </h4>
-                                <span className="text-[9px] uppercase tracking-widest text-white/30 block mt-1.5">
-                                  {dateFormatted}
-                                </span>
+                        // Fetch replies for this specific comment
+                        const commentReplies = comments
+                          .filter(c => c.parent_id === comment.id)
+                          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+                        return (
+                          <div key={comment.id} className="space-y-4">
+                            {/* Main Top-Level Comment */}
+                            <div className="bg-black/20 backdrop-blur-md border border-white/10 rounded-3xl p-6 md:p-8 flex gap-4 md:gap-5 shadow-2xl relative group hover:bg-black/30 transition-all">
+                              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10 border border-white/20 overflow-hidden relative shrink-0 flex items-center justify-center">
+                                {comment.avatar_url ? (
+                                  <Image src={comment.avatar_url} alt={comment.user_name} fill className="object-cover" unoptimized />
+                                ) : (
+                                  <User size={18} className="text-white/40" />
+                                )}
                               </div>
 
-                              {canDelete && (
-                                <button
-                                  onClick={() => handleCommentDelete(comment.id)}
-                                  className="p-2 bg-white/5 hover:bg-red-500/20 text-white/40 hover:text-red-500 rounded-full transition-all opacity-0 group-hover:opacity-100"
-                                  title="Supprimer ce commentaire"
-                                >
-                                  <Trash2 size={12} />
-                                </button>
-                              )}
-                            </div>
+                              <div className="flex-1 min-w-0 space-y-3">
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <h4 className="text-sm font-bold text-white leading-none flex items-center gap-2">
+                                      {comment.user_name}
+                                      {comment.user_email === 'caillatlucas2304@gmail.com' && (
+                                        <span className="text-[8px] bg-primary-red/20 text-primary-red px-2 py-0.5 rounded-full border border-primary-red/20 font-bold uppercase tracking-widest">
+                                          Admin
+                                        </span>
+                                      )}
+                                    </h4>
+                                    <span className="text-[9px] uppercase tracking-widest text-white/30 block mt-1.5">
+                                      {dateFormatted}
+                                    </span>
+                                  </div>
 
-                            <p className="text-sm text-white/80 font-normal leading-relaxed whitespace-pre-wrap">
-                              {comment.content}
-                            </p>
+                                  {canDelete && (
+                                    <button
+                                      onClick={() => handleCommentDelete(comment.id)}
+                                      className="p-2 bg-white/5 hover:bg-red-500/20 text-white/40 hover:text-red-500 rounded-full transition-all opacity-0 group-hover:opacity-100"
+                                      title="Supprimer ce commentaire"
+                                    >
+                                      <Trash2 size={12} />
+                                    </button>
+                                  )}
+                                </div>
 
-                            {comment.image_url && (
-                              <div
-                                onClick={() => setSelectedImage({ url: comment.image_url, name: `Image de ${comment.user_name}` } as any)}
-                                className="relative max-w-sm aspect-video rounded-2xl overflow-hidden border border-white/10 group cursor-zoom-in mt-3 shadow-lg"
-                              >
-                                <Image src={comment.image_url} alt="Attached Media" fill className="object-cover group-hover:scale-102 transition-transform" unoptimized />
-                                <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                  <Maximize2 size={20} className="text-white drop-shadow-md" />
+                                <p className="text-sm text-white/80 font-normal leading-relaxed whitespace-pre-wrap">
+                                  {comment.content}
+                                </p>
+
+                                {comment.image_url && (
+                                  <div
+                                    onClick={() => setSelectedImage({ url: comment.image_url, name: `Image de ${comment.user_name}` } as any)}
+                                    className="relative max-w-sm aspect-video rounded-2xl overflow-hidden border border-white/10 group cursor-zoom-in mt-3 shadow-lg"
+                                  >
+                                    <Image src={comment.image_url} alt="Attached Media" fill className="object-cover group-hover:scale-102 transition-transform" unoptimized />
+                                    <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                      <Maximize2 size={20} className="text-white drop-shadow-md" />
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Likes & Reply Actions Footer */}
+                                <div className="flex items-center gap-4 pt-2 border-t border-white/5">
+                                  <button
+                                    onClick={() => handleCommentLike(comment)}
+                                    className="flex items-center gap-1.5 group/like text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors"
+                                  >
+                                    <Heart size={14} className={hasLiked ? "fill-primary-red text-primary-red" : "text-white/40 group-hover/like:text-white transition-colors"} />
+                                    <span>{commentLikes.length}</span>
+                                  </button>
+
+                                  <button
+                                    onClick={() => {
+                                      if (replyingToId === comment.id) {
+                                        setReplyingToId(null);
+                                      } else {
+                                        setReplyingToId(comment.id);
+                                        setReplyingToName(comment.user_name);
+                                      }
+                                    }}
+                                    className="flex items-center gap-1.5 group/reply text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors"
+                                  >
+                                    <MessageSquare size={13} className="text-white/40 group-hover/reply:text-white transition-colors" />
+                                    <span>Répondre</span>
+                                  </button>
                                 </div>
                               </div>
+                            </div>
+
+                            {/* Reply Input Form nested directly inside card container */}
+                            {replyingToId === comment.id && (
+                              <div className="bg-black/10 border border-white/10 rounded-2xl p-5 ml-8 md:ml-12 space-y-4">
+                                <p className="text-[9px] font-bold uppercase tracking-widest text-white/40">Répondre à <span className="text-primary-red">{replyingToName}</span></p>
+                                <form onSubmit={(e) => handleReplySubmit(e, comment.id)} className="space-y-4">
+                                  <textarea
+                                    value={replyContent}
+                                    onChange={(e) => setReplyContent(e.target.value)}
+                                    placeholder="Écrivez votre réponse..."
+                                    rows={2}
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs outline-none focus:border-primary-red focus:bg-white/10 transition-all text-white resize-none"
+                                    required
+                                  />
+
+                                  {/* Compact Reply Attachment system */}
+                                  <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-white/5">
+                                    <div className="flex items-center gap-3">
+                                      <span className="text-[8px] font-bold uppercase tracking-widest text-white/30">Média</span>
+                                      <div className="flex bg-white/5 rounded-md p-0.5 border border-white/5">
+                                        <button
+                                          type="button"
+                                          onClick={() => setReplyImgMode('upload')}
+                                          className={`text-[8px] font-bold px-2 py-0.5 rounded transition-all ${replyImgMode === 'upload' ? 'bg-primary-red text-white' : 'text-white/40'}`}
+                                        >
+                                          Local
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => setReplyImgMode('url')}
+                                          className={`text-[8px] font-bold px-2 py-0.5 rounded transition-all ${replyImgMode === 'url' ? 'bg-primary-red text-white' : 'text-white/40'}`}
+                                        >
+                                          URL
+                                        </button>
+                                      </div>
+                                    </div>
+
+                                    <div className="flex-1 min-w-[120px]">
+                                      {replyImgMode === 'upload' ? (
+                                        <label className="cursor-pointer text-[9px] font-bold text-primary-red uppercase tracking-widest flex items-center gap-1 hover:text-red-400 justify-end">
+                                          <Upload size={10} /> Choisir...
+                                          <input type="file" className="hidden" accept="image/*" onChange={handleReplyImageUpload} />
+                                        </label>
+                                      ) : (
+                                        <input
+                                          type="text"
+                                          value={replyImageUrl}
+                                          onChange={(e) => setReplyImageUrl(e.target.value)}
+                                          placeholder="URL de l'image..."
+                                          className="w-full bg-white/5 border border-white/10 rounded-lg p-1.5 text-[9px] outline-none focus:border-primary-red text-white"
+                                        />
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {replyImageUrl && (
+                                    <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-white/10 group mt-1">
+                                      <Image src={replyImageUrl} alt="Reply Attachment" fill className="object-cover" unoptimized />
+                                      <button
+                                        type="button"
+                                        onClick={() => setReplyImageUrl("")}
+                                        className="absolute inset-0 bg-red-600/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white"
+                                      >
+                                        <X size={12} />
+                                      </button>
+                                    </div>
+                                  )}
+
+                                  <div className="flex justify-end gap-2.5 pt-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => setReplyingToId(null)}
+                                      className="px-3.5 py-2 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all"
+                                    >
+                                      Annuler
+                                    </button>
+                                    <button
+                                      type="submit"
+                                      className="px-3.5 py-2 bg-primary-red hover:bg-red-600 text-white rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all"
+                                    >
+                                      Répondre
+                                    </button>
+                                  </div>
+                                </form>
+                              </div>
+                            )}
+
+                            {/* Nested Replies List */}
+                            {commentReplies.length > 0 && (
+                              <div className="space-y-4 pl-8 md:pl-12 border-l border-white/5 ml-5 md:ml-6">
+                                {commentReplies.map((reply) => {
+                                  const isReplyAuthor = user?.id === reply.user_id;
+                                  const canDeleteReply = isReplyAuthor || isAdmin;
+                                  const replyDateFormatted = new Date(reply.created_at).toLocaleDateString("fr-FR", {
+                                    day: 'numeric',
+                                    month: 'short',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  });
+                                  const replyLikes = reply.likes || [];
+                                  const hasReplyLiked = user ? replyLikes.includes(user.id) : false;
+
+                                  return (
+                                    <div key={reply.id} className="bg-black/10 backdrop-blur-md border border-white/5 rounded-2xl p-5 md:p-6 flex gap-3.5 md:gap-4 shadow-xl relative group hover:bg-black/20 transition-all">
+                                      <div className="w-8 h-8 rounded-full bg-white/10 border border-white/10 overflow-hidden relative shrink-0 flex items-center justify-center">
+                                        {reply.avatar_url ? (
+                                          <Image src={reply.avatar_url} alt={reply.user_name} fill className="object-cover" unoptimized />
+                                        ) : (
+                                          <User size={14} className="text-white/40" />
+                                        )}
+                                      </div>
+
+                                      <div className="flex-1 min-w-0 space-y-2">
+                                        <div className="flex justify-between items-start">
+                                          <div>
+                                            <h5 className="text-xs font-bold text-white leading-none flex items-center gap-1.5">
+                                              {reply.user_name}
+                                              {reply.user_email === 'caillatlucas2304@gmail.com' && (
+                                                <span className="text-[7px] bg-primary-red/20 text-primary-red px-1.5 py-0.5 rounded-full border border-primary-red/20 font-bold uppercase tracking-widest">
+                                                  Admin
+                                                </span>
+                                              )}
+                                            </h5>
+                                            <span className="text-[8px] uppercase tracking-widest text-white/30 block mt-1">
+                                              {replyDateFormatted}
+                                            </span>
+                                          </div>
+
+                                          {canDeleteReply && (
+                                            <button
+                                              onClick={() => handleCommentDelete(reply.id)}
+                                              className="p-1.5 bg-white/5 hover:bg-red-500/20 text-white/40 hover:text-red-500 rounded-full transition-all opacity-0 group-hover:opacity-100"
+                                              title="Supprimer ce commentaire"
+                                            >
+                                              <Trash2 size={10} />
+                                            </button>
+                                          )}
+                                        </div>
+
+                                        <p className="text-xs text-white/70 font-normal leading-relaxed whitespace-pre-wrap">
+                                          {reply.content}
+                                        </p>
+
+                                        {reply.image_url && (
+                                          <div
+                                            onClick={() => setSelectedImage({ url: reply.image_url, name: `Image de ${reply.user_name}` } as any)}
+                                            className="relative max-w-xs aspect-video rounded-xl overflow-hidden border border-white/10 group cursor-zoom-in mt-2 shadow-md"
+                                          >
+                                            <Image src={reply.image_url} alt="Attached Reply Media" fill className="object-cover group-hover:scale-102 transition-transform" unoptimized />
+                                            <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                              <Maximize2 size={16} className="text-white drop-shadow-md" />
+                                            </div>
+                                          </div>
+                                        )}
+
+                                        {/* Likes Actions for Reply */}
+                                        <div className="flex items-center gap-3 pt-1">
+                                          <button
+                                            onClick={() => handleCommentLike(reply)}
+                                            className="flex items-center gap-1 group/reply-like text-[9px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors"
+                                          >
+                                            <Heart size={12} className={hasReplyLiked ? "fill-primary-red text-primary-red" : "text-white/40 group-hover/reply-like:text-white transition-colors"} />
+                                            <span>{replyLikes.length}</span>
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
                             )}
                           </div>
-                        </div>
-                      );
-                    })
+                        );
+                      })
                   )}
                 </div>
               </div>
