@@ -89,15 +89,23 @@ function ProjectContent() {
           className="lg:col-span-8 space-y-12"
         >
           <div className="prose prose-xl prose-red">
-            <h2 className="font-serif text-4xl mb-8 text-white">À propos du projet</h2>
+            <div className="flex justify-start mb-8">
+              <div className="inline-flex items-center gap-4 bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 px-6 py-3.5 rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.6)] transition-all duration-300">
+                <span className="w-2.5 h-2.5 bg-primary-red rounded-full animate-pulse shadow-[0_0_10px_var(--primary-red)]"></span>
+                <h2 className="font-serif text-xl md:text-2xl text-white tracking-tight leading-none italic">À propos du projet</h2>
+              </div>
+            </div>
             <div className="text-lg leading-relaxed text-white/80 whitespace-pre-wrap">
               {project.content || "Aucune description disponible."}
             </div>
             
             {project.gallery && project.gallery.length > 0 && (
               <div className="mt-16 space-y-6">
-                <div className="flex justify-between items-center border-b border-white/10 pb-4">
-                  <h3 className="font-serif text-3xl italic text-white">Galerie Media</h3>
+                <div className="flex justify-between items-center border-b border-white/10 pb-6 mb-8">
+                  <div className="inline-flex items-center gap-4 bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 px-6 py-3.5 rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.6)] transition-all duration-300">
+                    <span className="w-2.5 h-2.5 bg-primary-red rounded-full animate-pulse shadow-[0_0_10px_var(--primary-red)]"></span>
+                    <h3 className="font-serif text-xl md:text-2xl text-white tracking-tight leading-none italic">Galerie Media</h3>
+                  </div>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-white/30">Défilement horizontal →</p>
                 </div>
                 <div className="flex gap-6 overflow-x-auto pb-8 snap-x snap-mandatory no-scrollbar">
@@ -141,8 +149,13 @@ function ProjectContent() {
           transition={{ delay: 0.6 }}
           className="lg:col-span-4 space-y-12"
         >
-          <div className="bg-white/5 backdrop-blur-2xl border border-white/10 p-12 rounded-3xl shadow-2xl">
-            <h4 className="font-serif text-3xl mb-10 border-b border-white/10 pb-6 italic text-white">Détails</h4>
+          <div className="bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 p-12 rounded-3xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_20px_50px_rgba(0,0,0,0.8)] transition-all duration-300">
+            <div className="flex justify-start mb-10 pb-6 border-b border-white/10">
+              <div className="inline-flex items-center gap-4 bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 px-6 py-3.5 rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.6)] transition-all duration-300">
+                <span className="w-2.5 h-2.5 bg-primary-red rounded-full animate-pulse shadow-[0_0_10px_var(--primary-red)]"></span>
+                <h4 className="font-serif text-xl md:text-2xl text-white tracking-tight leading-none italic">Détails</h4>
+              </div>
+            </div>
             <div className="space-y-8">
               <div className="flex items-center gap-6">
                 <div className="w-12 h-12 bg-white/5 flex items-center justify-center rounded-2xl text-primary-red border border-white/5">

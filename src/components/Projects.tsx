@@ -64,7 +64,7 @@ export default function Projects({ config, label, subLabel, textColor, secondary
           <span className="w-2.5 h-2.5 bg-primary-red rounded-full animate-pulse shadow-[0_0_10px_var(--primary-red)]"></span>
           <motion.h2 style={{ color: textColor }} className="font-serif text-xl md:text-2xl tracking-tight leading-none italic">{label || config.recentProjectsTitle || "Projets Récents"}</motion.h2>
           <div className="w-[1px] h-5 bg-white/15" />
-          <motion.span style={{ color: secondaryTextColor }} className="text-[10px] font-bold uppercase tracking-[0.2em]">{subLabel || config.projectsTitle}</motion.span>
+          <motion.span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white">{subLabel || config.projectsTitle}</motion.span>
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">
