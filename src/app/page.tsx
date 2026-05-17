@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useMotionValue, useSpring, useTransform, useScroll, useMotionTemplate, AnimatePresence, useMotionValueEvent } from "framer-motion";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ArrowUpRight, ArrowLeft, Zap, X, Send, User, MessageSquare, CheckCircle2, Mail, Music, Volume2, VolumeX, Copy, Check, Bell, Play, Upload, Maximize2, Minimize2, Settings, LogOut, Trash2, Heart, Plus, ChevronDown, SkipBack, SkipForward, Pause, Share2 } from "lucide-react";
 import Projects from "@/components/Projects";
 import Socials from "@/components/Socials";
@@ -13,26 +13,66 @@ import dynamic from 'next/dynamic';
 
 const StatueBackground = dynamic(() => import('@/components/StatueBackground'), { ssr: false });
 
-// Markdown parser helper for bold text (**text**) and newlines (\n -> <br />)
+// Markdown parser helper for bold, italic, bold+italic, underline, strikethrough and newlines
 function parseMarkdown(text: string): React.ReactNode[] {
   if (!text) return [];
-  const boldParts = text.split(/(\*\*[^*]+\*\*)/g);
-  return boldParts.flatMap((part, index) => {
-    const isBold = part.startsWith("**") && part.endsWith("**");
-    const content = isBold ? part.slice(2, -2) : part;
-    const lines = content.split('\n');
-    const nodes: React.ReactNode[] = [];
-    lines.forEach((line, lineIdx) => {
-      if (isBold) {
-        nodes.push(<strong key={`${index}-${lineIdx}`} className="font-bold text-white">{line}</strong>);
-      } else {
-        nodes.push(line);
+
+  const parseInline = (str: string): React.ReactNode[] => {
+    const boldItalicRegex = /(\*\*\*[^*]+\*\*\*)/g;
+    const boldRegex = /(\*\*[^*]+\*\*)/g;
+    const underlineRegex = /(__[^_]+__)/g;
+    const strikeRegex = /(~~[^~]+~~)/g;
+    const italicRegex = /(\*[^*]+\*|_[^_]+_)/g;
+
+    const matches = [
+      { regex: boldItalicRegex, type: 'boldItalic' },
+      { regex: boldRegex, type: 'bold' },
+      { regex: underlineRegex, type: 'underline' },
+      { regex: strikeRegex, type: 'strike' },
+      { regex: italicRegex, type: 'italic' }
+    ];
+
+    for (const { regex, type } of matches) {
+      const parts = str.split(regex);
+      if (parts.length > 1) {
+        return parts.flatMap((part, idx) => {
+          if (part.match(regex)) {
+            let innerText = "";
+            let element: React.ReactNode = null;
+            
+            if (type === 'boldItalic') {
+              innerText = part.slice(3, -3);
+              element = <strong className="font-bold italic text-white">{parseInline(innerText)}</strong>;
+            } else if (type === 'bold') {
+              innerText = part.slice(2, -2);
+              element = <strong className="font-bold text-white">{parseInline(innerText)}</strong>;
+            } else if (type === 'underline') {
+              innerText = part.slice(2, -2);
+              element = <span className="underline">{parseInline(innerText)}</span>;
+            } else if (type === 'strike') {
+              innerText = part.slice(2, -2);
+              element = <span className="line-through opacity-60">{parseInline(innerText)}</span>;
+            } else if (type === 'italic') {
+              innerText = part.slice(1, -1);
+              element = <em className="italic">{parseInline(innerText)}</em>;
+            }
+            return <React.Fragment key={idx}>{element}</React.Fragment>;
+          }
+          return parseInline(part);
+        });
       }
-      if (lineIdx < lines.length - 1) {
-        nodes.push(<br key={`br-${index}-${lineIdx}`} />);
-      }
-    });
-    return nodes;
+    }
+
+    return [str];
+  };
+
+  const lines = text.split('\n');
+  return lines.flatMap((line, lineIdx) => {
+    const parsedLine = parseInline(line);
+    if (lineIdx < lines.length - 1) {
+      return [...parsedLine, <br key={`br-${lineIdx}`} />];
+    }
+    return parsedLine;
   });
 }
 
