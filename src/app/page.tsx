@@ -2,7 +2,7 @@
 
 import { motion, useMotionValue, useSpring, useTransform, useScroll, useMotionTemplate, AnimatePresence, useMotionValueEvent } from "framer-motion";
 import { useEffect, useState } from "react";
-import { ArrowUpRight, ArrowLeft, Zap, X, Send, User, MessageSquare, CheckCircle2, Mail, Music, Volume2, VolumeX, Copy, Check, Bell, Play, Upload, Maximize2, Minimize2, Settings, LogOut } from "lucide-react";
+import { ArrowUpRight, ArrowLeft, Zap, X, Send, User, MessageSquare, CheckCircle2, Mail, Music, Volume2, VolumeX, Copy, Check, Bell, Play, Upload, Maximize2, Minimize2, Settings, LogOut, Trash2 } from "lucide-react";
 import Projects from "@/components/Projects";
 import Socials from "@/components/Socials";
 import Link from "next/link";
