@@ -483,6 +483,10 @@ export default function AdminDashboard() {
   const addMediaByUrl = async () => {
     const url = prompt("URL Image ou Vidéo YouTube :");
     if (url) {
+      if (url.includes("discordapp.com") || url.includes("discord.com")) {
+        alert("⚠️ Attention : Les liens d'images Discord expirent après 24 heures.\nVeuillez plutôt télécharger l'image sur votre appareil et l'importer en local pour qu'elle reste enregistrée de manière permanente.");
+        return;
+      }
       const ytId = getYoutubeId(url);
       const name = ytId ? "Vidéo YouTube" : "URL Image";
       const { data } = await supabase.from('media').insert({ url, name }).select();
@@ -492,7 +496,13 @@ export default function AdminDashboard() {
 
   const addGalleryItem = (type: 'image' | 'video') => {
     const url = prompt(type === 'video' ? "Lien YouTube :" : "URL Image :");
-    if (url) { setFormGallery([...formGallery, { url, type }]); }
+    if (url) {
+      if (type === 'image' && (url.includes("discordapp.com") || url.includes("discord.com"))) {
+        alert("⚠️ Attention : Les liens d'images Discord expirent après 24 heures.\nVeuillez plutôt télécharger l'image sur votre appareil et l'importer en local.");
+        return;
+      }
+      setFormGallery([...formGallery, { url, type }]);
+    }
   };
 
   const removeGalleryItem = (idx: number) => { setFormGallery(formGallery.filter((_, i) => i !== idx)); };
@@ -986,10 +996,134 @@ export default function AdminDashboard() {
           {isProductModalOpen && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsProductModalOpen(false)} className="absolute inset-0 bg-black/60 backdrop-blur-xl" />
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-2xl bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl p-8 max-h-[90vh] overflow-y-auto text-white">
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-2xl bg-[#0a0a0a]/95 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl p-8 max-h-[90vh] overflow-y-auto text-white">
                 <form onSubmit={handleSubmitProduct} className="space-y-6">
-                  <div className="flex justify-between items-center border-b border-white/10 pb-6"><h3 className="font-serif text-3xl italic text-primary-red">Produit</h3><button type="button" onClick={() => setIsProductModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors text-white/50 hover:text-white"><X size={24} /></button></div>
-                  <button type="submit" className="w-full bg-primary-red text-white py-4 rounded-2xl font-bold text-xs tracking-widest uppercase hover:bg-red-600 transition-all shadow-2xl shadow-primary-red/30">Enregistrer le Produit</button>
+                  <div className="flex justify-between items-center border-b border-white/10 pb-6">
+                    <h3 className="font-serif text-3xl italic text-primary-red">
+                      {editingProduct ? "Modifier le Produit" : "Nouveau Produit"}
+                    </h3>
+                    <button type="button" onClick={() => setIsProductModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors text-white/50 hover:text-white">
+                      <X size={24} />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 ml-1">Nom du produit *</label>
+                      <input 
+                        type="text" 
+                        value={prodName} 
+                        onChange={(e) => setProdName(e.target.value)} 
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white" 
+                        placeholder="Ex: Logo Design Premium" 
+                        required 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 ml-1">Prix (€) *</label>
+                      <input 
+                        type="number" 
+                        value={prodPrice} 
+                        onChange={(e) => setProdPrice(Number(e.target.value))} 
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white" 
+                        placeholder="Ex: 150" 
+                        required 
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 ml-1">Description</label>
+                    <textarea 
+                      value={prodDesc} 
+                      onChange={(e) => setProdDesc(e.target.value)} 
+                      rows={4} 
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white resize-none" 
+                      placeholder="Décrivez ce produit..." 
+                      required 
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 ml-1">URLs des Images (Une par ligne) *</label>
+                    <div className="flex gap-4 items-start">
+                      <textarea 
+                        value={prodImagesText} 
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setProdImagesText(val);
+                          if (val.includes("discordapp.com") || val.includes("discord.com")) {
+                            alert("⚠️ Attention : Les liens d'images Discord expirent après 24 heures.\nVeuillez plutôt télécharger les images et les importer en local.");
+                          }
+                        }} 
+                        rows={4} 
+                        className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white resize-none" 
+                        placeholder="https://site.com/image1.jpg&#10;https://site.com/image2.jpg" 
+                        required 
+                      />
+                      <label className="bg-white/10 border border-white/10 hover:bg-white/20 px-6 py-4 rounded-2xl text-xs font-bold uppercase tracking-widest flex items-center gap-2 cursor-pointer transition-all">
+                        <Upload size={16} /> Importer
+                        <input 
+                          type="file" 
+                          className="hidden" 
+                          accept="image/*" 
+                          multiple
+                          onChange={(e) => {
+                            const files = Array.from(e.target.files || []);
+                            files.forEach((file) => {
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                setProdImagesText(prev => {
+                                  const list = prev.trim() ? prev.split('\n') : [];
+                                  list.push(reader.result as string);
+                                  return list.join('\n');
+                                });
+                              };
+                              reader.readAsDataURL(file);
+                            });
+                          }} 
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 ml-1">Lien externe optionnel</label>
+                      <input 
+                        type="text" 
+                        value={prodLink} 
+                        onChange={(e) => setProdLink(e.target.value)} 
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white" 
+                        placeholder="https://..." 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 ml-1">Texte du lien</label>
+                      <input 
+                        type="text" 
+                        value={prodLinkText} 
+                        onChange={(e) => setProdLinkText(e.target.value)} 
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white" 
+                        placeholder="Ex: Voir la démo" 
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 ml-1">Message d'achat personnalisé</label>
+                    <textarea 
+                      value={prodPurchaseMsg} 
+                      onChange={(e) => setProdPurchaseMsg(e.target.value)} 
+                      rows={3} 
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white resize-none" 
+                      placeholder="Ex: Bonjour, je souhaite commander ce service..." 
+                    />
+                  </div>
+
+                  <button type="submit" className="w-full bg-primary-red text-white py-4 rounded-2xl font-bold text-xs tracking-widest uppercase hover:bg-red-600 transition-all shadow-2xl shadow-primary-red/30">
+                    Enregistrer le Produit
+                  </button>
                 </form>
               </motion.div>
             </div>
@@ -998,10 +1132,177 @@ export default function AdminDashboard() {
           {isModalOpen && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsModalOpen(false)} className="absolute inset-0 bg-black/60 backdrop-blur-xl" />
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-5xl bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl p-10 max-h-[90vh] overflow-y-auto text-white">
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-5xl bg-[#0a0a0a]/95 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl p-10 max-h-[90vh] overflow-y-auto text-white">
                 <form onSubmit={handleSubmit} className="space-y-8">
-                  <div className="flex justify-between items-center border-b border-white/10 pb-6"><h3 className="font-serif text-4xl italic text-primary-red">Poste</h3><button type="button" onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors text-white/50 hover:text-white"><X size={24} /></button></div>
-                  <button type="submit" className="w-full bg-primary-red text-white py-5 rounded-2xl font-bold text-xs tracking-widest uppercase hover:bg-red-600 transition-all shadow-2xl shadow-primary-red/30">ENREGISTRER LE POSTE</button>
+                  <div className="flex justify-between items-center border-b border-white/10 pb-6">
+                    <h3 className="font-serif text-4xl italic text-primary-red">
+                      {editingProject ? "Modifier le Poste" : "Nouveau Poste"}
+                    </h3>
+                    <button type="button" onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors text-white/50 hover:text-white">
+                      <X size={24} />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 ml-1">Titre du poste *</label>
+                      <input 
+                        type="text" 
+                        value={formTitle} 
+                        onChange={(e) => setFormTitle(e.target.value)} 
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white" 
+                        placeholder="Ex: Refonte Site Web" 
+                        required 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 ml-1">Catégorie</label>
+                      <input 
+                        type="text" 
+                        value={formCategory} 
+                        onChange={(e) => setFormCategory(e.target.value)} 
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white" 
+                        placeholder="Ex: Web Design / Développement" 
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 ml-1">Date *</label>
+                      <input 
+                        type="text" 
+                        value={formDate} 
+                        onChange={(e) => setFormDate(e.target.value)} 
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white" 
+                        placeholder="Ex: 2024 ou Mai 2024" 
+                        required 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 ml-1">Statut *</label>
+                      <select 
+                        value={formStatus} 
+                        onChange={(e) => setFormStatus(e.target.value as "Publié" | "Brouillon")} 
+                        className="w-full bg-[#111] border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white"
+                      >
+                        <option value="Publié">Publié</option>
+                        <option value="Brouillon">Brouillon</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 ml-1">Image du poste (URL ou Upload local) *</label>
+                    <div className="flex gap-4">
+                      <input 
+                        type="text" 
+                        value={formImage} 
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setFormImage(val);
+                          if (val.includes("discordapp.com") || val.includes("discord.com")) {
+                            alert("⚠️ Les liens d'images Discord expirent après 24 heures.\nVeuillez plutôt télécharger l'image et l'importer en local.");
+                          }
+                        }} 
+                        className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white" 
+                        placeholder="URL de l'image (ex: https://...)" 
+                        required 
+                      />
+                      <label className="bg-white/10 border border-white/10 hover:bg-white/20 px-6 rounded-2xl text-xs font-bold uppercase tracking-widest flex items-center gap-2 cursor-pointer transition-all">
+                        <Upload size={16} /> Importer
+                        <input 
+                          type="file" 
+                          className="hidden" 
+                          accept="image/*" 
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onloadend = () => setFormImage(reader.result as string);
+                              reader.readAsDataURL(file);
+                            }
+                          }} 
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 ml-1">Type de Lien *</label>
+                      <select 
+                        value={formLinkType} 
+                        onChange={(e) => setFormLinkType(e.target.value as "external" | "internal")} 
+                        className="w-full bg-[#111] border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white"
+                      >
+                        <option value="internal">Page interne (Détails du projet)</option>
+                        <option value="external">Lien externe (Site web, github, etc)</option>
+                      </select>
+                    </div>
+                    {formLinkType === "external" && (
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 ml-1">URL Externe *</label>
+                        <input 
+                          type="text" 
+                          value={formUrl} 
+                          onChange={(e) => setFormUrl(e.target.value)} 
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white" 
+                          placeholder="https://example.com" 
+                          required 
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 ml-1">Description / Contenu (Markdown/Texte)</label>
+                    <textarea 
+                      value={formContent} 
+                      onChange={(e) => setFormContent(e.target.value)} 
+                      rows={6} 
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white resize-none" 
+                      placeholder="Décrivez le projet en détail..." 
+                    />
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 ml-1">Galerie d'images / vidéos</label>
+                      <div className="flex gap-2">
+                        <button type="button" onClick={() => addGalleryItem('image')} className="bg-white/5 hover:bg-white/10 text-white border border-white/10 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest flex items-center gap-1.5 transition-all">
+                          <Plus size={14} /> Image URL
+                        </button>
+                        <button type="button" onClick={() => addGalleryItem('video')} className="bg-white/5 hover:bg-white/10 text-white border border-white/10 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest flex items-center gap-1.5 transition-all">
+                          <Plus size={14} /> Vidéo YouTube
+                        </button>
+                      </div>
+                    </div>
+
+                    {formGallery.length > 0 && (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-white/5 rounded-2xl border border-white/10">
+                        {formGallery.map((item, idx) => {
+                          const ytId = getYoutubeId(item.url);
+                          const displayUrl = ytId ? getYoutubeThumbnail(ytId) : item.url;
+                          return (
+                            <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-white/10 group">
+                              <Image src={displayUrl} alt="Gallery item" fill className="object-cover" unoptimized />
+                              {item.type === 'video' && <div className="absolute inset-0 flex items-center justify-center bg-black/30"><Zap size={20} className="text-white fill-current animate-pulse" /></div>}
+                              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-all">
+                                <button type="button" onClick={() => moveGalleryItem(idx, 'up')} className="p-1.5 bg-white/20 hover:bg-white/40 rounded-lg text-white"><ArrowLeft size={12} className="rotate-90" /></button>
+                                <button type="button" onClick={() => moveGalleryItem(idx, 'down')} className="p-1.5 bg-white/20 hover:bg-white/40 rounded-lg text-white"><ArrowLeft size={12} className="-rotate-90" /></button>
+                                <button type="button" onClick={() => removeGalleryItem(idx)} className="p-2 bg-red-600 text-white rounded-lg"><Trash2 size={12} /></button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  <button type="submit" className="w-full bg-primary-red text-white py-5 rounded-2xl font-bold text-xs tracking-widest uppercase hover:bg-red-600 transition-all shadow-2xl shadow-primary-red/30">
+                    ENREGISTRER LE POSTE
+                  </button>
                 </form>
               </motion.div>
             </div>

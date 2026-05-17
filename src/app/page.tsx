@@ -160,12 +160,12 @@ export default function Home() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
-      if (session?.user) fetchUserProfile(session.user.id);
+      if (session?.user) fetchUserProfile(session.user.id, session.user.email);
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      if (session?.user) fetchUserProfile(session.user.id);
+      if (session?.user) fetchUserProfile(session.user.id, session.user.email);
     });
 
     return () => { 
@@ -230,11 +230,20 @@ export default function Home() {
     if (pData) setProducts(pData);
   };
 
-  const fetchUserProfile = async (userId: string) => {
+  const fetchUserProfile = async (userId: string, email?: string) => {
     try {
       const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
-      if (error) throw error;
-      if (data) setUserProfileImage(data.avatar_url || "");
+      if (error || !data) {
+        const defaultName = email ? email.split('@')[0] : "Utilisateur";
+        await supabase.from('profiles').upsert({ 
+          id: userId, 
+          avatar_url: "", 
+          full_name: defaultName 
+        });
+        setUserProfileImage("");
+      } else {
+        setUserProfileImage(data.avatar_url || "");
+      }
     } catch (err) {
       console.warn("Profil non trouvé ou table inexistante:", err);
     }
