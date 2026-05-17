@@ -20,22 +20,32 @@ function Statue({ color, textureUrl }: { color: string; textureUrl?: string }) {
   const isWhite = color.toLowerCase() === '#ffffff' || color.toLowerCase() === 'white';
 
   useMemo(() => {
-    let texture: THREE.Texture | null = null;
-    if (textureUrl) {
-      const loader = new THREE.TextureLoader();
-      loader.setCrossOrigin('anonymous');
-      texture = loader.load(textureUrl);
-      texture.wrapS = THREE.RepeatWrapping;
-      texture.wrapT = THREE.RepeatWrapping;
-      texture.repeat.set(2, 2);
-    }
-
     const toonMaterial = new THREE.MeshToonMaterial({
-      color: color,
-      map: texture,
+      color: textureUrl ? '#ffffff' : color, // Use white if texture is present, so the texture renders in its true colors!
       emissive: isWhite ? '#ff0000' : color, // Red glow when white
       emissiveIntensity: isWhite ? 0.3 : 0.1,
     });
+
+    if (textureUrl) {
+      const loader = new THREE.TextureLoader();
+      loader.setCrossOrigin('anonymous');
+      loader.load(
+        textureUrl,
+        (tex) => {
+          tex.wrapS = THREE.RepeatWrapping;
+          tex.wrapT = THREE.RepeatWrapping;
+          tex.repeat.set(2, 2);
+          tex.needsUpdate = true;
+          
+          toonMaterial.map = tex;
+          toonMaterial.needsUpdate = true;
+        },
+        undefined,
+        (err) => {
+          console.error("Error loading texture in Three.js:", err);
+        }
+      );
+    }
 
     scene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
