@@ -22,7 +22,9 @@ function Statue({ color, textureUrl }: { color: string; textureUrl?: string }) {
   useMemo(() => {
     let texture: THREE.Texture | null = null;
     if (textureUrl) {
-      texture = new THREE.TextureLoader().load(textureUrl);
+      const loader = new THREE.TextureLoader();
+      loader.setCrossOrigin('anonymous');
+      texture = loader.load(textureUrl);
       texture.wrapS = THREE.RepeatWrapping;
       texture.wrapT = THREE.RepeatWrapping;
       texture.repeat.set(2, 2);
