@@ -1385,6 +1385,51 @@ export default function Home() {
                       </label>
                     </div>
                   </div>
+
+                  {/* Owner site settings (Bio & Profession) */}
+                  {user.email === 'caillatlucas2304@gmail.com' && (
+                    <div className="space-y-4 pt-4 border-t border-white/5">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-primary-red">Paramètres du Site (Lucas)</p>
+                      
+                      <div className="space-y-2">
+                        <p className="text-[9px] font-bold uppercase tracking-widest text-white/30">Profession / Rôle</p>
+                        <input 
+                          type="text" 
+                          value={settings.profession || ""}
+                          onChange={async (e) => {
+                            const newProf = e.target.value;
+                            setSettings(prev => ({ ...prev, profession: newProf }));
+                            
+                            // Save globally
+                            const { data: currentSettings } = await supabase.from('settings').select('*').eq('key', 'global').single();
+                            const globalVal = currentSettings?.value || {};
+                            globalVal.profileProfession = newProf;
+                            await supabase.from('settings').upsert({ key: 'global', value: globalVal });
+                          }}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-[10px] outline-none focus:border-primary-red transition-all text-white font-medium"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <p className="text-[9px] font-bold uppercase tracking-widest text-white/30">Biographie (Bio)</p>
+                        <textarea 
+                          rows={3}
+                          value={settings.bio || ""}
+                          onChange={async (e) => {
+                            const newBio = e.target.value;
+                            setSettings(prev => ({ ...prev, bio: newBio }));
+                            
+                            // Save globally
+                            const { data: currentSettings } = await supabase.from('settings').select('*').eq('key', 'global').single();
+                            const globalVal = currentSettings?.value || {};
+                            globalVal.profileBio = newBio;
+                            await supabase.from('settings').upsert({ key: 'global', value: globalVal });
+                          }}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-[10px] outline-none focus:border-primary-red transition-all text-white font-medium resize-none"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1970,13 +2015,13 @@ export default function Home() {
 
                 {/* Comments list column */}
                 <div className="lg:col-span-2 space-y-6">
-                  {comments.filter(c => !c.parent_id && (!c.deleted_by_user || comments.some(r => r.parent_id === c.id))).length === 0 ? (
+                  {comments.filter(c => !c.parent_id && (!c.deleted_by_user || comments.some(r => r.parent_id === c.id && !r.deleted_by_user))).length === 0 ? (
                     <div className="bg-[#0c0c0c]/85 backdrop-blur-2xl border border-dashed border-white/15 rounded-3xl p-12 text-center text-white/90 font-semibold italic shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.6)]">
                       Aucun commentaire pour le moment. Soyez le premier à vous exprimer !
                     </div>
                   ) : (
                     comments
-                      .filter(c => !c.parent_id && (!c.deleted_by_user || comments.some(r => r.parent_id === c.id)))
+                      .filter(c => !c.parent_id && (!c.deleted_by_user || comments.some(r => r.parent_id === c.id && !r.deleted_by_user)))
                       .map((comment) => {
                         const isAuthor = user?.id === comment.user_id;
                         const isAdmin = user?.email === 'caillatlucas2304@gmail.com';
