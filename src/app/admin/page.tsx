@@ -483,10 +483,6 @@ export default function AdminDashboard() {
   const addMediaByUrl = async () => {
     const url = prompt("URL Image ou Vidéo YouTube :");
     if (url) {
-      if (url.includes("discordapp.com") || url.includes("discord.com")) {
-        alert("⚠️ Attention : Les liens d'images Discord expirent après 24 heures.\nVeuillez plutôt télécharger l'image sur votre appareil et l'importer en local pour qu'elle reste enregistrée de manière permanente.");
-        return;
-      }
       const ytId = getYoutubeId(url);
       const name = ytId ? "Vidéo YouTube" : "URL Image";
       const { data } = await supabase.from('media').insert({ url, name }).select();
@@ -497,10 +493,6 @@ export default function AdminDashboard() {
   const addGalleryItem = (type: 'image' | 'video') => {
     const url = prompt(type === 'video' ? "Lien YouTube :" : "URL Image :");
     if (url) {
-      if (type === 'image' && (url.includes("discordapp.com") || url.includes("discord.com"))) {
-        alert("⚠️ Attention : Les liens d'images Discord expirent après 24 heures.\nVeuillez plutôt télécharger l'image sur votre appareil et l'importer en local.");
-        return;
-      }
       setFormGallery([...formGallery, { url, type }]);
     }
   };
@@ -1052,9 +1044,6 @@ export default function AdminDashboard() {
                         onChange={(e) => {
                           const val = e.target.value;
                           setProdImagesText(val);
-                          if (val.includes("discordapp.com") || val.includes("discord.com")) {
-                            alert("⚠️ Attention : Les liens d'images Discord expirent après 24 heures.\nVeuillez plutôt télécharger les images et les importer en local.");
-                          }
                         }} 
                         rows={4} 
                         className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white resize-none" 
@@ -1201,9 +1190,6 @@ export default function AdminDashboard() {
                         onChange={(e) => {
                           const val = e.target.value;
                           setFormImage(val);
-                          if (val.includes("discordapp.com") || val.includes("discord.com")) {
-                            alert("⚠️ Les liens d'images Discord expirent après 24 heures.\nVeuillez plutôt télécharger l'image et l'importer en local.");
-                          }
                         }} 
                         className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white" 
                         placeholder="URL de l'image (ex: https://...)" 

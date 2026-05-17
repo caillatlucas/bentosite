@@ -835,9 +835,6 @@ export default function Home() {
                       onChange={async (e) => {
                         const newUrl = e.target.value;
                         setUserProfileImage(newUrl);
-                        if (newUrl.includes("discordapp.com") || newUrl.includes("discord.com")) {
-                          alert("⚠️ Attention : Les liens d'images Discord expirent après 24 heures.\nVeuillez utiliser un lien d'image permanent ou hébergé ailleurs.");
-                        }
                         await supabase.from('profiles').upsert({ id: user.id, avatar_url: newUrl, full_name: user.email.split('@')[0] });
                         if (user.email === 'caillatlucas2304@gmail.com') {
                           setOwnerImage(newUrl);
