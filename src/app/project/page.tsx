@@ -110,7 +110,12 @@ function ProjectContent() {
   const hasExternalLink = project.link_type === "external" && project.url;
 
   return (
-    <main className="min-h-screen bg-[#0a0a0a] text-white pb-32">
+    <motion.main 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      className="min-h-screen bg-[#0a0a0a] text-white pb-32"
+    >
       <section className="relative h-[65vh] overflow-hidden">
         <Image 
           src={project.image} 
@@ -269,7 +274,7 @@ function ProjectContent() {
           </div>
         </motion.aside>
       </section>
-    </main>
+    </motion.main>
   );
 }
 

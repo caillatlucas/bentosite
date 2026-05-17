@@ -1009,6 +1009,9 @@ export default function Home() {
 
   return (
     <motion.main 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
       className="min-h-screen relative flex flex-col pt-24 pb-24 md:pt-32 md:pb-32 px-6 md:px-16 w-full overflow-x-hidden bg-transparent"
     >
       {/* Center Category Floating Navigation Bar */}

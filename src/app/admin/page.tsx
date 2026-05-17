@@ -6,7 +6,7 @@ import {
   Plus, Settings, FileText, ImageIcon, 
   LogOut, Check, X as CloseIcon, X, Edit2, Trash2, Upload, AlertCircle, Link as LinkIcon,
   Share2, Mail, MessageSquare, Zap, User, Clock, Music, Play, Pause, Send, ArrowLeft,
-  Download, ExternalLink, Users, Phone, Heart
+  Download, ExternalLink, Users, Phone, Heart, Activity
 } from "lucide-react";
 import { FaLinkedin, FaGithub, FaTwitter, FaInstagram, FaYoutube, FaTiktok, FaGlobe, FaDiscord, FaPhone } from "react-icons/fa";
 import Link from "next/link";
@@ -66,7 +66,7 @@ interface Product {
 
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState("pages");
+  const [activeTab, setActiveTab] = useState("stats");
   const [projects, setProjects] = useState<Project[]>([]);
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -83,6 +83,7 @@ export default function AdminDashboard() {
   const [selectedUserHistory, setSelectedUserHistory] = useState<any | null>(null);
   const [allProfiles, setAllProfiles] = useState<any[]>([]);
   const [selectedAttachment, setSelectedAttachment] = useState<string | null>(null);
+  const [visits, setVisits] = useState<any[]>([]);
   const router = useRouter();
   
   const [profileName, setProfileName] = useState("Lucas Caillat");
@@ -289,6 +290,9 @@ export default function AdminDashboard() {
 
     const { data: allP } = await supabase.from('profiles').select('*');
     if (allP) setAllProfiles(allP);
+
+    const { data: vData } = await supabase.rpc('get_all_site_visits');
+    if (vData) setVisits(vData);
 
     if (sData) {
       const global = sData.find(s => s.key === 'global')?.value;
@@ -622,6 +626,7 @@ export default function AdminDashboard() {
   };
 
   const tabs = [
+    { id: "stats", label: "Dashboard", icon: Activity },
     { id: "pages", label: "Postes", icon: FileText },
     { id: "media", label: "Médias", icon: ImageIcon },
     { id: "shop", label: "Boutique", icon: Zap },
@@ -633,7 +638,12 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white font-sans flex flex-col md:flex-row">
+    <motion.div 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      className="min-h-screen bg-[#0a0a0a] text-white font-sans flex flex-col md:flex-row"
+    >
       <aside className="w-full md:w-72 border-b md:border-b-0 md:border-r border-white/10 p-8 flex flex-col justify-between bg-white/5 backdrop-blur-xl">
         <div>
           <Link href="/" className="inline-block mb-12 group">
@@ -690,6 +700,184 @@ export default function AdminDashboard() {
         </header>
 
         <AnimatePresence mode="wait">
+          {activeTab === "stats" && (() => {
+            // Count actual visits per day of the week (0 = Sunday, 1 = Monday...)
+            const days = [0, 0, 0, 0, 0, 0, 0];
+            visits.forEach(v => {
+              if (v.visited_at) {
+                const d = new Date(v.visited_at).getDay();
+                days[d]++;
+              }
+            });
+            const visitsByDay = [
+              { day: "Lun", val: days[1] },
+              { day: "Mar", val: days[2] },
+              { day: "Mer", val: days[3] },
+              { day: "Jeu", val: days[4] },
+              { day: "Ven", val: days[5] },
+              { day: "Sam", val: days[6] },
+              { day: "Dim", val: days[0] }
+            ];
+
+            const maxVisits = Math.max(...visitsByDay.map(d => d.val), 5);
+            // Dynamic SVG path calculations
+            const chartPoints = visitsByDay.map((d, idx) => {
+              const x = idx * 16.6; // Scale evenly from 0 to 100
+              const y = 90 - ((d.val / maxVisits) * 75);
+              return { x, y };
+            });
+
+            // Fallback nice baseline values for 0 traffic to keep design stunning
+            const isZeroTraffic = visits.length === 0;
+            const finalPoints = isZeroTraffic
+              ? [
+                  { x: 0, y: 90 },
+                  { x: 16.6, y: 88 },
+                  { x: 33.2, y: 90 },
+                  { x: 49.8, y: 87 },
+                  { x: 66.4, y: 89 },
+                  { x: 83.0, y: 90 },
+                  { x: 100, y: 88 }
+                ]
+              : chartPoints;
+
+            // Generate paths
+            const linePath = finalPoints.reduce((acc, p, idx) => {
+              return acc + (idx === 0 ? `M ${p.x} ${p.y}` : ` L ${p.x} ${p.y}`);
+            }, "");
+            const areaPath = `${linePath} L 100 95 L 0 95 Z`;
+
+            return (
+              <motion.div 
+                key="stats" 
+                initial={{ opacity: 0, y: 15 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                exit={{ opacity: 0, y: -15 }} 
+                className="space-y-12"
+              >
+                {/* Cards Grid */}
+                <div className="grid grid-cols-2 lg:grid-cols-5 gap-6">
+                  {[
+                    { label: "Postes", value: projects.length, color: "from-red-500/20 to-red-600/5", icon: FileText, desc: "Articles & projets" },
+                    { label: "Visites", value: visits.length, color: "from-emerald-500/20 to-emerald-600/5", icon: Activity, desc: "Vues uniques de l'IP" },
+                    { label: "Boutique", value: products.length, color: "from-purple-500/20 to-purple-600/5", icon: Zap, desc: "Produits en vente" },
+                    { label: "Messages", value: messages.length, color: "from-blue-500/20 to-blue-600/5", icon: MessageSquare, desc: "Contacts & formulaires" },
+                    { label: "Communauté", value: allProfiles.length, color: "from-green-500/20 to-green-600/5", icon: Users, desc: "Membres enregistrés" },
+                  ].map((card, i) => {
+                    const Icon = card.icon;
+                    return (
+                      <div key={i} className="bg-black/35 backdrop-blur-2xl border border-white/10 p-6 rounded-3xl relative overflow-hidden group shadow-2xl flex flex-col justify-between min-h-[140px] hover:border-primary-red/30 transition-all">
+                        <div className={`absolute -right-8 -top-8 w-24 h-24 bg-gradient-to-br ${card.color} rounded-full opacity-30 group-hover:scale-125 transition-transform`} />
+                        <div className="flex justify-between items-start">
+                          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">{card.label}</span>
+                          <Icon size={18} className="text-white/30" />
+                        </div>
+                        <div>
+                          <h4 className="font-serif text-4xl font-bold text-white mt-4">{card.value}</h4>
+                          <p className="text-[9px] text-white/30 mt-1 uppercase tracking-wider">{card.desc}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Main analytics row */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                  {/* Visual SVG Activity Chart */}
+                  <div className="lg:col-span-8 bg-black/25 backdrop-blur-2xl border border-white/10 rounded-3xl p-8 shadow-2xl flex flex-col justify-between min-h-[400px]">
+                    <div className="flex justify-between items-center mb-6">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary-red">Analyses</span>
+                        <h3 className="font-serif text-2xl text-white italic mt-1">Activité Récente</h3>
+                      </div>
+                      <span className="text-[9px] font-bold uppercase tracking-widest bg-white/10 px-3 py-1 rounded-full text-white/70">7 derniers jours</span>
+                    </div>
+
+                    {/* SVG Chart */}
+                    <div className="relative flex-1 min-h-[220px] flex items-end justify-between px-2 pt-6">
+                      {/* SVG Graph path drawing */}
+                      <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
+                        <defs>
+                          <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="var(--primary-red)" stopOpacity="0.4" />
+                            <stop offset="100%" stopColor="var(--primary-red)" stopOpacity="0.0" />
+                          </linearGradient>
+                        </defs>
+                        {/* Area path */}
+                        <path
+                          d={areaPath}
+                          fill="url(#chartGrad)"
+                          className="transition-all duration-1000"
+                        />
+                        {/* Line path */}
+                        <path
+                          d={linePath}
+                          fill="none"
+                          stroke="var(--primary-red)"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          className="transition-all duration-1000"
+                        />
+                      </svg>
+
+                      {/* Chart axis markers */}
+                      <div className="absolute inset-y-0 left-0 flex flex-col justify-between text-[8px] font-bold text-white/20 uppercase tracking-widest pointer-events-none pb-8">
+                        <span>{isZeroTraffic ? "5" : maxVisits}</span>
+                        <span>{isZeroTraffic ? "2" : Math.round(maxVisits / 2)}</span>
+                        <span>0</span>
+                      </div>
+
+                      {/* Chart columns with interactive bars */}
+                      {visitsByDay.map((col, i) => (
+                        <div key={i} className="flex flex-col items-center gap-2 group relative z-10 w-full">
+                          <div className="text-[9px] font-bold bg-white/10 text-white px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity absolute -top-8 shadow-xl">
+                            {col.val} visites
+                          </div>
+                          <div 
+                            style={{ height: `${maxVisits > 0 ? (col.val / maxVisits) * 160 : 0}px` }} 
+                            className="w-1.5 md:w-2 bg-white/10 group-hover:bg-primary-red rounded-full transition-all duration-500 relative min-h-[4px]"
+                          >
+                            <div className="absolute inset-0 bg-primary-red rounded-full scale-0 group-hover:scale-100 transition-transform origin-bottom" />
+                          </div>
+                          <span className="text-[9px] font-bold text-white/40 uppercase tracking-wider">{col.day}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Connection History Sidebar */}
+                  <div className="lg:col-span-4 bg-black/25 backdrop-blur-2xl border border-white/10 rounded-3xl p-8 shadow-2xl flex flex-col justify-between min-h-[400px]">
+                    <div className="mb-6">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary-red">Sécurité</span>
+                      <h3 className="font-serif text-2xl text-white italic mt-1">Logs de Connexion</h3>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto max-h-[280px] space-y-4 no-scrollbar">
+                      {visits.length === 0 ? (
+                        <p className="text-center py-20 text-white/30 italic text-xs">Aucune visite récente.</p>
+                      ) : (
+                        visits.slice(0, 5).map((log, i) => (
+                          <div key={i} className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center gap-3.5 shadow-md">
+                            <div className="p-2.5 bg-primary-red/10 border border-primary-red/20 rounded-xl text-primary-red shrink-0">
+                              <Clock size={14} />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex justify-between items-center">
+                                <span className="font-mono text-xs text-white truncate">{log.ip}</span>
+                                <span className="text-[8px] text-white/30 font-bold uppercase tracking-widest">{new Date(log.visited_at).toLocaleTimeString("fr-FR", { hour: '2-digit', minute: '2-digit' })}</span>
+                              </div>
+                              <p className="text-[9px] text-white/40 mt-1">{new Date(log.visited_at).toLocaleDateString("fr-FR")}</p>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })()}
+
           {activeTab === "pages" && (
             <motion.div key="pages" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
               {projects.map((project, idx) => (
@@ -1773,6 +1961,6 @@ export default function AdminDashboard() {
           )}
         </AnimatePresence>
       </main>
-    </div>
+    </motion.div>
   );
 }

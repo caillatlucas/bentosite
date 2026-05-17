@@ -30,6 +30,29 @@ export default function RootLayout({
       lang="fr"
       className={`${playfair.variable} ${inter.variable} h-full antialiased`}
     >
+      <head>
+        <link rel="manifest" href="/bentosite/manifest.json" />
+        <meta name="theme-color" content="#0d0d0d" />
+        <link rel="apple-touch-icon" href="/bentosite/icon-192x192.png" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/bentosite/sw.js').then(
+                    function(registration) {
+                      console.log('PWA Service Worker registered with scope: ', registration.scope);
+                    },
+                    function(err) {
+                      console.log('PWA Service Worker registration failed: ', err);
+                    }
+                  );
+                });
+              }
+            `,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col font-sans text-text-black bg-background">{children}</body>
     </html>
   );
