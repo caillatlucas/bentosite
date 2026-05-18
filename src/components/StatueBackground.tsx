@@ -51,9 +51,15 @@ function assignCylindricalUVs(geometry: THREE.BufferGeometry) {
   }
 }
 
-function Statue({ color, textureUrl, modelUrl }: { color: string; textureUrl?: string; modelUrl?: string }) {
+function Statue({ color, textureUrl, modelUrl, useOriginalMaterial }: { color: string; textureUrl?: string; modelUrl?: string; useOriginalMaterial?: boolean }) {
   const mesh = useRef<THREE.Group>(null);
   const { scene } = useGLTF(modelUrl || 'models/model.glb');
+  
+  // Clone the scene so that we do not modify the globally cached Drei scene,
+  // allowing seamless toggling of original materials.
+  const clonedScene = useMemo(() => {
+    return scene.clone();
+  }, [scene]);
   
   // Detect if color is white (top of page) to trigger the red shadow effect
   const isWhite = color.toLowerCase() === '#ffffff' || color.toLowerCase() === 'white';
@@ -88,6 +94,11 @@ function Statue({ color, textureUrl, modelUrl }: { color: string; textureUrl?: s
   }, [textureUrl]);
 
   useMemo(() => {
+    if (useOriginalMaterial) {
+      // Do not overwrite materials, preserve original GLB textures & shaders
+      return;
+    }
+
     // If a texture is loaded, use MeshStandardMaterial to render photorealistic marble details.
     // Otherwise, use the stylized cell-shaded MeshToonMaterial.
     const material = texture
@@ -103,7 +114,7 @@ function Statue({ color, textureUrl, modelUrl }: { color: string; textureUrl?: s
           emissiveIntensity: isWhite ? 0.3 : 0.1,
         });
 
-    scene.traverse((child) => {
+    clonedScene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         if (!child.geometry.attributes.uv) {
           console.log("Three.js - Mesh name:", child.name, "lacks UV mapping. Generating cylindrical mapping...");
@@ -114,7 +125,7 @@ function Statue({ color, textureUrl, modelUrl }: { color: string; textureUrl?: s
         child.material = material;
       }
     });
-  }, [scene, color, isWhite, texture]);
+  }, [clonedScene, color, isWhite, texture, useOriginalMaterial]);
 
   const currentRotationY = useRef(0);
 
@@ -136,7 +147,7 @@ function Statue({ color, textureUrl, modelUrl }: { color: string; textureUrl?: s
     <group>
       <ScenePrimitive 
         ref={mesh} 
-        object={scene} 
+        object={clonedScene} 
         scale={2.8} 
         position={[0, -1.2, 0]} 
       />
@@ -155,7 +166,7 @@ function Statue({ color, textureUrl, modelUrl }: { color: string; textureUrl?: s
   );
 }
 
-export default function StatueBackground({ color, textureUrl, modelUrl }: { color: string; textureUrl?: string; modelUrl?: string }) {
+export default function StatueBackground({ color, textureUrl, modelUrl, useOriginalMaterial }: { color: string; textureUrl?: string; modelUrl?: string; useOriginalMaterial?: boolean }) {
   const isWhite = color.toLowerCase() === '#ffffff' || color.toLowerCase() === 'white';
 
   return (
@@ -170,7 +181,13 @@ export default function StatueBackground({ color, textureUrl, modelUrl }: { colo
           <PointLight position={[10, 10, 10]} intensity={1} />
           <DirectionalLight position={[-5, 5, 5]} intensity={1.5} />
           <React.Suspense fallback={null}>
-            <Statue key={modelUrl || 'default'} color={color} textureUrl={textureUrl} modelUrl={modelUrl} />
+            <Statue 
+              key={`${modelUrl || 'default'}-${useOriginalMaterial ? 'orig' : 'custom'}`} 
+              color={color} 
+              textureUrl={textureUrl} 
+              modelUrl={modelUrl} 
+              useOriginalMaterial={useOriginalMaterial} 
+            />
           </React.Suspense>
         </Canvas>
       </div>

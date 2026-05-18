@@ -102,6 +102,7 @@ export default function AdminDashboard() {
   const [musicRotationEnabled, setMusicRotationEnabled] = useState(true);
   const [statueTextureUrl, setStatueTextureUrl] = useState("");
   const [statueModelUrl, setStatueModelUrl] = useState("");
+  const [useOriginalMaterial, setUseOriginalMaterial] = useState(false);
   const [sectionsConfig, setSectionsConfig] = useState([
     { id: 'projects', label: 'Projets', subLabel: 'Sélection 2024', visible: true },
     { id: 'shop', label: 'Boutique', subLabel: 'Nos Produits', visible: true },
@@ -334,6 +335,7 @@ export default function AdminDashboard() {
         setMusicRotationEnabled(global.musicRotationEnabled ?? true);
         setStatueTextureUrl(global.statueTextureUrl || "");
         setStatueModelUrl(global.statueModelUrl || "");
+        setUseOriginalMaterial(global.useOriginalMaterial ?? false);
         if (global.sectionsConfig) {
           const hasComments = global.sectionsConfig.some((s: any) => s.id === 'comments');
           let migratedSections = global.sectionsConfig.map((s: { id: string; label: string; subLabel?: string; visible: boolean }) => {
@@ -404,7 +406,7 @@ export default function AdminDashboard() {
   };
 
   const handleSaveSettings = async () => {
-    const s = { profileName, profileProfession, profileBio, profileImage, heroTitleMain, heroTitleSub, textEffectImage, musicEnabled, musicUrl, musicCover, primaryColor, show3DBackground, musicRotationEnabled, statueTextureUrl, statueModelUrl, sectionsConfig, mediaOrder: mediaItems.map(m => m.id) };
+    const s = { profileName, profileProfession, profileBio, profileImage, heroTitleMain, heroTitleSub, textEffectImage, musicEnabled, musicUrl, musicCover, primaryColor, show3DBackground, musicRotationEnabled, statueTextureUrl, statueModelUrl, useOriginalMaterial, sectionsConfig, mediaOrder: mediaItems.map(m => m.id) };
     const { error } = await supabase.from('settings').upsert({ key: 'global', value: s });
     if (error) {
       console.error(error);
@@ -1652,21 +1654,40 @@ export default function AdminDashboard() {
                       <p className="text-[8px] text-white/30 ml-1">Si vide, le modèle 3D par défaut (models/model.glb) sera affiché.</p>
                     </div>
 
+                    {/* Use original textures toggle switch */}
+                    <div className="flex items-center justify-between bg-white/[0.02] border border-white/5 rounded-2xl p-4">
+                      <div className="space-y-0.5">
+                        <label className="text-[10px] font-bold uppercase tracking-widest opacity-70">Utiliser les textures d'origine du GLB</label>
+                        <p className="text-[8px] text-white/30">Si activé, conserve les textures, ombrages et couleurs internes du fichier GLB au lieu d'appliquer le style marbre/cell-shading.</p>
+                      </div>
+                      <button 
+                        type="button"
+                        onClick={() => setUseOriginalMaterial(!useOriginalMaterial)} 
+                        className={`w-12 h-6 rounded-full transition-colors relative ${ useOriginalMaterial ? "bg-primary-red" : "bg-text-black/10" }`}
+                      >
+                        <motion.div animate={{ x: useOriginalMaterial ? 24 : 4 }} className="w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm" />
+                      </button>
+                    </div>
+
                     {/* Texture field */}
-                    <div className="space-y-2">
-                      <label className="text-[9px] font-bold uppercase tracking-widest opacity-40 ml-1">Texture du Modèle 3D (Image URL ou Upload local)</label>
+                    <div className={`space-y-2 transition-all duration-300 ${useOriginalMaterial ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
+                      <label className="text-[9px] font-bold uppercase tracking-widest opacity-40 ml-1">
+                        Texture du Modèle 3D (Image URL ou Upload local) {useOriginalMaterial && "(Désactivé car textures d'origine actives)"}
+                      </label>
                       <div className="flex gap-4">
                         <input 
                           type="text" 
+                          disabled={useOriginalMaterial}
                           value={statueTextureUrl} 
                           onChange={(e) => setStatueTextureUrl(e.target.value)} 
                           className="flex-1 bg-white/5 border border-text-black/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white" 
                           placeholder="URL de la texture (ex: https://...)" 
                         />
-                        <label className="bg-white/10 border border-text-black/10 hover:bg-white/20 px-6 rounded-2xl text-xs font-bold uppercase tracking-widest flex items-center gap-2 cursor-pointer transition-all">
+                        <label className={`bg-white/10 border border-text-black/10 px-6 rounded-2xl text-xs font-bold uppercase tracking-widest flex items-center gap-2 cursor-pointer transition-all ${useOriginalMaterial ? 'cursor-not-allowed' : 'hover:bg-white/20'}`}>
                           <Upload size={16} /> Importer Image
                           <input 
                             type="file" 
+                            disabled={useOriginalMaterial}
                             className="hidden" 
                             accept="image/*" 
                             onChange={(e) => {
