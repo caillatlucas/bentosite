@@ -51,9 +51,9 @@ function assignCylindricalUVs(geometry: THREE.BufferGeometry) {
   }
 }
 
-function Statue({ color, textureUrl }: { color: string; textureUrl?: string }) {
+function Statue({ color, textureUrl, modelUrl }: { color: string; textureUrl?: string; modelUrl?: string }) {
   const mesh = useRef<THREE.Group>(null);
-  const { scene } = useGLTF('models/model.glb');
+  const { scene } = useGLTF(modelUrl || 'models/model.glb');
   
   // Detect if color is white (top of page) to trigger the red shadow effect
   const isWhite = color.toLowerCase() === '#ffffff' || color.toLowerCase() === 'white';
@@ -155,7 +155,7 @@ function Statue({ color, textureUrl }: { color: string; textureUrl?: string }) {
   );
 }
 
-export default function StatueBackground({ color, textureUrl }: { color: string; textureUrl?: string }) {
+export default function StatueBackground({ color, textureUrl, modelUrl }: { color: string; textureUrl?: string; modelUrl?: string }) {
   const isWhite = color.toLowerCase() === '#ffffff' || color.toLowerCase() === 'white';
 
   return (
@@ -167,11 +167,11 @@ export default function StatueBackground({ color, textureUrl }: { color: string;
           style={{ pointerEvents: 'none' }}
         >
           <AmbientLight intensity={0.8} />
-        <PointLight position={[10, 10, 10]} intensity={1} />
-        <DirectionalLight position={[-5, 5, 5]} intensity={1.5} />
-        <React.Suspense fallback={null}>
-          <Statue color={color} textureUrl={textureUrl} />
-        </React.Suspense>
+          <PointLight position={[10, 10, 10]} intensity={1} />
+          <DirectionalLight position={[-5, 5, 5]} intensity={1.5} />
+          <React.Suspense fallback={null}>
+            <Statue key={modelUrl || 'default'} color={color} textureUrl={textureUrl} modelUrl={modelUrl} />
+          </React.Suspense>
         </Canvas>
       </div>
 

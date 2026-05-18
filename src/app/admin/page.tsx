@@ -101,6 +101,7 @@ export default function AdminDashboard() {
   const [show3DBackground, setShow3DBackground] = useState(false);
   const [musicRotationEnabled, setMusicRotationEnabled] = useState(true);
   const [statueTextureUrl, setStatueTextureUrl] = useState("");
+  const [statueModelUrl, setStatueModelUrl] = useState("");
   const [sectionsConfig, setSectionsConfig] = useState([
     { id: 'projects', label: 'Projets', subLabel: 'Sélection 2024', visible: true },
     { id: 'shop', label: 'Boutique', subLabel: 'Nos Produits', visible: true },
@@ -332,6 +333,7 @@ export default function AdminDashboard() {
         setShow3DBackground(global.show3DBackground ?? false);
         setMusicRotationEnabled(global.musicRotationEnabled ?? true);
         setStatueTextureUrl(global.statueTextureUrl || "");
+        setStatueModelUrl(global.statueModelUrl || "");
         if (global.sectionsConfig) {
           const hasComments = global.sectionsConfig.some((s: any) => s.id === 'comments');
           let migratedSections = global.sectionsConfig.map((s: { id: string; label: string; subLabel?: string; visible: boolean }) => {
@@ -402,7 +404,7 @@ export default function AdminDashboard() {
   };
 
   const handleSaveSettings = async () => {
-    const s = { profileName, profileProfession, profileBio, profileImage, heroTitleMain, heroTitleSub, textEffectImage, musicEnabled, musicUrl, musicCover, primaryColor, show3DBackground, musicRotationEnabled, statueTextureUrl, sectionsConfig, mediaOrder: mediaItems.map(m => m.id) };
+    const s = { profileName, profileProfession, profileBio, profileImage, heroTitleMain, heroTitleSub, textEffectImage, musicEnabled, musicUrl, musicCover, primaryColor, show3DBackground, musicRotationEnabled, statueTextureUrl, statueModelUrl, sectionsConfig, mediaOrder: mediaItems.map(m => m.id) };
     const { error } = await supabase.from('settings').upsert({ key: 'global', value: s });
     if (error) {
       console.error(error);
@@ -1618,32 +1620,66 @@ export default function AdminDashboard() {
                 </div>
 
                 {show3DBackground && (
-                  <div className="space-y-2 bg-white/5 p-4 rounded-2xl border border-text-black/5">
-                    <label className="text-[9px] font-bold uppercase tracking-widest opacity-40 ml-1">Texture du Modèle 3D (Image URL ou Upload local)</label>
-                    <div className="flex gap-4">
-                      <input 
-                        type="text" 
-                        value={statueTextureUrl} 
-                        onChange={(e) => setStatueTextureUrl(e.target.value)} 
-                        className="flex-1 bg-white/5 border border-text-black/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white" 
-                        placeholder="URL de la texture (ex: https://...)" 
-                      />
-                      <label className="bg-white/10 border border-text-black/10 hover:bg-white/20 px-6 rounded-2xl text-xs font-bold uppercase tracking-widest flex items-center gap-2 cursor-pointer transition-all">
-                        <Upload size={16} /> Importer
+                  <div className="space-y-6 bg-white/5 p-6 rounded-2xl border border-text-black/5">
+                    {/* Model GLB field */}
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-bold uppercase tracking-widest opacity-40 ml-1">Modèle 3D GLB (URL du fichier .glb ou Upload local)</label>
+                      <div className="flex gap-4">
                         <input 
-                          type="file" 
-                          className="hidden" 
-                          accept="image/*" 
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              const reader = new FileReader();
-                              reader.onloadend = () => setStatueTextureUrl(reader.result as string);
-                              reader.readAsDataURL(file);
-                            }
-                          }} 
+                          type="text" 
+                          value={statueModelUrl} 
+                          onChange={(e) => setStatueModelUrl(e.target.value)} 
+                          className="flex-1 bg-white/5 border border-text-black/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white" 
+                          placeholder="URL du fichier .glb (ex: https://...)" 
                         />
-                      </label>
+                        <label className="bg-white/10 border border-text-black/10 hover:bg-white/20 px-6 rounded-2xl text-xs font-bold uppercase tracking-widest flex items-center gap-2 cursor-pointer transition-all">
+                          <Upload size={16} /> Importer GLB
+                          <input 
+                            type="file" 
+                            className="hidden" 
+                            accept=".glb,.gltf" 
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onloadend = () => setStatueModelUrl(reader.result as string);
+                                reader.readAsDataURL(file);
+                              }
+                            }} 
+                          />
+                        </label>
+                      </div>
+                      <p className="text-[8px] text-white/30 ml-1">Si vide, le modèle 3D par défaut (models/model.glb) sera affiché.</p>
+                    </div>
+
+                    {/* Texture field */}
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-bold uppercase tracking-widest opacity-40 ml-1">Texture du Modèle 3D (Image URL ou Upload local)</label>
+                      <div className="flex gap-4">
+                        <input 
+                          type="text" 
+                          value={statueTextureUrl} 
+                          onChange={(e) => setStatueTextureUrl(e.target.value)} 
+                          className="flex-1 bg-white/5 border border-text-black/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white" 
+                          placeholder="URL de la texture (ex: https://...)" 
+                        />
+                        <label className="bg-white/10 border border-text-black/10 hover:bg-white/20 px-6 rounded-2xl text-xs font-bold uppercase tracking-widest flex items-center gap-2 cursor-pointer transition-all">
+                          <Upload size={16} /> Importer Image
+                          <input 
+                            type="file" 
+                            className="hidden" 
+                            accept="image/*" 
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onloadend = () => setStatueTextureUrl(reader.result as string);
+                                reader.readAsDataURL(file);
+                              }
+                            }} 
+                          />
+                        </label>
+                      </div>
                     </div>
                   </div>
                 )}
