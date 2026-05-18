@@ -32,6 +32,8 @@ export default function RootLayout({
       className={`${playfair.variable} ${inter.variable} h-full antialiased`}
     >
       <head>
+        <link rel="icon" type="image/png" href="/bentosite/favicon.png?v=2" />
+        <link rel="shortcut icon" href="/bentosite/favicon.ico?v=2" />
         <link rel="manifest" href="/bentosite/manifest.json" />
         <meta name="theme-color" content="#0d0d0d" />
         <link rel="apple-touch-icon" href="/bentosite/icon-192x192.png" />

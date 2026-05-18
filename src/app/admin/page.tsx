@@ -6,7 +6,7 @@ import {
   Plus, Settings, FileText, ImageIcon, 
   LogOut, Check, X as CloseIcon, X, Edit2, Trash2, Upload, AlertCircle, Link as LinkIcon,
   Share2, Mail, MessageSquare, Zap, User, Clock, Music, Play, Pause, Send, ArrowLeft,
-  Download, ExternalLink, Users, Phone, Heart, Activity
+  Download, ExternalLink, Users, Phone, Heart, Activity, ShoppingCart
 } from "lucide-react";
 import { FaLinkedin, FaGithub, FaTwitter, FaInstagram, FaYoutube, FaTiktok, FaGlobe, FaDiscord, FaPhone } from "react-icons/fa";
 import Link from "next/link";
@@ -84,6 +84,7 @@ export default function AdminDashboard() {
   const [allProfiles, setAllProfiles] = useState<any[]>([]);
   const [selectedAttachment, setSelectedAttachment] = useState<string | null>(null);
   const [visits, setVisits] = useState<any[]>([]);
+  const [orderSearchQuery, setOrderSearchQuery] = useState("");
   const router = useRouter();
   
   const [profileName, setProfileName] = useState("Lucas Caillat");
@@ -630,6 +631,7 @@ export default function AdminDashboard() {
     { id: "pages", label: "Postes", icon: FileText },
     { id: "media", label: "Médias", icon: ImageIcon },
     { id: "shop", label: "Boutique", icon: Zap },
+    { id: "orders", label: "Commandes", icon: ShoppingCart },
     { id: "messages", label: "Messages", icon: MessageSquare },
     { id: "comments", label: "Commentaires", icon: Heart },
     { id: "users", label: "Utilisateurs", icon: Users },
@@ -659,7 +661,8 @@ export default function AdminDashboard() {
                 <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 ${activeTab === tab.id ? "bg-primary-red text-white shadow-2xl shadow-primary-red/20 translate-x-2" : "text-white/60 hover:bg-white/5 hover:text-white hover:translate-x-1"}`}>
                   <Icon size={20} strokeWidth={1.5} />
                   <span className="font-medium tracking-wide flex-1 text-left">{tab.label}</span>
-                  {tab.id === "messages" && messages.length > 0 && <span className="bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-full">{messages.length}</span>}
+                  {tab.id === "messages" && messages.filter(m => !m.order_id).length > 0 && <span className="bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-full">{messages.filter(m => !m.order_id).length}</span>}
+                  {tab.id === "orders" && messages.filter(m => m.order_id).length > 0 && <span className="bg-primary-red text-white text-[10px] px-2.5 py-0.5 rounded-full font-bold shadow-lg shadow-primary-red/20">{messages.filter(m => m.order_id).length}</span>}
                   {tab.id === "comments" && comments.length > 0 && <span className="bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-full">{comments.length}</span>}
                 </button>
               );
@@ -969,110 +972,367 @@ export default function AdminDashboard() {
 
           {activeTab === "messages" && (
             <motion.div key="messages" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-8">
-              {messages.map((msg) => (
-                <div key={msg.id} className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-3xl p-8 space-y-8 relative group shadow-2xl">
-                  <button onClick={() => deleteMessage(msg.id)} className="absolute top-8 right-8 text-white/20 hover:text-red-500 transition-colors"><Trash2 size={20} /></button>
-                  <div className="flex items-start gap-6">
-                    <div className="w-16 h-16 rounded-full bg-white/10 border border-white/10 overflow-hidden relative shrink-0">
-                      {(msg as any).profiles?.avatar_url ? (
-                        <Image src={(msg as any).profiles.avatar_url} alt="Profile" fill className="object-cover" unoptimized />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-primary-red/10 text-primary-red">
-                          <User size={32} />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 space-y-4">
-                      <div className="flex items-center gap-4 flex-wrap">
-                        <h3 className="font-serif text-3xl text-white">{(msg as any).profiles?.full_name || msg.name || "Anonyme"}</h3>
-                        <span className="text-white/40 text-xs">{(msg as any).profiles?.full_name ? `(${msg.name})` : ''}</span>
-                        {msg.order_id && <span className="bg-primary-red/20 text-primary-red px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border border-primary-red/20 shadow-lg shadow-primary-red/10">Commande: {msg.order_id}</span>}
-                        {msg.user_email && <span className="bg-blue-500/20 text-blue-400 px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border border-blue-500/20 flex items-center gap-2"><User size={12} /> {msg.user_email}</span>}
-                        {(msg as any).contact && <span className="bg-green-500/20 text-green-400 px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border border-green-500/20 flex items-center gap-2"><Phone size={12} /> {(msg as any).contact}</span>}
+              {messages.filter(m => !m.order_id).length === 0 ? (
+                <div className="bg-white/5 border border-dashed border-white/10 rounded-3xl p-12 text-center text-white/40 italic">
+                  Aucun message pour le moment.
+                </div>
+              ) : (
+                messages.filter(m => !m.order_id).map((msg) => (
+                  <div key={msg.id} className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-3xl p-8 space-y-8 relative group shadow-2xl">
+                    <button onClick={() => deleteMessage(msg.id)} className="absolute top-8 right-8 text-white/20 hover:text-red-500 transition-colors"><Trash2 size={20} /></button>
+                    <div className="flex items-start gap-6">
+                      <div className="w-16 h-16 rounded-full bg-white/10 border border-white/10 overflow-hidden relative shrink-0">
+                        {(msg as any).profiles?.avatar_url ? (
+                          <Image src={(msg as any).profiles.avatar_url} alt="Profile" fill className="object-cover" unoptimized />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-primary-red/10 text-primary-red">
+                            <User size={24} />
+                          </div>
+                        )}
                       </div>
-                      <h4 className="text-xl font-medium text-white/90">{msg.title}</h4>
-                      <p className="text-base leading-relaxed text-white/70 bg-white/5 p-6 rounded-2xl border border-white/5 whitespace-pre-wrap">{msg.content}</p>
-                      {msg.attachments && msg.attachments.length > 0 && (
-                        <div className="flex flex-wrap gap-3 pt-2">
-                          {msg.attachments.map((att, aidx) => (
-                            <a key={aidx} href={att} target="_blank" rel="noreferrer" className="relative w-24 h-24 rounded-xl overflow-hidden border border-white/10 group cursor-pointer block shadow-lg">
-                              <Image src={att} alt="Attachment" fill className="object-cover group-hover:scale-105 transition-transform" unoptimized />
-                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <ExternalLink size={20} className="text-white drop-shadow-md" />
+                      <div className="flex-1 space-y-4">
+                        <div className="flex items-center gap-4 flex-wrap">
+                          <h3 className="font-serif text-3xl text-white">{(msg as any).profiles?.full_name || msg.name || "Anonyme"}</h3>
+                          <span className="text-white/40 text-xs">{(msg as any).profiles?.full_name ? `(${msg.name})` : ''}</span>
+                          {msg.user_email && <span className="bg-blue-500/20 text-blue-400 px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border border-blue-500/20 flex items-center gap-2"><User size={12} /> {msg.user_email}</span>}
+                          {(msg as any).contact && <span className="bg-green-500/20 text-green-400 px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border border-green-500/20 flex items-center gap-2"><Phone size={12} /> {(msg as any).contact}</span>}
+                        </div>
+                        <h4 className="text-xl font-medium text-white/90">{msg.title}</h4>
+                        <p className="text-base leading-relaxed text-white/70 bg-white/5 p-6 rounded-2xl border border-white/5 whitespace-pre-wrap">{msg.content}</p>
+                        {msg.attachments && msg.attachments.length > 0 && (
+                          <div className="flex flex-wrap gap-3 pt-2">
+                            {msg.attachments.map((att, aidx) => (
+                              <a key={aidx} href={att} target="_blank" rel="noreferrer" className="relative w-24 h-24 rounded-xl overflow-hidden border border-white/10 group cursor-pointer block shadow-lg">
+                                <Image src={att} alt="Attachment" fill className="object-cover group-hover:scale-105 transition-transform" unoptimized />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                  <ExternalLink size={20} className="text-white drop-shadow-md" />
+                                </div>
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      {msg.replies && msg.replies.length > 0 && (
+                        <div className="space-y-4 pt-4 border-t border-white/10">
+                          {msg.replies.map((rep, ridx) => (
+                            <div key={ridx} className="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-3">
+                              <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest opacity-40">
+                                <span>Lucas</span>
+                                <span>{rep.date}</span>
                               </div>
-                            </a>
+                              <p className="text-sm text-white/80">{rep.text}</p>
+                              {rep.media && rep.media.length > 0 && (
+                                <div className="flex flex-wrap gap-2 pt-2">
+                                  {rep.media.map((m, midx) => (
+                                    <div key={midx} className="relative w-20 h-20 rounded-lg overflow-hidden border border-white/10">
+                                      <Image src={m.url} alt="Reply Media" fill className="object-cover" unoptimized />
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
                           ))}
                         </div>
                       )}
+                      
+                      <div className="flex flex-col gap-3">
+                        {replyMedia[msg.id]?.length > 0 && (
+                          <div className="flex flex-wrap gap-2 p-2 bg-white/5 rounded-xl border border-white/10">
+                            {replyMedia[msg.id].map((m, idx) => (
+                              <div key={idx} className="relative w-16 h-16 rounded-lg overflow-hidden group">
+                                <Image src={m.url} alt="Pending Media" fill className="object-cover" unoptimized />
+                                <button onClick={() => setReplyMedia({ ...replyMedia, [msg.id]: replyMedia[msg.id].filter((_, i) => i !== idx) })} className="absolute inset-0 bg-red-500/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white">
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <div className="flex gap-4 items-end">
+                          <div className="flex-1 relative">
+                            <textarea 
+                              placeholder="Votre réponse..." 
+                              value={replyText[msg.id] || ""} 
+                              onChange={(e) => setReplyText({ ...replyText, [msg.id]: e.target.value })} 
+                              rows={2} 
+                              className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 pr-12 text-sm text-white outline-none focus:border-primary-red transition-all resize-none" 
+                            />
+                            <button 
+                              onClick={() => {
+                                const url = prompt("URL de l'image :");
+                                if (url) {
+                                  const current = replyMedia[msg.id] || [];
+                                  setReplyMedia({ ...replyMedia, [msg.id]: [...current, { url, type: 'image' }] });
+                                }
+                              }}
+                              className="absolute right-4 bottom-4 text-white/30 hover:text-primary-red transition-colors"
+                            >
+                              <Plus size={20} />
+                            </button>
+                          </div>
+                          <button onClick={() => handleReply(msg.id)} className="bg-primary-red text-white px-8 py-4 text-xs font-bold rounded-2xl flex items-center gap-2 hover:bg-red-600 transition-all shadow-xl shadow-primary-red/20 h-[52px]"> <Send size={16} /> RÉPONDRE </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div className="space-y-4">
-                    {msg.replies && msg.replies.length > 0 && (
-                      <div className="space-y-4 pt-4 border-t border-white/10">
-                        {msg.replies.map((rep, ridx) => (
-                          <div key={ridx} className="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-3">
-                            <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest opacity-40">
-                              <span>Lucas</span>
-                              <span>{rep.date}</span>
+                ))
+              )}
+            </motion.div>
+          )}
+
+          {activeTab === "orders" && (() => {
+            const orderMessages = messages.filter(m => m.order_id);
+            const filteredOrders = orderMessages.filter(o => {
+              const query = orderSearchQuery.toLowerCase();
+              return (
+                o.order_id?.toLowerCase().includes(query) ||
+                o.name?.toLowerCase().includes(query) ||
+                o.title?.toLowerCase().includes(query) ||
+                o.content?.toLowerCase().includes(query) ||
+                o.user_email?.toLowerCase().includes(query) ||
+                o.contact?.toLowerCase().includes(query)
+              );
+            });
+
+            const totalOrders = orderMessages.length;
+            
+            const getOrderPrice = (msg: Message) => {
+              const product = products.find(p => msg.title.toLowerCase().includes(p.name.toLowerCase()));
+              if (product) return product.price;
+              const match = msg.content.match(/(\d+)\s*€/);
+              return match ? parseInt(match[1]) : 0;
+            };
+
+            const totalRevenue = orderMessages.reduce((sum, msg) => sum + getOrderPrice(msg), 0);
+            
+            return (
+              <motion.div 
+                key="orders" 
+                initial={{ opacity: 0, y: 10 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                exit={{ opacity: 0, y: -10 }} 
+                className="space-y-8"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="bg-black/35 backdrop-blur-2xl border border-white/10 p-6 rounded-3xl relative overflow-hidden group shadow-2xl flex flex-col justify-between hover:border-primary-red/30 transition-all">
+                    <div className="absolute -right-8 -top-8 w-24 h-24 bg-gradient-to-br from-red-500/20 to-red-600/5 rounded-full opacity-30 group-hover:scale-125 transition-transform" />
+                    <div className="flex justify-between items-start">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">Total Commandes</span>
+                      <ShoppingCart size={18} className="text-white/30" />
+                    </div>
+                    <div>
+                      <h4 className="font-serif text-4xl font-bold text-white mt-4">{totalOrders}</h4>
+                      <p className="text-[9px] text-white/30 mt-1 uppercase tracking-wider">Demandes d'achat uniques</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-black/35 backdrop-blur-2xl border border-white/10 p-6 rounded-3xl relative overflow-hidden group shadow-2xl flex flex-col justify-between hover:border-primary-red/30 transition-all">
+                    <div className="absolute -right-8 -top-8 w-24 h-24 bg-gradient-to-br from-emerald-500/20 to-emerald-600/5 rounded-full opacity-30 group-hover:scale-125 transition-transform" />
+                    <div className="flex justify-between items-start">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">Chiffre Estimé</span>
+                      <Zap size={18} className="text-white/30" />
+                    </div>
+                    <div>
+                      <h4 className="font-serif text-4xl font-bold text-emerald-400 mt-4">{totalRevenue} €</h4>
+                      <p className="text-[9px] text-white/30 mt-1 uppercase tracking-wider">Cumulé sur les produits boutique</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-black/35 backdrop-blur-2xl border border-white/10 p-6 rounded-3xl relative overflow-hidden group shadow-2xl flex flex-col justify-between hover:border-primary-red/30 transition-all">
+                    <div className="absolute -right-8 -top-8 w-24 h-24 bg-gradient-to-br from-blue-500/20 to-blue-600/5 rounded-full opacity-30 group-hover:scale-125 transition-transform" />
+                    <div className="flex justify-between items-start">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">Engagement Cash</span>
+                      <Check size={18} className="text-white/30" />
+                    </div>
+                    <div>
+                      <h4 className="font-serif text-4xl font-bold text-blue-400 mt-4">
+                        {orderMessages.filter(m => m.agreed_to_pay).length}
+                      </h4>
+                      <p className="text-[9px] text-white/30 mt-1 uppercase tracking-wider">Clients engagés à payer cash</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex bg-white/5 border border-white/10 p-2 rounded-2xl shadow-lg items-center gap-4">
+                  <input
+                    type="text"
+                    placeholder="Rechercher par ID, produit, client, email..."
+                    value={orderSearchQuery}
+                    onChange={(e) => setOrderSearchQuery(e.target.value)}
+                    className="flex-1 bg-transparent py-2 px-4 outline-none text-white placeholder-white/35 text-sm"
+                  />
+                  {orderSearchQuery && (
+                    <button onClick={() => setOrderSearchQuery("")} className="text-white/40 hover:text-white transition-colors px-2">
+                      <X size={16} />
+                    </button>
+                  )}
+                </div>
+
+                {filteredOrders.length === 0 ? (
+                  <div className="bg-white/5 border border-dashed border-white/10 rounded-3xl p-12 text-center text-white/40 italic">
+                    {orderMessages.length === 0 ? "Aucune commande reçue pour le moment." : "Aucune commande ne correspond à votre recherche."}
+                  </div>
+                ) : (
+                  <div className="space-y-8">
+                    {filteredOrders.map((msg) => {
+                      const orderPrice = getOrderPrice(msg);
+                      const isAgreed = msg.agreed_to_pay;
+
+                      return (
+                        <div key={msg.id} className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-3xl p-8 space-y-8 relative group shadow-2xl hover:border-primary-red/20 transition-all">
+                          <button onClick={() => deleteMessage(msg.id)} className="absolute top-8 right-8 text-white/20 hover:text-red-500 transition-colors"><Trash2 size={20} /></button>
+                          
+                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-6">
+                            <div className="flex items-center gap-4 flex-wrap">
+                              <span className="bg-primary-red text-white font-mono text-sm font-bold tracking-widest px-4 py-1.5 rounded-xl shadow-lg shadow-primary-red/10 border border-primary-red/10">
+                                #{msg.order_id}
+                              </span>
+                              <span className="text-white/40 text-xs">{msg.date}</span>
+                              {isAgreed ? (
+                                <span className="bg-green-500/10 text-green-400 px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border border-green-500/20 flex items-center gap-1.5 shadow-md">
+                                  <Check size={12} /> Paiement Cash Confirmé
+                                </span>
+                              ) : (
+                                <span className="bg-amber-500/10 text-amber-400 px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border border-amber-500/20 flex items-center gap-1.5 shadow-md">
+                                  <AlertCircle size={12} /> Engagement Non Validé
+                                </span>
+                              )}
                             </div>
-                            <p className="text-sm text-white/80">{rep.text}</p>
-                            {rep.media && rep.media.length > 0 && (
-                              <div className="flex flex-wrap gap-2 pt-2">
-                                {rep.media.map((m, midx) => (
-                                  <div key={midx} className="relative w-20 h-20 rounded-lg overflow-hidden border border-white/10">
-                                    <Image src={m.url} alt="Reply Media" fill className="object-cover" unoptimized />
+                            
+                            {orderPrice > 0 && (
+                              <div className="text-right">
+                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 block">Montant Estimé</span>
+                                <span className="text-2xl font-serif italic text-emerald-400 mt-1 block">{orderPrice} €</span>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                            <div className="lg:col-span-4 bg-white/5 p-6 rounded-2xl border border-white/5 space-y-4">
+                              <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary-red">Client</h4>
+                              
+                              <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 rounded-full bg-white/10 border border-white/10 overflow-hidden relative shrink-0 flex items-center justify-center">
+                                  {(msg as any).profiles?.avatar_url ? (
+                                    <Image src={(msg as any).profiles.avatar_url} alt="Profile" fill className="object-cover" unoptimized />
+                                  ) : (
+                                    <User size={20} className="text-white/40" />
+                                  )}
+                                </div>
+                                <div className="min-w-0">
+                                  <span className="font-serif text-lg text-white truncate block">{(msg as any).profiles?.full_name || msg.name || "Anonyme"}</span>
+                                  <span className="text-[9px] text-white/40 uppercase tracking-widest block">{(msg as any).profiles?.full_name ? msg.name : "Visiteur"}</span>
+                                </div>
+                              </div>
+
+                              <div className="space-y-2 pt-2 border-t border-white/5 text-xs text-white/70">
+                                <div className="flex justify-between">
+                                  <span className="text-white/40">Email :</span>
+                                  <span className="font-medium truncate max-w-[180px]">{msg.user_email || "Non renseigné"}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-white/40">Contact :</span>
+                                  <span className="font-medium truncate max-w-[180px]">{(msg as any).contact || "Non renseigné"}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="lg:col-span-8 space-y-4">
+                              <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">Détails de la demande</h4>
+                              <h3 className="text-xl font-medium text-white/90">{msg.title}</h3>
+                              <p className="text-sm leading-relaxed text-white/70 bg-white/5 p-6 rounded-2xl border border-white/5 whitespace-pre-wrap">{msg.content}</p>
+                              
+                              {msg.attachments && msg.attachments.length > 0 && (
+                                <div className="space-y-2">
+                                  <span className="text-[9px] font-bold uppercase tracking-widest text-white/35">Pièces jointes ({msg.attachments.length})</span>
+                                  <div className="flex flex-wrap gap-3">
+                                    {msg.attachments.map((att, aidx) => (
+                                      <a key={aidx} href={att} target="_blank" rel="noreferrer" className="relative w-24 h-24 rounded-xl overflow-hidden border border-white/10 group cursor-pointer block shadow-lg">
+                                        <Image src={att} alt="Attachment" fill className="object-cover group-hover:scale-105 transition-transform" unoptimized />
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                          <ExternalLink size={20} className="text-white drop-shadow-md" />
+                                        </div>
+                                      </a>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="space-y-4 pt-6 border-t border-white/5">
+                            {msg.replies && msg.replies.length > 0 && (
+                              <div className="space-y-4">
+                                {msg.replies.map((rep, ridx) => (
+                                  <div key={ridx} className="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-3">
+                                    <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest opacity-40">
+                                      <span>Lucas (Admin)</span>
+                                      <span>{rep.date}</span>
+                                    </div>
+                                    <p className="text-sm text-white/80">{rep.text}</p>
+                                    {rep.media && rep.media.length > 0 && (
+                                      <div className="flex flex-wrap gap-2 pt-2">
+                                        {rep.media.map((m, midx) => (
+                                          <div key={midx} className="relative w-20 h-20 rounded-lg overflow-hidden border border-white/10">
+                                            <Image src={m.url} alt="Reply Media" fill className="object-cover" unoptimized />
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
                                   </div>
                                 ))}
                               </div>
                             )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    
-                    <div className="flex flex-col gap-3">
-                      {replyMedia[msg.id]?.length > 0 && (
-                        <div className="flex flex-wrap gap-2 p-2 bg-white/5 rounded-xl border border-white/10">
-                          {replyMedia[msg.id].map((m, idx) => (
-                            <div key={idx} className="relative w-16 h-16 rounded-lg overflow-hidden group">
-                              <Image src={m.url} alt="Pending Media" fill className="object-cover" unoptimized />
-                              <button onClick={() => setReplyMedia({ ...replyMedia, [msg.id]: replyMedia[msg.id].filter((_, i) => i !== idx) })} className="absolute inset-0 bg-red-500/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white">
-                                <Trash2 size={16} />
-                              </button>
+                            
+                            <div className="flex flex-col gap-3">
+                              {replyMedia[msg.id]?.length > 0 && (
+                                <div className="flex flex-wrap gap-2 p-2 bg-white/5 rounded-xl border border-white/10">
+                                  {replyMedia[msg.id].map((m, idx) => (
+                                    <div key={idx} className="relative w-16 h-16 rounded-lg overflow-hidden group">
+                                      <Image src={m.url} alt="Pending Media" fill className="object-cover" unoptimized />
+                                      <button onClick={() => setReplyMedia({ ...replyMedia, [msg.id]: replyMedia[msg.id].filter((_, i) => i !== idx) })} className="absolute inset-0 bg-red-500/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white">
+                                        <Trash2 size={16} />
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              <div className="flex gap-4 items-end">
+                                <div className="flex-1 relative">
+                                  <textarea 
+                                    placeholder="Répondre au client..." 
+                                    value={replyText[msg.id] || ""} 
+                                    onChange={(e) => setReplyText({ ...replyText, [msg.id]: e.target.value })} 
+                                    rows={2} 
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 pr-12 text-sm text-white outline-none focus:border-primary-red transition-all resize-none" 
+                                  />
+                                  <button 
+                                    onClick={() => {
+                                      const url = prompt("URL de l'image :");
+                                      if (url) {
+                                        const current = replyMedia[msg.id] || [];
+                                        setReplyMedia({ ...replyMedia, [msg.id]: [...current, { url, type: 'image' }] });
+                                      }
+                                    }}
+                                    className="absolute right-4 bottom-4 text-white/30 hover:text-primary-red transition-colors"
+                                  >
+                                    <Plus size={20} />
+                                  </button>
+                                </div>
+                                <button onClick={() => handleReply(msg.id)} className="bg-primary-red text-white px-8 py-4 text-xs font-bold rounded-2xl flex items-center gap-2 hover:bg-red-600 transition-all shadow-xl shadow-primary-red/20 h-[52px]"> <Send size={16} /> RÉPONDRE </button>
+                              </div>
                             </div>
-                          ))}
+                          </div>
                         </div>
-                      )}
-                      <div className="flex gap-4 items-end">
-                        <div className="flex-1 relative">
-                          <textarea 
-                            placeholder="Votre réponse..." 
-                            value={replyText[msg.id] || ""} 
-                            onChange={(e) => setReplyText({ ...replyText, [msg.id]: e.target.value })} 
-                            rows={2} 
-                            className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 pr-12 text-sm text-white outline-none focus:border-primary-red transition-all resize-none" 
-                          />
-                          <button 
-                            onClick={() => {
-                              const url = prompt("URL de l'image :");
-                              if (url) {
-                                const current = replyMedia[msg.id] || [];
-                                setReplyMedia({ ...replyMedia, [msg.id]: [...current, { url, type: 'image' }] });
-                              }
-                            }}
-                            className="absolute right-4 bottom-4 text-white/30 hover:text-primary-red transition-colors"
-                          >
-                            <Plus size={20} />
-                          </button>
-                        </div>
-                        <button onClick={() => handleReply(msg.id)} className="bg-primary-red text-white px-8 py-4 text-xs font-bold rounded-2xl flex items-center gap-2 hover:bg-red-600 transition-all shadow-xl shadow-primary-red/20 h-[52px]"> <Send size={16} /> RÉPONDRE </button>
-                      </div>
-                    </div>
+                      );
+                    })}
                   </div>
-                </div>
-              ))}
-            </motion.div>
-          )}
+                )}
+              </motion.div>
+            );
+          })()}
 
           {activeTab === "comments" && (
             <motion.div key="comments" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
