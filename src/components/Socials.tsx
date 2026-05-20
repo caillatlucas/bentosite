@@ -10,11 +10,38 @@ import {
   FaTiktok,
   FaGlobe,
   FaDiscord,
-  FaPhone
+  FaPhone,
+  FaLink,
+  FaFacebook,
+  FaTwitch,
+  FaSnapchat,
+  FaPinterest,
+  FaSpotify,
+  FaSteam,
+  FaReddit,
+  FaWhatsapp,
+  FaTelegram,
+  FaEnvelope,
+  FaPatreon,
+  FaPaypal,
+  FaMedium,
+  FaBehance,
+  FaDribbble,
+  FaFigma,
+  FaArtstation,
+  FaBriefcase,
+  FaBook
 } from "react-icons/fa";
 
 export interface SocialLink {
   url: string;
+  enabled: boolean;
+}
+
+export interface CustomLink {
+  name: string;
+  url: string;
+  icon?: string;
   enabled: boolean;
 }
 
@@ -28,8 +55,40 @@ export interface SocialConfig {
   tiktok: SocialLink;
   discord: SocialLink;
   phone: SocialLink;
-  customLinks: { name: string; url: string; enabled: boolean }[];
+  customLinks?: CustomLink[];
 }
+
+export const ICON_MAP: Record<string, any> = {
+  globe: FaGlobe,
+  link: FaLink,
+  linkedin: FaLinkedin,
+  github: FaGithub,
+  twitter: FaTwitter,
+  instagram: FaInstagram,
+  youtube: FaYoutube,
+  tiktok: FaTiktok,
+  discord: FaDiscord,
+  phone: FaPhone,
+  facebook: FaFacebook,
+  twitch: FaTwitch,
+  snapchat: FaSnapchat,
+  pinterest: FaPinterest,
+  spotify: FaSpotify,
+  steam: FaSteam,
+  reddit: FaReddit,
+  whatsapp: FaWhatsapp,
+  telegram: FaTelegram,
+  envelope: FaEnvelope,
+  patreon: FaPatreon,
+  paypal: FaPaypal,
+  medium: FaMedium,
+  behance: FaBehance,
+  dribbble: FaDribbble,
+  figma: FaFigma,
+  artstation: FaArtstation,
+  portfolio: FaBriefcase,
+  blog: FaBook
+};
 
 const defaultSocials: SocialConfig = {
   email: "contact@lucascaillat.fr",
@@ -58,19 +117,22 @@ export default function Socials({ config, color }: { config?: SocialConfig | nul
     { id: "phone", icon: FaPhone, label: "Téléphone", data: socials.phone ? { ...socials.phone, url: socials.phone.url.startsWith('tel:') ? socials.phone.url : `tel:${socials.phone.url}` } : null },
   ];
 
-  const customItems = (socials.customLinks || []).map(link => ({
-    id: link.name,
-    icon: FaGlobe,
-    label: link.name,
-    data: { url: link.url, enabled: link.enabled }
-  }));
+  const customItems = (socials.customLinks || []).map((link, index) => {
+    const IconComponent = ICON_MAP[link.icon || "link"] || FaGlobe;
+    return {
+      id: `custom-${index}-${link.name}`,
+      icon: IconComponent,
+      label: link.name,
+      data: { url: link.url, enabled: link.enabled }
+    };
+  });
 
   const enabledItems = [...socialItems, ...customItems].filter(item => item.data?.enabled && item.data?.url);
 
   if (enabledItems.length === 0) return null;
 
   return (
-    <div className="flex gap-8 md:gap-12 items-center">
+    <div className="flex gap-8 md:gap-12 items-center flex-wrap">
       {enabledItems.map((item, index) => (
         <motion.a
           key={item.id}
@@ -87,7 +149,7 @@ export default function Socials({ config, color }: { config?: SocialConfig | nul
             className="text-2xl transition-all duration-300 transform group-hover:-translate-y-1 group-hover:!text-primary-red" 
             style={{ color: color || 'rgba(255,255,255,0.4)' }}
           />
-          <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[8px] font-bold tracking-[0.2em] uppercase opacity-0 group-hover:opacity-40 transition-all duration-300">
+          <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[8px] font-bold tracking-[0.2em] uppercase opacity-0 group-hover:opacity-40 transition-all duration-300 whitespace-nowrap">
             {item.label}
           </span>
         </motion.a>

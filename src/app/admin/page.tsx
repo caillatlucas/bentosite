@@ -12,7 +12,7 @@ import { FaLinkedin, FaGithub, FaTwitter, FaInstagram, FaYoutube, FaTiktok, FaGl
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { SocialConfig } from "@/components/Socials";
+import { SocialConfig, ICON_MAP } from "@/components/Socials";
 import { supabase } from "@/lib/supabase";
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -362,7 +362,7 @@ export default function AdminDashboard() {
         }
       }
       const soc = sData.find(s => s.key === 'socials')?.value;
-      if (soc) setSocials(soc);
+      if (soc) setSocials({ ...soc, customLinks: soc.customLinks || [] });
     }
     
     if (pData) setProjects(pData);
@@ -969,6 +969,122 @@ export default function AdminDashboard() {
                     </div>
                   ))}
                 </div>
+                {/* Liens Personnalisés Section */}
+                <div className="space-y-6 pt-6 border-t border-text-black/10">
+                  <div className="flex justify-between items-center border-b border-text-black/10 pb-4">
+                    <h3 className="font-serif text-2xl">Liens Personnalisés</h3>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updatedLinks = [
+                          ...(socials.customLinks || []),
+                          { name: "Mon site", url: "https://", icon: "link", enabled: true }
+                        ];
+                        setSocials({ ...socials, customLinks: updatedLinks });
+                      }}
+                      className="bg-primary-red hover:bg-red-600 text-white font-bold text-[10px] tracking-widest uppercase px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all shadow-md"
+                    >
+                      <Plus size={12} /> Ajouter
+                    </button>
+                  </div>
+
+                  {(socials.customLinks || []).length === 0 ? (
+                    <p className="text-sm text-white/45 italic py-2">Aucun lien personnalisé configuré.</p>
+                  ) : (
+                    <div className="space-y-6">
+                      {(socials.customLinks || []).map((link, idx) => (
+                        <div key={idx} className="flex flex-col md:flex-row items-start md:items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5 shadow-md">
+                          {/* Icon selection */}
+                          <div className="flex flex-col w-full md:w-36">
+                            <label className="block text-[8px] font-bold uppercase tracking-widest mb-1 opacity-50">Icône</label>
+                            <select
+                              value={link.icon || "link"}
+                              onChange={(e) => {
+                                const updated = [...(socials.customLinks || [])];
+                                updated[idx] = { ...updated[idx], icon: e.target.value };
+                                setSocials({ ...socials, customLinks: updated });
+                              }}
+                              className="bg-[#121212]/90 border border-white/10 text-white rounded-lg px-2 py-1.5 text-xs focus:border-primary-red outline-none"
+                            >
+                              {Object.keys(ICON_MAP).map((iconKey) => (
+                                <option key={iconKey} value={iconKey} className="bg-[#121212] text-white">
+                                  {iconKey.charAt(0).toUpperCase() + iconKey.slice(1)}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {/* Name input */}
+                          <div className="flex-1 w-full">
+                            <label className="block text-[8px] font-bold uppercase tracking-widest mb-1 opacity-50">Nom du lien</label>
+                            <input
+                              type="text"
+                              value={link.name}
+                              onChange={(e) => {
+                                const updated = [...(socials.customLinks || [])];
+                                updated[idx] = { ...updated[idx], name: e.target.value };
+                                setSocials({ ...socials, customLinks: updated });
+                              }}
+                              className="w-full bg-transparent border-b border-text-black/20 py-1 outline-none text-sm"
+                              placeholder="Ex: Portfolio, Blog..."
+                            />
+                          </div>
+
+                          {/* URL input */}
+                          <div className="flex-1 w-full md:w-64">
+                            <label className="block text-[8px] font-bold uppercase tracking-widest mb-1 opacity-50">URL</label>
+                            <input
+                              type="text"
+                              value={link.url}
+                              onChange={(e) => {
+                                const updated = [...(socials.customLinks || [])];
+                                updated[idx] = { ...updated[idx], url: e.target.value };
+                                setSocials({ ...socials, customLinks: updated });
+                              }}
+                              className="w-full bg-transparent border-b border-text-black/20 py-1 outline-none text-sm"
+                              placeholder="https://..."
+                            />
+                          </div>
+
+                          {/* Toggle & Delete buttons */}
+                          <div className="flex items-center gap-4 self-end md:self-center mt-2 md:mt-0">
+                            {/* Enable toggle */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = [...(socials.customLinks || [])];
+                                updated[idx] = { ...updated[idx], enabled: !updated[idx].enabled };
+                                setSocials({ ...socials, customLinks: updated });
+                              }}
+                              className={`w-10 h-5 rounded-full transition-colors relative shrink-0 ${
+                                link.enabled ? "bg-primary-red" : "bg-text-black/10"
+                              }`}
+                            >
+                              <motion.div
+                                animate={{ x: link.enabled ? 20 : 2 }}
+                                className="w-3.5 h-3.5 bg-white rounded-full absolute top-0.5 shadow-sm"
+                              />
+                            </button>
+
+                            {/* Delete button */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = (socials.customLinks || []).filter((_, i) => i !== idx);
+                                setSocials({ ...socials, customLinks: updated });
+                              }}
+                              className="p-2 bg-white/5 hover:bg-red-500/20 text-white/40 hover:text-red-500 rounded-xl transition-all"
+                              title="Supprimer"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 <button onClick={handleSaveSocials} className="bg-text-black text-white px-10 py-4 font-bold text-xs tracking-widest uppercase">Sauvegarder</button>
               </div>
             </motion.div>
@@ -1388,7 +1504,9 @@ export default function AdminDashboard() {
                               )}
                             </div>
                             
-                            <p className="text-base text-white/80 leading-relaxed whitespace-pre-wrap">{comment.content}</p>
+                            {comment.content && comment.content.trim() && (
+                              <p className="text-base text-white/80 leading-relaxed whitespace-pre-wrap break-words">{comment.content}</p>
+                            )}
                             
                             {comment.image_url && (
                               <div className="relative max-w-xs aspect-video rounded-xl overflow-hidden border border-white/10 mt-3 shadow-md">

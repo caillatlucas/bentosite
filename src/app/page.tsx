@@ -1998,7 +1998,6 @@ export default function Home() {
                           placeholder="Écrivez un message ou laissez un commentaire..."
                           rows={4}
                           className="w-full bg-white/[0.04] border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red focus:bg-white/10 transition-all text-white placeholder-white/50 font-medium resize-none"
-                          required
                         />
 
                         {/* Image Attachment System */}
@@ -2163,9 +2162,11 @@ export default function Home() {
                                   </p>
                                 ) : (
                                   <>
-                                    <p className="text-sm text-white font-medium leading-relaxed whitespace-pre-wrap">
-                                      {parseMarkdown(comment.content)}
-                                    </p>
+                                    {comment.content && comment.content.trim() && (
+                                      <p className="text-sm text-white font-medium leading-relaxed whitespace-pre-wrap break-words">
+                                        {parseMarkdown(comment.content)}
+                                      </p>
+                                    )}
 
                                     {comment.image_url && (
                                       <div
@@ -2222,7 +2223,6 @@ export default function Home() {
                                     placeholder="Écrivez votre réponse..."
                                     rows={2}
                                     className="w-full bg-white/[0.04] border border-white/10 rounded-xl p-3 text-xs outline-none focus:border-primary-red focus:bg-white/10 transition-all text-white placeholder-white/50 font-medium resize-none"
-                                    required
                                   />
 
                                   {/* Compact Reply Attachment system */}
@@ -2350,9 +2350,11 @@ export default function Home() {
                                           )}
                                         </div>
 
-                                        <p className="text-xs text-white font-medium leading-relaxed whitespace-pre-wrap">
-                                          {parseMarkdown(reply.content)}
-                                        </p>
+                                        {reply.content && reply.content.trim() && (
+                                          <p className="text-xs text-white font-medium leading-relaxed whitespace-pre-wrap break-words">
+                                            {parseMarkdown(reply.content)}
+                                          </p>
+                                        )}
 
                                         {reply.image_url && (
                                           <div
