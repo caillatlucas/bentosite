@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useMotionValue, useSpring, useTransform, useScroll, useMotionTemplate, AnimatePresence, useMotionValueEvent } from "framer-motion";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { ArrowUpRight, ArrowLeft, Zap, X, Send, User, MessageSquare, CheckCircle2, Mail, Music, Volume2, VolumeX, Copy, Check, Bell, Play, Upload, Maximize2, Minimize2, Settings, LogOut, Trash2, Heart, Plus, ChevronDown, SkipBack, SkipForward, Pause, Share2 } from "lucide-react";
 import Projects from "@/components/Projects";
 import Socials from "@/components/Socials";
@@ -163,6 +163,8 @@ export default function Home() {
   const [songArtist, setSongArtist] = useState("");
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(202);
+  const lastCommentTime = useRef(0);
+  const [isMutedLocal, setIsMutedLocal] = useState(false);
 
   const musicId = settings.musicUrl ? getYoutubeId(settings.musicUrl) : null;
 
@@ -594,6 +596,30 @@ export default function Home() {
     }
     if (!commentContent.trim() && !commentImageUrl) return;
 
+    if (commentContent.length > 300) {
+      alert("Le commentaire ne doit pas dépasser 300 caractères.");
+      return;
+    }
+
+    if (Date.now() - lastCommentTime.current < 2000) {
+      alert("Veuillez patienter 2 secondes entre chaque message.");
+      return;
+    }
+
+    lastCommentTime.current = Date.now();
+
+    const oneMinuteAgo = new Date(Date.now() - 60000).toISOString();
+    const { data: recentComments } = await supabase.from('comments').select('id').eq('user_id', user.id).gte('created_at', oneMinuteAgo);
+    
+    let isSpamming = false;
+    if (recentComments && recentComments.length >= 5) {
+      setIsMutedLocal(true);
+      isSpamming = true;
+      alert("Vous avez envoyé trop de messages en 1 minute. Vous êtes temporairement muté et vos messages doivent être vérifiés.");
+    }
+
+    const needsValidation = (settings as any).requireCommentValidation || isMutedLocal || isSpamming;
+
     setIsSubmittingComment(true);
 
     const newComment = {
@@ -601,8 +627,9 @@ export default function Home() {
       user_email: user.email,
       user_name: userPseudo || user.email.split('@')[0],
       avatar_url: userProfileImage || "",
-      content: commentContent,
+      content: commentContent.substring(0, 300),
       image_url: commentImageUrl || null,
+      validated: !needsValidation,
       created_at: new Date().toISOString()
     };
 
@@ -715,6 +742,31 @@ export default function Home() {
       return;
     }
     if (!replyContent.trim() && !replyImageUrl) return;
+
+    if (replyContent.length > 300) {
+      alert("La réponse ne doit pas dépasser 300 caractères.");
+      return;
+    }
+
+    if (Date.now() - lastCommentTime.current < 2000) {
+      alert("Veuillez patienter 2 secondes entre chaque message.");
+      return;
+    }
+
+    lastCommentTime.current = Date.now();
+
+    const oneMinuteAgo = new Date(Date.now() - 60000).toISOString();
+    const { data: recentComments } = await supabase.from('comments').select('id').eq('user_id', user.id).gte('created_at', oneMinuteAgo);
+    
+    let isSpamming = false;
+    if (recentComments && recentComments.length >= 5) {
+      setIsMutedLocal(true);
+      isSpamming = true;
+      alert("Vous avez envoyé trop de messages en 1 minute. Vous êtes temporairement muté et vos messages doivent être vérifiés.");
+    }
+
+    const needsValidation = (settings as any).requireCommentValidation || isMutedLocal || isSpamming;
+
     setIsSubmittingComment(true);
 
     const newReply = {
@@ -723,9 +775,10 @@ export default function Home() {
       user_email: user.email,
       user_name: userPseudo || user.email.split('@')[0],
       avatar_url: userProfileImage || "",
-      content: replyContent,
+      content: replyContent.substring(0, 300),
       image_url: replyImageUrl || null,
       likes: [],
+      validated: !needsValidation,
       created_at: new Date().toISOString()
     };
 
@@ -1997,8 +2050,12 @@ export default function Home() {
                           onChange={(e) => setCommentContent(e.target.value)}
                           placeholder="Écrivez un message ou laissez un commentaire..."
                           rows={4}
+                          maxLength={300}
                           className="w-full bg-white/[0.04] border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red focus:bg-white/10 transition-all text-white placeholder-white/50 font-medium resize-none"
                         />
+                        <div className="text-[9px] text-right text-white/40 font-bold tracking-widest mt-1">
+                          {commentContent.length}/300
+                        </div>
 
                         {/* Image Attachment System */}
                         <div className="space-y-3 pt-2">
@@ -2222,10 +2279,12 @@ export default function Home() {
                                     onChange={(e) => setReplyContent(e.target.value)}
                                     placeholder="Écrivez votre réponse..."
                                     rows={2}
+                                    maxLength={300}
                                     className="w-full bg-white/[0.04] border border-white/10 rounded-xl p-3 text-xs outline-none focus:border-primary-red focus:bg-white/10 transition-all text-white placeholder-white/50 font-medium resize-none"
                                   />
-
-                                  {/* Compact Reply Attachment system */}
+                                  <div className="text-[9px] text-right text-white/40 font-bold tracking-widest -mt-2 mb-2">
+                                    {replyContent.length}/300
+                                  </div>                                  {/* Compact Reply Attachment system */}
                                   <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-white/5">
                                     <div className="flex items-center gap-3">
                                       <span className="text-[8px] font-bold uppercase tracking-widest text-white/30">Média</span>

@@ -42,6 +42,7 @@ export interface CustomLink {
   name: string;
   url: string;
   icon?: string;
+  customIconUrl?: string;
   enabled: boolean;
 }
 
@@ -119,11 +120,16 @@ export default function Socials({ config, color }: { config?: SocialConfig | nul
 
   const customItems = (socials.customLinks || []).map((link, index) => {
     const IconComponent = ICON_MAP[link.icon || "link"] || FaGlobe;
+    let finalUrl = link.url;
+    if (finalUrl && !finalUrl.startsWith('http') && !finalUrl.startsWith('mailto:') && !finalUrl.startsWith('tel:')) {
+      finalUrl = 'https://' + finalUrl;
+    }
     return {
       id: `custom-${index}-${link.name}`,
       icon: IconComponent,
+      customIconUrl: link.customIconUrl,
       label: link.name,
-      data: { url: link.url, enabled: link.enabled }
+      data: { url: finalUrl, enabled: link.enabled }
     };
   });
 
@@ -145,10 +151,18 @@ export default function Socials({ config, color }: { config?: SocialConfig | nul
           className="group relative"
           title={item.label}
         >
-          <item.icon 
-            className="text-2xl transition-all duration-300 transform group-hover:-translate-y-1 group-hover:!text-primary-red" 
-            style={{ color: color || 'rgba(255,255,255,0.4)' }}
-          />
+          {item.customIconUrl ? (
+            <img 
+              src={item.customIconUrl} 
+              alt={item.label}
+              className="w-6 h-6 object-contain transition-all duration-300 transform group-hover:-translate-y-1"
+            />
+          ) : (
+            <item.icon 
+              className="text-2xl transition-all duration-300 transform group-hover:-translate-y-1 group-hover:!text-primary-red" 
+              style={{ color: color || 'rgba(255,255,255,0.4)' }}
+            />
+          )}
           <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[8px] font-bold tracking-[0.2em] uppercase opacity-0 group-hover:opacity-40 transition-all duration-300 whitespace-nowrap">
             {item.label}
           </span>

@@ -103,6 +103,7 @@ export default function AdminDashboard() {
   const [statueTextureUrl, setStatueTextureUrl] = useState("");
   const [statueModelUrl, setStatueModelUrl] = useState("");
   const [useOriginalMaterial, setUseOriginalMaterial] = useState(false);
+  const [requireCommentValidation, setRequireCommentValidation] = useState(false);
   const [sectionsConfig, setSectionsConfig] = useState([
     { id: 'projects', label: 'Projets', subLabel: 'Sélection 2024', visible: true },
     { id: 'shop', label: 'Boutique', subLabel: 'Nos Produits', visible: true },
@@ -336,6 +337,7 @@ export default function AdminDashboard() {
         setStatueTextureUrl(global.statueTextureUrl || "");
         setStatueModelUrl(global.statueModelUrl || "");
         setUseOriginalMaterial(global.useOriginalMaterial ?? false);
+        setRequireCommentValidation(global.requireCommentValidation ?? false);
         if (global.sectionsConfig) {
           const hasComments = global.sectionsConfig.some((s: any) => s.id === 'comments');
           let migratedSections = global.sectionsConfig.map((s: { id: string; label: string; subLabel?: string; visible: boolean }) => {
@@ -406,7 +408,7 @@ export default function AdminDashboard() {
   };
 
   const handleSaveSettings = async () => {
-    const s = { profileName, profileProfession, profileBio, profileImage, heroTitleMain, heroTitleSub, textEffectImage, musicEnabled, musicUrl, musicCover, primaryColor, show3DBackground, musicRotationEnabled, statueTextureUrl, statueModelUrl, useOriginalMaterial, sectionsConfig, mediaOrder: mediaItems.map(m => m.id) };
+    const s = { profileName, profileProfession, profileBio, profileImage, heroTitleMain, heroTitleSub, textEffectImage, musicEnabled, musicUrl, musicCover, primaryColor, show3DBackground, musicRotationEnabled, statueTextureUrl, statueModelUrl, useOriginalMaterial, requireCommentValidation, sectionsConfig, mediaOrder: mediaItems.map(m => m.id) };
     const { error } = await supabase.from('settings').upsert({ key: 'global', value: s });
     if (error) {
       console.error(error);
@@ -454,6 +456,14 @@ export default function AdminDashboard() {
       setComments(prev => prev.filter(c => c.id !== id));
     } else {
       alert("Erreur de suppression : " + error.message);
+    }
+  };
+  const validateComment = async (id: string) => {
+    const { error } = await supabase.from('comments').update({ validated: true }).eq('id', id);
+    if (!error) {
+      setComments(prev => prev.map(c => c.id === id ? { ...c, validated: true } : c));
+    } else {
+      alert("Erreur lors de la validation : " + error.message);
     }
   };
 
@@ -1004,7 +1014,7 @@ export default function AdminDashboard() {
                                 updated[idx] = { ...updated[idx], icon: e.target.value };
                                 setSocials({ ...socials, customLinks: updated });
                               }}
-                              className="bg-[#121212]/90 border border-white/10 text-white rounded-lg px-2 py-1.5 text-xs focus:border-primary-red outline-none"
+                              className="bg-[#121212]/90 border border-white/10 text-white rounded-lg px-2 py-1.5 text-xs focus:border-primary-red outline-none mb-2"
                             >
                               {Object.keys(ICON_MAP).map((iconKey) => (
                                 <option key={iconKey} value={iconKey} className="bg-[#121212] text-white">
@@ -1012,6 +1022,18 @@ export default function AdminDashboard() {
                                 </option>
                               ))}
                             </select>
+                            <input
+                              type="text"
+                              value={link.customIconUrl || ""}
+                              onChange={(e) => {
+                                const updated = [...(socials.customLinks || [])];
+                                updated[idx] = { ...updated[idx], customIconUrl: e.target.value };
+                                setSocials({ ...socials, customLinks: updated });
+                              }}
+                              className="w-full bg-transparent border-b border-text-black/20 py-1 outline-none text-[10px]"
+                              placeholder="Image URL (optionnel)"
+                              title="URL d'une image (remplace l'icône)"
+                            />
                           </div>
 
                           {/* Name input */}
@@ -1514,6 +1536,18 @@ export default function AdminDashboard() {
                               </div>
                             )}
 
+                            {!comment.validated && (
+                              <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-between">
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400">En attente de validation</span>
+                                <button 
+                                  onClick={() => validateComment(comment.id)} 
+                                  className="px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all flex items-center gap-1.5 shadow-lg bg-amber-500/20 text-amber-400 hover:bg-amber-500 hover:text-white"
+                                >
+                                  <Check size={12} /> Valider
+                                </button>
+                              </div>
+                            )}
+
                             <div className="flex justify-between items-center pt-4 border-t border-white/5 mt-4">
                               <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest text-white/40">
                                 <span className="flex items-center gap-1.5"><Heart size={12} className="text-primary-red fill-primary-red animate-pulse" /> {commentLikesCount} likes</span>
@@ -1827,6 +1861,13 @@ export default function AdminDashboard() {
                   <span className="text-[9px] font-bold uppercase tracking-widest opacity-40">Rotation Image Lecteur</span>
                   <button onClick={() => setMusicRotationEnabled(!musicRotationEnabled)} className={`w-12 h-6 rounded-full transition-colors relative ${ musicRotationEnabled ? "bg-primary-red" : "bg-text-black/10" }`}>
                     <motion.div animate={{ x: musicRotationEnabled ? 24 : 4 }} className="w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm" />
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span className="text-[9px] font-bold uppercase tracking-widest opacity-40">Validation manuelle des commentaires</span>
+                  <button onClick={() => setRequireCommentValidation(!requireCommentValidation)} className={`w-12 h-6 rounded-full transition-colors relative ${ requireCommentValidation ? "bg-primary-red" : "bg-text-black/10" }`}>
+                    <motion.div animate={{ x: requireCommentValidation ? 24 : 4 }} className="w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm" />
                   </button>
                 </div>
 
