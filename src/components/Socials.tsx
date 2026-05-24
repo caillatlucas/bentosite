@@ -133,7 +133,13 @@ export default function Socials({ config, color }: { config?: SocialConfig | nul
     };
   });
 
-  const enabledItems = [...socialItems, ...customItems].filter(item => item.data?.enabled && item.data?.url);
+  const enabledItems = [...socialItems, ...customItems].filter(item => item.data?.enabled && item.data?.url) as Array<{
+    id: string;
+    icon: any;
+    label: string;
+    data: { url: string; enabled: boolean };
+    customIconUrl?: string;
+  }>;
 
   if (enabledItems.length === 0) return null;
 
