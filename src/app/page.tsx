@@ -2140,13 +2140,13 @@ export default function Home() {
 
                 {/* Comments list column */}
                 <div className="lg:col-span-2 space-y-6">
-                  {comments.filter(c => !c.parent_id && (!c.deleted_by_user || comments.some(r => r.parent_id === c.id && !r.deleted_by_user))).length === 0 ? (
+                  {comments.filter(c => !c.parent_id && c.validated !== false && (!c.deleted_by_user || comments.some(r => r.parent_id === c.id && !r.deleted_by_user && r.validated !== false))).length === 0 ? (
                     <div className="bg-[#0c0c0c]/85 backdrop-blur-2xl border border-dashed border-white/15 rounded-3xl p-12 text-center text-white/90 font-semibold italic shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.6)]">
                       Aucun commentaire pour le moment. Soyez le premier à vous exprimer !
                     </div>
                   ) : (
                     comments
-                      .filter(c => !c.parent_id && (!c.deleted_by_user || comments.some(r => r.parent_id === c.id && !r.deleted_by_user)))
+                      .filter(c => !c.parent_id && c.validated !== false && (!c.deleted_by_user || comments.some(r => r.parent_id === c.id && !r.deleted_by_user && r.validated !== false)))
                       .map((comment) => {
                         const isAuthor = user?.id === comment.user_id;
                         const isAdmin = user?.email === 'caillatlucas2304@gmail.com';
@@ -2164,7 +2164,7 @@ export default function Home() {
 
                         // Fetch replies for this specific comment
                         const commentReplies = comments
-                          .filter(c => c.parent_id === comment.id && !c.deleted_by_user)
+                          .filter(c => c.parent_id === comment.id && !c.deleted_by_user && c.validated !== false)
                           .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
                         const isDeleted = comment.deleted_by_user;
