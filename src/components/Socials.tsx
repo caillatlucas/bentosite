@@ -165,7 +165,7 @@ export default function Socials({ config, color }: { config?: SocialConfig | nul
             />
           ) : (
             <item.icon 
-              className="text-2xl transition-all duration-300 transform group-hover:-translate-y-1 group-hover:!text-primary-red" 
+              className="text-2xl transition-all duration-300 transform group-hover:-translate-y-1 group-hover:!text-primary-sage" 
               style={{ color: color || 'rgba(255,255,255,0.4)' }}
             />
           )}

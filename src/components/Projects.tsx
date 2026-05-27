@@ -61,7 +61,7 @@ export default function Projects({ config, label, subLabel, textColor, secondary
     <section>
       <div className="flex justify-center md:justify-start mb-16">
         <div className="inline-flex items-center gap-4 bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 px-6 py-3.5 rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.6)] transition-all duration-300">
-          <span className="w-2.5 h-2.5 bg-primary-red rounded-full animate-pulse shadow-[0_0_10px_var(--primary-red)]"></span>
+          <span className="w-2.5 h-2.5 bg-primary-sage rounded-full animate-pulse shadow-[0_0_10px_var(--primary-sage)]"></span>
           <motion.h2 style={{ color: textColor }} className="font-serif text-xl md:text-2xl tracking-tight leading-none italic">{label || config.recentProjectsTitle || "Projets Récents"}</motion.h2>
           <div className="w-[1px] h-5 bg-white/15" />
           <motion.span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white">{subLabel || config.projectsTitle}</motion.span>
@@ -99,13 +99,13 @@ export default function Projects({ config, label, subLabel, textColor, secondary
                     <div className="bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 p-4 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.6)]">
                       {project.category && (
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="w-1 h-1 bg-primary-red rounded-full animate-pulse"></span>
+                          <span className="w-1 h-1 bg-primary-sage rounded-full animate-pulse"></span>
                           <p className="text-white/60 text-[10px] md:text-xs tracking-[0.2em] uppercase font-bold">
                             {project.category}
                           </p>
                         </div>
                       )}
-                      <h3 className="text-white font-serif text-2xl md:text-3xl flex justify-between items-center group-hover:text-primary-red transition-colors">
+                      <h3 className="text-white font-serif text-2xl md:text-3xl flex justify-between items-center group-hover:text-primary-sage transition-colors">
                         {project.title}
                         <ArrowUpRight size={20} className="opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-500" />
                       </h3>

@@ -142,14 +142,14 @@ function ProjectContent() {
             transition={{ duration: 0.8 }}
             className="space-y-6"
           >
-            <Link href="/" className="inline-flex items-center gap-3 text-white/50 hover:text-primary-red mb-8 transition-all uppercase tracking-[0.2em] text-[10px] font-bold group">
-              <div className="p-2 bg-white/5 rounded-full group-hover:bg-primary-red/10 transition-all"><ArrowLeft size={14} /></div> Retour au portfolio
+            <Link href="/" className="inline-flex items-center gap-3 text-white/50 hover:text-primary-sage mb-8 transition-all uppercase tracking-[0.2em] text-[10px] font-bold group">
+              <div className="p-2 bg-white/5 rounded-full group-hover:bg-primary-sage/10 transition-all"><ArrowLeft size={14} /></div> Retour au portfolio
             </Link>
             <h1 className="font-serif text-6xl md:text-8xl lg:text-[140px] leading-[0.9] tracking-tighter mb-4 text-white drop-shadow-2xl">
               {parseMarkdown(project.title)}
             </h1>
             <div className="flex items-center gap-4">
-              <span className="w-3 h-3 bg-primary-red rounded-full animate-pulse"></span>
+              <span className="w-3 h-3 bg-primary-sage rounded-full animate-pulse"></span>
               <p className="text-xl md:text-3xl text-white/60 font-light italic font-serif">
                 {parseMarkdown(project.category)}
               </p>
@@ -168,7 +168,7 @@ function ProjectContent() {
           <div className="prose prose-xl prose-red">
             <div className="flex justify-start mb-8">
               <div className="inline-flex items-center gap-4 bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 px-6 py-3.5 rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.6)] transition-all duration-300">
-                <span className="w-2.5 h-2.5 bg-primary-red rounded-full animate-pulse shadow-[0_0_10px_var(--primary-red)]"></span>
+                <span className="w-2.5 h-2.5 bg-primary-sage rounded-full animate-pulse shadow-[0_0_10px_var(--primary-sage)]"></span>
                 <h2 className="font-serif text-xl md:text-2xl text-white tracking-tight leading-none italic">À propos du projet</h2>
               </div>
             </div>
@@ -180,7 +180,7 @@ function ProjectContent() {
               <div className="mt-16 space-y-6 relative group/carousel">
                 <div className="flex justify-between items-center border-b border-white/10 pb-6 mb-8">
                   <div className="inline-flex items-center gap-4 bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 px-6 py-3.5 rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.6)] transition-all duration-300">
-                    <span className="w-2.5 h-2.5 bg-primary-red rounded-full animate-pulse shadow-[0_0_10px_var(--primary-red)]"></span>
+                    <span className="w-2.5 h-2.5 bg-primary-sage rounded-full animate-pulse shadow-[0_0_10px_var(--primary-sage)]"></span>
                     <h3 className="font-serif text-xl md:text-2xl text-white tracking-tight leading-none italic">Galerie Media</h3>
                   </div>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-white/30">Défilement horizontal ou boutons de navigation</p>
@@ -190,7 +190,7 @@ function ProjectContent() {
                   {/* Left Navigation Button */}
                   <button 
                     onClick={() => scrollCarousel('left')}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-4 rounded-full bg-black/60 backdrop-blur-xl border border-white/15 text-white hover:bg-primary-red hover:border-primary-red transition-all shadow-2xl opacity-0 group-hover/carousel:opacity-100 duration-300"
+                    className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-4 rounded-full bg-black/60 backdrop-blur-xl border border-white/15 text-white hover:bg-primary-sage hover:border-primary-sage transition-all shadow-2xl opacity-0 group-hover/carousel:opacity-100 duration-300"
                     aria-label="Précédent"
                   >
                     <ChevronLeft size={20} />
@@ -199,7 +199,7 @@ function ProjectContent() {
                   {/* Right Navigation Button */}
                   <button 
                     onClick={() => scrollCarousel('right')}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-4 rounded-full bg-black/60 backdrop-blur-xl border border-white/15 text-white hover:bg-primary-red hover:border-primary-red transition-all shadow-2xl opacity-0 group-hover/carousel:opacity-100 duration-300"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-4 rounded-full bg-black/60 backdrop-blur-xl border border-white/15 text-white hover:bg-primary-sage hover:border-primary-sage transition-all shadow-2xl opacity-0 group-hover/carousel:opacity-100 duration-300"
                     aria-label="Suivant"
                   >
                     <ChevronRight size={20} />
@@ -214,7 +214,7 @@ function ProjectContent() {
                       const ytId = isVideo ? item.url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/)?.[2] : null;
                       
                       return (
-                        <div key={i} className="min-w-[85vw] md:min-w-[700px] aspect-video relative rounded-xl overflow-hidden shadow-2xl bg-text-black/5 snap-center border border-white/10 hover:border-primary-red/30 transition-all duration-300">
+                        <div key={i} className="min-w-[85vw] md:min-w-[700px] aspect-video relative rounded-xl overflow-hidden shadow-2xl bg-text-black/5 snap-center border border-white/10 hover:border-primary-sage/30 transition-all duration-300">
                           {isVideo ? (
                             <iframe 
                               width="100%" 
@@ -254,13 +254,13 @@ function ProjectContent() {
           <div className="bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 p-12 rounded-3xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_20px_50px_rgba(0,0,0,0.8)] transition-all duration-300">
             <div className="flex justify-start mb-10 pb-6 border-b border-white/10">
               <div className="inline-flex items-center gap-3 bg-white/5 border border-white/10 px-6 py-2.5 rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
-                <span className="w-2 h-2 bg-primary-red rounded-full animate-pulse shadow-[0_0_8px_var(--primary-red)]"></span>
+                <span className="w-2 h-2 bg-primary-sage rounded-full animate-pulse shadow-[0_0_8px_var(--primary-sage)]"></span>
                 <span className="font-serif italic text-white text-lg font-medium">Détails</span>
               </div>
             </div>
             <div className="space-y-8">
               <div className="flex items-center gap-6">
-                <div className="w-12 h-12 bg-white/5 flex items-center justify-center rounded-2xl text-primary-red border border-white/5 shrink-0">
+                <div className="w-12 h-12 bg-white/5 flex items-center justify-center rounded-2xl text-primary-sage border border-white/5 shrink-0">
                   <Calendar size={20} />
                 </div>
                 <div>
@@ -270,7 +270,7 @@ function ProjectContent() {
               </div>
               {project.category && (
                 <div className="flex items-center gap-6">
-                  <div className="w-12 h-12 bg-white/5 flex items-center justify-center rounded-2xl text-primary-red border border-white/5 shrink-0">
+                  <div className="w-12 h-12 bg-white/5 flex items-center justify-center rounded-2xl text-primary-sage border border-white/5 shrink-0">
                     <Tag size={20} />
                   </div>
                   <div>
@@ -281,7 +281,7 @@ function ProjectContent() {
               )}
               {project.details && (
                 <div className="flex items-start gap-6">
-                  <div className="w-12 h-12 bg-white/5 flex items-center justify-center rounded-2xl text-primary-red border border-white/5 shrink-0">
+                  <div className="w-12 h-12 bg-white/5 flex items-center justify-center rounded-2xl text-primary-sage border border-white/5 shrink-0">
                     <Info size={20} />
                   </div>
                   <div>
@@ -298,7 +298,7 @@ function ProjectContent() {
                    href={project.url} 
                    target="_blank" 
                    rel="noopener noreferrer"
-                   className="block w-full text-center bg-primary-red text-white py-5 rounded-2xl hover:bg-red-600 transition-all font-bold text-xs tracking-widest uppercase shadow-2xl shadow-primary-red/30"
+                   className="block w-full text-center bg-primary-sage text-white py-5 rounded-2xl hover:bg-red-600 transition-all font-bold text-xs tracking-widest uppercase shadow-2xl shadow-primary-sage/30"
                  >
                     Voir le site live
                  </a>

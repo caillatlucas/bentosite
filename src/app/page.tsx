@@ -111,13 +111,13 @@ export default function Home() {
     recentProjectsTitle: "Projets Récents",
     galleryTitle: "Galerie", 
     bentoGridTitle: "Bento Grid",
-    heroTitleMain: "CAILLAT", 
-    heroTitleSub: "Lucas", 
+    heroTitleMain: "Peloille", 
+    heroTitleSub: "Galerie", 
     textEffectImage: "",
     musicEnabled: false, 
     musicUrl: "", 
     musicCover: "",
-    primaryColor: "#ff3131",
+    primaryColor: "#606c38",
     show3DBackground: false,
     musicRotationEnabled: true,
     statueTextureUrl: "",
@@ -198,7 +198,7 @@ export default function Home() {
   const { scrollYProgress } = useScroll();
 
   // Color transition - Adjusted for portrait
-  const pColor = settings.primaryColor || "#ff3131";
+  const pColor = settings.primaryColor || "#606c38";
   const backgroundColor = useTransform(scrollYProgress, [0, 0.15], [pColor, "#ffffff"]);
   const textColor = useTransform(scrollYProgress, [0, 0.15], ["#ffffff", pColor]);
   const secondaryTextColor = useTransform(scrollYProgress, [0, 0.15], ["rgba(255,255,255,0.7)", "rgba(17,17,17,0.6)"]);
@@ -1084,7 +1084,7 @@ export default function Home() {
                   type="button"
                   className={`px-4 py-1.5 rounded-full text-[10px] md:text-xs font-bold tracking-wider uppercase transition-all duration-300 ${
                     isActive 
-                      ? "bg-primary-red text-white shadow-lg shadow-primary-red/30 scale-105" 
+                      ? "bg-primary-sage text-white shadow-lg shadow-primary-sage/30 scale-105" 
                       : "text-white/85 hover:text-white hover:bg-white/10"
                   }`}
                 >
@@ -1120,8 +1120,8 @@ export default function Home() {
       {/* Dynamic Theme Styles */}
       <style jsx global>{`
         :root {
-          --primary-red: ${pColor};
-          --color-primary-red: ${pColor};
+          --primary-sage: ${pColor};
+          --color-primary-sage: ${pColor};
           --shadow-red: ${pColor}22;
           --color-shadow-red: ${pColor}22;
         }
@@ -1160,7 +1160,7 @@ export default function Home() {
           className="bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 text-white w-12 h-12 md:w-14 md:h-14 rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_10px_30px_rgba(0,0,0,0.5)] flex items-center justify-center relative transition-all duration-300 hover:bg-[#0c0c0c]/95"
         >
           <Bell size={24} />
-          {unreadCount > 0 && <span className="absolute -top-1 -right-1 bg-primary-red text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white/10">{unreadCount}</span>}
+          {unreadCount > 0 && <span className="absolute -top-1 -right-1 bg-primary-sage text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white/10">{unreadCount}</span>}
         </motion.button>
         
         <div className="flex gap-4">
@@ -1197,7 +1197,7 @@ export default function Home() {
           </motion.button>
         </div>
 
-        <motion.button onClick={() => setIsContactOpen(true)} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="bg-primary-red text-white w-14 h-14 md:w-16 md:h-16 rounded-full shadow-2xl flex items-center justify-center group overflow-hidden">
+        <motion.button onClick={() => setIsContactOpen(true)} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="bg-primary-sage text-white w-14 h-14 md:w-16 md:h-16 rounded-full shadow-2xl flex items-center justify-center group overflow-hidden">
           <motion.div animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 2 }}><Zap size={24} fill="currentColor" /></motion.div>
         </motion.button>
       </div>
@@ -1209,30 +1209,30 @@ export default function Home() {
             <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-md bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl p-10 text-white">
               <form onSubmit={handleAuth} className="space-y-8">
                 <div className="space-y-2 text-center">
-                  <h3 className="font-serif text-4xl italic text-primary-red">{isSignUp ? "Créer un compte" : "Connexion"}</h3>
+                  <h3 className="font-serif text-4xl italic text-primary-sage">{isSignUp ? "Créer un compte" : "Connexion"}</h3>
                   <p className="text-xs text-white/40 uppercase tracking-widest">{isSignUp ? "Rejoignez l'aventure" : "Bon retour parmi nous"}</p>
                 </div>
 
                 <div className="space-y-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-white/30 ml-1">Email</label>
-                    <input type="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all" placeholder="votre@email.com" required />
+                    <input type="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-sage transition-all" placeholder="votre@email.com" required />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-white/30 ml-1">Mot de passe</label>
-                    <input type="password" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all" placeholder="••••••••" required />
+                    <input type="password" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-sage transition-all" placeholder="••••••••" required />
                   </div>
                 </div>
 
                 {authError && <p className="text-red-500 text-[10px] font-bold uppercase text-center tracking-widest">{authError}</p>}
 
-                <button type="submit" disabled={isAuthLoading} className="w-full bg-primary-red text-white py-5 rounded-2xl font-bold text-xs tracking-widest uppercase hover:bg-red-600 transition-all shadow-2xl shadow-primary-red/30 flex items-center justify-center gap-3">
+                <button type="submit" disabled={isAuthLoading} className="w-full bg-primary-sage text-white py-5 rounded-2xl font-bold text-xs tracking-widest uppercase hover:bg-red-600 transition-all shadow-2xl shadow-primary-sage/30 flex items-center justify-center gap-3">
                   {isAuthLoading ? "Chargement..." : (isSignUp ? "S'INSCRIRE" : "SE CONNECTER")}
                 </button>
 
                 <p className="text-center text-[10px] text-white/40 uppercase tracking-widest">
                   {isSignUp ? "Déjà un compte ?" : "Pas encore de compte ?"} 
-                  <button type="button" onClick={() => setIsSignUp(!isSignUp)} className="ml-2 text-primary-red hover:underline font-bold">
+                  <button type="button" onClick={() => setIsSignUp(!isSignUp)} className="ml-2 text-primary-sage hover:underline font-bold">
                     {isSignUp ? "SE CONNECTER" : "S'INSCRIRE"}
                   </button>
                 </p>
@@ -1274,13 +1274,13 @@ export default function Home() {
                   <>
                     <button 
                       onClick={(e) => { e.stopPropagation(); setActiveProdImg(prev => (prev - 1 + selectedProduct.images.length) % selectedProduct.images.length); }}
-                      className="absolute left-6 top-1/2 -translate-y-1/2 z-20 p-3 bg-black/40 hover:bg-primary-red rounded-full text-white backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 hidden md:flex"
+                      className="absolute left-6 top-1/2 -translate-y-1/2 z-20 p-3 bg-black/40 hover:bg-primary-sage rounded-full text-white backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 hidden md:flex"
                     >
                       <ArrowLeft size={20} />
                     </button>
                     <button 
                       onClick={(e) => { e.stopPropagation(); setActiveProdImg(prev => (prev + 1) % selectedProduct.images.length); }}
-                      className="absolute right-6 top-1/2 -translate-y-1/2 z-20 p-3 bg-black/40 hover:bg-primary-red rounded-full text-white backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 hidden md:flex"
+                      className="absolute right-6 top-1/2 -translate-y-1/2 z-20 p-3 bg-black/40 hover:bg-primary-sage rounded-full text-white backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 hidden md:flex"
                     >
                       <ArrowLeft size={20} className="rotate-180" />
                     </button>
@@ -1291,7 +1291,7 @@ export default function Home() {
                       </div>
                       <div className="flex gap-2">
                         {selectedProduct.images.map((_, i) => (
-                          <button key={i} onClick={() => setActiveProdImg(i)} className={`w-2 h-2 rounded-full transition-all ${activeProdImg === i ? 'bg-primary-red w-4' : 'bg-white/20 hover:bg-white/40'}`} />
+                          <button key={i} onClick={() => setActiveProdImg(i)} className={`w-2 h-2 rounded-full transition-all ${activeProdImg === i ? 'bg-primary-sage w-4' : 'bg-white/20 hover:bg-white/40'}`} />
                         ))}
                       </div>
                     </div>
@@ -1304,14 +1304,14 @@ export default function Home() {
                 <div className="space-y-8">
                   <div className="space-y-4">
                     <div className="flex items-center gap-3">
-                      <span className="w-2 h-2 bg-primary-red rounded-full animate-pulse"></span>
+                      <span className="w-2 h-2 bg-primary-sage rounded-full animate-pulse"></span>
                       <p className="text-xs md:text-sm font-bold uppercase tracking-[0.2em] text-white/60">Produit Premium</p>
                     </div>
                     <h2 className="font-serif text-4xl md:text-6xl text-white leading-tight">{selectedProduct.name}</h2>
-                    <p className="text-4xl font-serif italic text-primary-red">{selectedProduct.price}€</p>
+                    <p className="text-4xl font-serif italic text-primary-sage">{selectedProduct.price}€</p>
                   </div>
 
-                  <div className="h-[1px] w-20 bg-primary-red/30"></div>
+                  <div className="h-[1px] w-20 bg-primary-sage/30"></div>
 
                   <div className="space-y-6">
                     <h4 className="text-[10px] font-bold uppercase tracking-widest text-white/30">Description du produit</h4>
@@ -1322,7 +1322,7 @@ export default function Home() {
                         <Link 
                           href={selectedProduct.link} 
                           target="_blank"
-                          className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-primary-red border-b border-primary-red/30 pb-1 hover:border-primary-red transition-all"
+                          className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-primary-sage border-b border-primary-sage/30 pb-1 hover:border-primary-sage transition-all"
                         >
                           {selectedProduct.link_text || "En savoir plus"} <ArrowUpRight size={12} />
                         </Link>
@@ -1333,7 +1333,7 @@ export default function Home() {
                    <div className="pt-8 space-y-6">
                     <button 
                       onClick={() => { handleBuyProduct(selectedProduct); if (user) setSelectedProduct(null); }} 
-                      className="w-full bg-primary-red text-white py-6 rounded-2xl font-bold text-xs tracking-widest uppercase hover:bg-primary-red/80 transition-all shadow-2xl shadow-primary-red/30 flex items-center justify-center gap-4 group"
+                      className="w-full bg-primary-sage text-white py-6 rounded-2xl font-bold text-xs tracking-widest uppercase hover:bg-primary-sage/80 transition-all shadow-2xl shadow-primary-sage/30 flex items-center justify-center gap-4 group"
                     >
                       {user ? "COMMANDER MAINTENANT" : "SE CONNECTER POUR COMMANDER"} <Zap size={18} fill="currentColor" className="group-hover:scale-125 transition-transform" />
                     </button>
@@ -1367,7 +1367,7 @@ export default function Home() {
           >
             <div className="bg-white/5 backdrop-blur-md p-6 flex justify-between items-center shrink-0 border-b border-white/10"> 
               <div className="flex items-center gap-3">
-                <span className="w-2 h-2 bg-primary-red rounded-full animate-pulse"></span>
+                <span className="w-2 h-2 bg-primary-sage rounded-full animate-pulse"></span>
                 <h4 className="text-white font-serif italic text-lg">Réponses</h4> 
               </div>
               <div className="flex items-center gap-3">
@@ -1388,14 +1388,14 @@ export default function Home() {
                         </div>
                         <div>
                           <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">{r.profiles?.full_name || r.title || "Utilisateur"}</p>
-                          {r.order_id && <span className="text-[9px] font-bold text-primary-red">Code: {r.order_id}</span>}
+                          {r.order_id && <span className="text-[9px] font-bold text-primary-sage">Code: {r.order_id}</span>}
                         </div>
                       </div>
                     </div>
                     <div className="space-y-4 mb-4">
                       {r.replies && r.replies.length > 0 ? (
                         r.replies.map((rep: { text: string; date: string; from: string; media?: { url: string; type: string }[] }, idx: number) => (
-                          <div key={idx} className={`${rep.from === 'Lucas' ? 'bg-white/5 border-l-2 border-primary-red pl-4 py-2 rounded-r-lg' : ''} space-y-3`}>
+                          <div key={idx} className={`${rep.from === 'Lucas' ? 'bg-white/5 border-l-2 border-primary-sage pl-4 py-2 rounded-r-lg' : ''} space-y-3`}>
                             <div>
                               <p className="text-[9px] font-bold uppercase text-white/30 mb-1">{rep.from} • {rep.date}</p>
                               <p className="text-sm font-medium text-white/90">{rep.text}</p>
@@ -1423,7 +1423,7 @@ export default function Home() {
                       {r.reply && (
                         <button 
                           onClick={() => handleReplyToMessage(r)}
-                          className="text-[10px] font-bold text-primary-red uppercase tracking-widest hover:underline flex items-center gap-1"
+                          className="text-[10px] font-bold text-primary-sage uppercase tracking-widest hover:underline flex items-center gap-1"
                         >
                           <Send size={10} /> Répondre
                         </button>
@@ -1456,7 +1456,7 @@ export default function Home() {
                   {userProfileImage ? <Image src={userProfileImage} alt="Profile" fill className="object-cover" unoptimized /> : <User size={20} className="text-white/40" />}
                 </div>
                 <div className="overflow-hidden">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-primary-red truncate">Connecté en tant que</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-primary-sage truncate">Connecté en tant que</p>
                   <p className="text-xs text-white/60 truncate">{user.email}</p>
                 </div>
               </div>
@@ -1478,7 +1478,7 @@ export default function Home() {
                           full_name: newPseudo 
                         });
                       }}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-[10px] outline-none focus:border-primary-red transition-all text-white font-medium"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-[10px] outline-none focus:border-primary-sage transition-all text-white font-medium"
                     />
                   </div>
 
@@ -1496,12 +1496,12 @@ export default function Home() {
                           setOwnerImage(newUrl);
                         }
                       }}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-[10px] outline-none focus:border-primary-red transition-all text-white"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-[10px] outline-none focus:border-primary-sage transition-all text-white"
                     />
                     
                     <div className="flex items-center justify-between pt-1">
                       <span className="text-[8px] font-bold uppercase tracking-widest text-white/30">Ou local</span>
-                      <label className="cursor-pointer text-[10px] font-bold text-primary-red uppercase tracking-widest flex items-center gap-1.5 hover:text-red-400 transition-colors">
+                      <label className="cursor-pointer text-[10px] font-bold text-primary-sage uppercase tracking-widest flex items-center gap-1.5 hover:text-red-400 transition-colors">
                         <Upload size={12} /> Importer un fichier
                         <input type="file" className="hidden" accept="image/*" onChange={handleProfileImageUpload} />
                       </label>
@@ -1511,7 +1511,7 @@ export default function Home() {
                   {/* Owner site settings (Bio & Profession) */}
                   {user.email === 'caillatlucas2304@gmail.com' && (
                     <div className="space-y-4 pt-4 border-t border-white/5">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-primary-red">Paramètres du Site (Lucas)</p>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-primary-sage">Paramètres du Site (Lucas)</p>
                       
                       <div className="space-y-2">
                         <p className="text-[9px] font-bold uppercase tracking-widest text-white/30">Profession / Rôle</p>
@@ -1528,7 +1528,7 @@ export default function Home() {
                             globalVal.profileProfession = newProf;
                             await supabase.from('settings').upsert({ key: 'global', value: globalVal });
                           }}
-                          className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-[10px] outline-none focus:border-primary-red transition-all text-white font-medium"
+                          className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-[10px] outline-none focus:border-primary-sage transition-all text-white font-medium"
                         />
                       </div>
 
@@ -1547,7 +1547,7 @@ export default function Home() {
                             globalVal.profileBio = newBio;
                             await supabase.from('settings').upsert({ key: 'global', value: globalVal });
                           }}
-                          className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-[10px] outline-none focus:border-primary-red transition-all text-white font-medium resize-none"
+                          className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-[10px] outline-none focus:border-primary-sage transition-all text-white font-medium resize-none"
                         />
                       </div>
                     </div>
@@ -1557,7 +1557,7 @@ export default function Home() {
 
               <button 
                 onClick={handleLogout}
-                className="w-full bg-white/5 border border-white/10 text-white/60 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-primary-red hover:text-white transition-all flex items-center justify-center gap-2"
+                className="w-full bg-white/5 border border-white/10 text-white/60 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-primary-sage hover:text-white transition-all flex items-center justify-center gap-2"
               >
                 <LogOut size={14} /> Se déconnecter
               </button>
@@ -1579,8 +1579,8 @@ export default function Home() {
                     <p className="text-xs opacity-50">Lucas vous répondra bientôt.</p>
                   </div>
                   {formOrderId && (
-                    <div className="bg-primary-red/5 p-6 rounded-sm border border-primary-red/20 space-y-3">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-primary-red">Votre code de commande</p>
+                    <div className="bg-primary-sage/5 p-6 rounded-sm border border-primary-sage/20 space-y-3">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-primary-sage">Votre code de commande</p>
                       <p className="text-4xl font-serif text-white">{formOrderId}</p>
                       <p className="text-[9px] opacity-40 italic">Notez ce code pour le donner lors du paiement en cash.</p>
                     </div>
@@ -1588,21 +1588,21 @@ export default function Home() {
                 </div>
               ) : (
                 <form onSubmit={handleContactSubmit} className="space-y-6">
-                  <h3 className="font-serif text-4xl italic text-[var(--primary-red)]">Me contacter</h3>
+                  <h3 className="font-serif text-4xl italic text-[var(--primary-sage)]">Me contacter</h3>
                   <div className="grid grid-cols-2 gap-4">
-                    <input type="text" value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Nom & Prénom" className="w-full bg-white/5 border-b border-white/20 py-3 outline-none focus:border-primary-red transition-all" required />
-                    <input type="text" value={formContact} onChange={(e) => setFormContact(e.target.value)} placeholder="Email / Tél" className="w-full bg-white/5 border-b border-white/20 py-3 outline-none focus:border-primary-red transition-all" required />
+                    <input type="text" value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Nom & Prénom" className="w-full bg-white/5 border-b border-white/20 py-3 outline-none focus:border-primary-sage transition-all" required />
+                    <input type="text" value={formContact} onChange={(e) => setFormContact(e.target.value)} placeholder="Email / Tél" className="w-full bg-white/5 border-b border-white/20 py-3 outline-none focus:border-primary-sage transition-all" required />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <input type="text" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="Objet" className="w-full bg-white/5 border-b border-white/20 py-3 outline-none focus:border-primary-red transition-all" required />
-                    <input type="text" value={formOrderId} onChange={(e) => setFormOrderId(e.target.value)} placeholder="ID Commande (Optionnel)" className="w-full bg-white/5 border-b border-white/20 py-3 outline-none focus:border-primary-red transition-all" readOnly={formTitle.startsWith("Achat:")} />
+                    <input type="text" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="Objet" className="w-full bg-white/5 border-b border-white/20 py-3 outline-none focus:border-primary-sage transition-all" required />
+                    <input type="text" value={formOrderId} onChange={(e) => setFormOrderId(e.target.value)} placeholder="ID Commande (Optionnel)" className="w-full bg-white/5 border-b border-white/20 py-3 outline-none focus:border-primary-sage transition-all" readOnly={formTitle.startsWith("Achat:")} />
                   </div>
-                  <textarea value={formContent} onChange={(e) => setFormContent(e.target.value)} placeholder="Message..." rows={4} className="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none focus:border-primary-red resize-none transition-all" required />
+                  <textarea value={formContent} onChange={(e) => setFormContent(e.target.value)} placeholder="Message..." rows={4} className="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none focus:border-primary-sage resize-none transition-all" required />
                   
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
                       <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Pièces jointes</label>
-                      <label className="cursor-pointer text-[10px] font-bold text-primary-red uppercase tracking-widest flex items-center gap-2">
+                      <label className="cursor-pointer text-[10px] font-bold text-primary-sage uppercase tracking-widest flex items-center gap-2">
                         <Upload size={14} /> Joindre une image
                         <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />
                       </label>
@@ -1620,17 +1620,17 @@ export default function Home() {
                   </div>
                   
                   {(formOrderId || formTitle.startsWith("Achat:")) && (
-                    <div className="flex items-start gap-3 bg-primary-red/5 p-4 rounded-sm border border-primary-red/10">
+                    <div className="flex items-start gap-3 bg-primary-sage/5 p-4 rounded-sm border border-primary-sage/10">
                       <input 
                         type="checkbox" 
                         id="orderAgree" 
                         checked={orderAgreed} 
                         onChange={(e) => setOrderAgreed(e.target.checked)} 
-                        className="mt-1 accent-primary-red w-4 h-4 rounded-xs border-text-black/20" 
+                        className="mt-1 accent-primary-sage w-4 h-4 rounded-xs border-text-black/20" 
                         required 
                       />
                       <label htmlFor="orderAgree" className="text-[11px] leading-relaxed opacity-70 cursor-pointer">
-                        Je m'engage à régler le montant de ce produit ({selectedProduct ? `${selectedProduct.price}€` : "indiqué"}) une fois la commande validée par Lucas. <span className="text-primary-red font-bold">*</span>
+                        Je m'engage à régler le montant de ce produit ({selectedProduct ? `${selectedProduct.price}€` : "indiqué"}) une fois la commande validée par Lucas. <span className="text-primary-sage font-bold">*</span>
                       </label>
                     </div>
                   )}
@@ -1712,7 +1712,7 @@ export default function Home() {
                     }}
                   >
                     <div 
-                      className="absolute left-0 top-0 h-full bg-primary-red rounded-full shadow-[0_0_8px_var(--primary-red)]" 
+                      className="absolute left-0 top-0 h-full bg-primary-sage rounded-full shadow-[0_0_8px_var(--primary-sage)]" 
                       style={{ width: `${playerProgress}%` }}
                     />
                   </div>
@@ -1783,7 +1783,7 @@ export default function Home() {
 
                 {/* Song info and play status */}
                 <div className="flex-1 min-w-0 flex flex-col justify-center">
-                  <span className="text-[7px] font-bold uppercase tracking-[0.2em] text-primary-red leading-none mb-0.5">Musique</span>
+                  <span className="text-[7px] font-bold uppercase tracking-[0.2em] text-primary-sage leading-none mb-0.5">Musique</span>
                   <span className="text-[10px] font-bold text-white uppercase tracking-wider truncate leading-none">
                     {songTitle || settings.heroTitleMain || "BENTO PLAYER"}
                   </span>
@@ -1802,7 +1802,7 @@ export default function Home() {
 
                 {/* Progress bar line running along the bottom */}
                 <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-white/10 overflow-hidden">
-                  <div className="h-full bg-primary-red transition-all duration-300" style={{ width: `${playerProgress}%` }} />
+                  <div className="h-full bg-primary-sage transition-all duration-300" style={{ width: `${playerProgress}%` }} />
                 </div>
               </div>
 
@@ -1862,7 +1862,7 @@ export default function Home() {
             <section key="shop" id="shop" className="relative z-10 scroll-mt-36 md:scroll-mt-44">
               <div className="flex justify-center md:justify-start mb-16">
                 <div className="inline-flex items-center gap-4 bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 px-6 py-3.5 rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.6)] transition-all duration-300">
-                  <span className="w-2.5 h-2.5 bg-primary-red rounded-full animate-pulse shadow-[0_0_10px_var(--primary-red)]"></span>
+                  <span className="w-2.5 h-2.5 bg-primary-sage rounded-full animate-pulse shadow-[0_0_10px_var(--primary-sage)]"></span>
                   <motion.h2 style={{ color: textColor }} className="font-serif text-xl md:text-2xl tracking-tight leading-none italic">{section.label}</motion.h2>
                   <div className="w-[1px] h-5 bg-white/15" />
                   <motion.p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white">{section.subLabel}</motion.p>
@@ -1880,11 +1880,11 @@ export default function Home() {
                   >
                     <div className="relative aspect-square overflow-hidden m-4 rounded-xl">
                       <Image src={product.images[0] || ""} alt={product.name} fill className="object-cover group-hover:scale-105 transition-transform duration-700" unoptimized />
-                      <div className="absolute top-4 right-4 bg-primary-red text-white px-4 py-2 text-sm font-bold shadow-xl rounded-lg border border-white/20">{product.price}€</div>
+                      <div className="absolute top-4 right-4 bg-primary-sage text-white px-4 py-2 text-sm font-bold shadow-xl rounded-lg border border-white/20">{product.price}€</div>
                     </div>
                     <div className="p-8 pt-4 space-y-4">
                       <div className="flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 bg-primary-red rounded-full"></span>
+                        <span className="w-1.5 h-1.5 bg-primary-sage rounded-full"></span>
                         <motion.h3 style={{ color: textColor }} className="font-serif text-2xl leading-tight">{product.name}</motion.h3>
                       </div>
                       <motion.p className="text-[10px] font-bold uppercase tracking-widest text-white/60 group-hover:text-white transition-colors">Voir les détails</motion.p>
@@ -1904,7 +1904,7 @@ export default function Home() {
               <section key="gallery" id="gallery" className="relative scroll-mt-36 md:scroll-mt-44">
                 <div className="flex justify-between items-center mb-16 gap-4"> 
                   <div className="inline-flex items-center gap-4 bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 px-6 py-3.5 rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.6)] transition-all duration-300">
-                    <span className="w-2.5 h-2.5 bg-primary-red rounded-full animate-pulse shadow-[0_0_10px_var(--primary-red)]"></span>
+                    <span className="w-2.5 h-2.5 bg-primary-sage rounded-full animate-pulse shadow-[0_0_10px_var(--primary-sage)]"></span>
                     <motion.h2 style={{ color: textColor }} className="font-serif text-xl md:text-2xl tracking-tight leading-none italic">{section.label}</motion.h2>
                     <div className="w-[1px] h-5 bg-white/15" />
                     <motion.span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white">{section.subLabel}</motion.span>
@@ -1966,7 +1966,7 @@ export default function Home() {
                             
                             {ytId && (
                               <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="w-12 h-12 md:w-16 md:h-16 bg-white/20 backdrop-blur-md text-white rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 group-hover:bg-primary-red transition-all duration-500 border border-white/30">
+                                <div className="w-12 h-12 md:w-16 md:h-16 bg-white/20 backdrop-blur-md text-white rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 group-hover:bg-primary-sage transition-all duration-500 border border-white/30">
                                   <Play size={24} fill="currentColor" className="ml-1" />
                                 </div>
                               </div>
@@ -2002,7 +2002,7 @@ export default function Home() {
                         onClick={() => setGalleryIndex(idx)}
                         type="button"
                         className={`h-2 rounded-full transition-all duration-500 ${
-                          galleryIndex === idx ? "w-8 bg-primary-red" : "w-2 bg-white/20 hover:bg-white/50"
+                          galleryIndex === idx ? "w-8 bg-primary-sage" : "w-2 bg-white/20 hover:bg-white/50"
                         }`}
                       />
                     ))}
@@ -2016,7 +2016,7 @@ export default function Home() {
             <section key="comments" id="comments" className="relative z-10 scroll-mt-36 md:scroll-mt-44">
               <div className="flex justify-center md:justify-start mb-16">
                 <div className="inline-flex items-center gap-4 bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 px-6 py-3.5 rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.6)] transition-all duration-300">
-                  <span className="w-2.5 h-2.5 bg-primary-red rounded-full animate-pulse shadow-[0_0_10px_var(--primary-red)]"></span>
+                  <span className="w-2.5 h-2.5 bg-primary-sage rounded-full animate-pulse shadow-[0_0_10px_var(--primary-sage)]"></span>
                   <motion.h2 style={{ color: textColor }} className="font-serif text-xl md:text-2xl tracking-tight leading-none italic">{section.label}</motion.h2>
                   <div className="w-[1px] h-5 bg-white/15" />
                   <motion.p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white">{section.subLabel}</motion.p>
@@ -2040,7 +2040,7 @@ export default function Home() {
                             )}
                           </div>
                           <div className="overflow-hidden">
-                            <p className="text-[9px] font-bold uppercase tracking-widest text-primary-red">Connecté</p>
+                            <p className="text-[9px] font-bold uppercase tracking-widest text-primary-sage">Connecté</p>
                             <p className="text-xs text-white/60 truncate">{user.email}</p>
                           </div>
                         </div>
@@ -2051,7 +2051,7 @@ export default function Home() {
                           placeholder="Écrivez un message ou laissez un commentaire..."
                           rows={4}
                           maxLength={300}
-                          className="w-full bg-white/[0.04] border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red focus:bg-white/10 transition-all text-white placeholder-white/50 font-medium resize-none"
+                          className="w-full bg-white/[0.04] border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-sage focus:bg-white/10 transition-all text-white placeholder-white/50 font-medium resize-none"
                         />
                         <div className="text-[9px] text-right text-white/40 font-bold tracking-widest mt-1">
                           {commentContent.length}/300
@@ -2065,14 +2065,14 @@ export default function Home() {
                               <button
                                 type="button"
                                 onClick={() => setCommentImgMode('upload')}
-                                className={`text-[8px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md transition-all ${commentImgMode === 'upload' ? 'bg-primary-red text-white' : 'text-white/40 hover:text-white'}`}
+                                className={`text-[8px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md transition-all ${commentImgMode === 'upload' ? 'bg-primary-sage text-white' : 'text-white/40 hover:text-white'}`}
                               >
                                 Importer
                               </button>
                               <button
                                 type="button"
                                 onClick={() => setCommentImgMode('url')}
-                                className={`text-[8px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md transition-all ${commentImgMode === 'url' ? 'bg-primary-red text-white' : 'text-white/40 hover:text-white'}`}
+                                className={`text-[8px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md transition-all ${commentImgMode === 'url' ? 'bg-primary-sage text-white' : 'text-white/40 hover:text-white'}`}
                               >
                                 URL
                               </button>
@@ -2082,7 +2082,7 @@ export default function Home() {
                           {commentImgMode === 'upload' ? (
                             <div className="flex justify-between items-center bg-white/5 p-3 rounded-2xl border border-white/5">
                               <span className="text-[10px] text-white/40">Fichier local</span>
-                              <label className="cursor-pointer text-[10px] font-bold text-primary-red uppercase tracking-widest flex items-center gap-1.5 hover:text-red-400 transition-colors">
+                              <label className="cursor-pointer text-[10px] font-bold text-primary-sage uppercase tracking-widest flex items-center gap-1.5 hover:text-red-400 transition-colors">
                                 <Upload size={12} /> Choisir une image
                                 <input type="file" className="hidden" accept="image/*" onChange={handleCommentImageUpload} />
                               </label>
@@ -2093,7 +2093,7 @@ export default function Home() {
                               value={commentImageUrl}
                               onChange={(e) => setCommentImageUrl(e.target.value)}
                               placeholder="Coller l'URL de l'image..."
-                              className="w-full bg-white/[0.04] border border-white/10 rounded-2xl p-3 text-[10px] outline-none focus:border-primary-red transition-all text-white placeholder-white/40 font-medium"
+                              className="w-full bg-white/[0.04] border border-white/10 rounded-2xl p-3 text-[10px] outline-none focus:border-primary-sage transition-all text-white placeholder-white/40 font-medium"
                             />
                           )}
 
@@ -2114,7 +2114,7 @@ export default function Home() {
                         <button
                           type="submit"
                           disabled={isSubmittingComment || isCompressing}
-                          className="w-full bg-white text-black font-bold uppercase tracking-widest text-[10px] py-4 rounded-2xl hover:bg-primary-red hover:text-white transition-all shadow-xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-full bg-white text-black font-bold uppercase tracking-widest text-[10px] py-4 rounded-2xl hover:bg-primary-sage hover:text-white transition-all shadow-xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {isSubmittingComment ? "ENVOI..." : isCompressing ? "COMPRESSION..." : <>PUBLIER <Send size={12} /></>}
                         </button>
@@ -2129,7 +2129,7 @@ export default function Home() {
                         </p>
                         <button
                           onClick={() => { setIsSignUp(false); setIsAuthModalOpen(true); }}
-                          className="w-full bg-primary-red hover:bg-red-600 text-white font-bold uppercase tracking-widest text-[10px] py-3.5 rounded-2xl transition-all shadow-lg"
+                          className="w-full bg-primary-sage hover:bg-red-600 text-white font-bold uppercase tracking-widest text-[10px] py-3.5 rounded-2xl transition-all shadow-lg"
                         >
                           SE CONNECTER
                         </button>
@@ -2190,7 +2190,7 @@ export default function Home() {
                                         <>
                                           {comment.user_name}
                                           {comment.user_email === 'caillatlucas2304@gmail.com' && (
-                                            <span className="text-[8px] bg-primary-red/20 text-primary-red px-2 py-0.5 rounded-full border border-primary-red/20 font-bold uppercase tracking-widest">
+                                            <span className="text-[8px] bg-primary-sage/20 text-primary-sage px-2 py-0.5 rounded-full border border-primary-sage/20 font-bold uppercase tracking-widest">
                                               Admin
                                             </span>
                                           )}
@@ -2246,7 +2246,7 @@ export default function Home() {
                                       onClick={() => handleCommentLike(comment)}
                                       className="flex items-center gap-1.5 group/like text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors"
                                     >
-                                      <Heart size={14} className={hasLiked ? "fill-primary-red text-primary-red" : "text-white/40 group-hover/like:text-white transition-colors"} />
+                                      <Heart size={14} className={hasLiked ? "fill-primary-sage text-primary-sage" : "text-white/40 group-hover/like:text-white transition-colors"} />
                                       <span>{commentLikes.length}</span>
                                     </button>
                                   )}
@@ -2272,7 +2272,7 @@ export default function Home() {
                             {/* Reply Input Form nested directly inside card container */}
                             {replyingToId === comment.id && (
                               <div className="bg-[#111111] border border-white/15 rounded-2xl p-5 ml-8 md:ml-12 space-y-4 shadow-2xl">
-                                <p className="text-[9px] font-bold uppercase tracking-widest text-white/70">Répondre à <span className="text-primary-red">{replyingToName}</span></p>
+                                <p className="text-[9px] font-bold uppercase tracking-widest text-white/70">Répondre à <span className="text-primary-sage">{replyingToName}</span></p>
                                 <form onSubmit={(e) => handleReplySubmit(e, comment.id)} className="space-y-4">
                                   <textarea
                                     value={replyContent}
@@ -2280,7 +2280,7 @@ export default function Home() {
                                     placeholder="Écrivez votre réponse..."
                                     rows={2}
                                     maxLength={300}
-                                    className="w-full bg-white/[0.04] border border-white/10 rounded-xl p-3 text-xs outline-none focus:border-primary-red focus:bg-white/10 transition-all text-white placeholder-white/50 font-medium resize-none"
+                                    className="w-full bg-white/[0.04] border border-white/10 rounded-xl p-3 text-xs outline-none focus:border-primary-sage focus:bg-white/10 transition-all text-white placeholder-white/50 font-medium resize-none"
                                   />
                                   <div className="text-[9px] text-right text-white/40 font-bold tracking-widest -mt-2 mb-2">
                                     {replyContent.length}/300
@@ -2292,14 +2292,14 @@ export default function Home() {
                                         <button
                                           type="button"
                                           onClick={() => setReplyImgMode('upload')}
-                                          className={`text-[8px] font-bold px-2 py-0.5 rounded transition-all ${replyImgMode === 'upload' ? 'bg-primary-red text-white' : 'text-white/40'}`}
+                                          className={`text-[8px] font-bold px-2 py-0.5 rounded transition-all ${replyImgMode === 'upload' ? 'bg-primary-sage text-white' : 'text-white/40'}`}
                                         >
                                           Local
                                         </button>
                                         <button
                                           type="button"
                                           onClick={() => setReplyImgMode('url')}
-                                          className={`text-[8px] font-bold px-2 py-0.5 rounded transition-all ${replyImgMode === 'url' ? 'bg-primary-red text-white' : 'text-white/40'}`}
+                                          className={`text-[8px] font-bold px-2 py-0.5 rounded transition-all ${replyImgMode === 'url' ? 'bg-primary-sage text-white' : 'text-white/40'}`}
                                         >
                                           URL
                                         </button>
@@ -2308,7 +2308,7 @@ export default function Home() {
 
                                     <div className="flex-1 min-w-[120px]">
                                       {replyImgMode === 'upload' ? (
-                                        <label className="cursor-pointer text-[9px] font-bold text-primary-red uppercase tracking-widest flex items-center gap-1 hover:text-red-400 justify-end">
+                                        <label className="cursor-pointer text-[9px] font-bold text-primary-sage uppercase tracking-widest flex items-center gap-1 hover:text-red-400 justify-end">
                                           <Upload size={10} /> Choisir...
                                           <input type="file" className="hidden" accept="image/*" onChange={handleReplyImageUpload} />
                                         </label>
@@ -2318,7 +2318,7 @@ export default function Home() {
                                           value={replyImageUrl}
                                           onChange={(e) => setReplyImageUrl(e.target.value)}
                                           placeholder="URL de l'image..."
-                                          className="w-full bg-white/[0.04] border border-white/10 rounded-lg p-1.5 text-[9px] outline-none focus:border-primary-red text-white placeholder-white/40 font-medium"
+                                          className="w-full bg-white/[0.04] border border-white/10 rounded-lg p-1.5 text-[9px] outline-none focus:border-primary-sage text-white placeholder-white/40 font-medium"
                                         />
                                       )}
                                     </div>
@@ -2347,7 +2347,7 @@ export default function Home() {
                                     </button>
                                     <button
                                       type="submit"
-                                      className="px-3.5 py-2 bg-primary-red hover:bg-red-600 text-white rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all"
+                                      className="px-3.5 py-2 bg-primary-sage hover:bg-red-600 text-white rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all"
                                     >
                                       Répondre
                                     </button>
@@ -2388,7 +2388,7 @@ export default function Home() {
                                             <h5 className="text-xs font-bold text-white leading-none flex items-center gap-1.5">
                                               {reply.user_name}
                                               {reply.user_email === 'caillatlucas2304@gmail.com' && (
-                                                <span className="text-[7px] bg-primary-red/20 text-primary-red px-1.5 py-0.5 rounded-full border border-primary-red/20 font-bold uppercase tracking-widest">
+                                                <span className="text-[7px] bg-primary-sage/20 text-primary-sage px-1.5 py-0.5 rounded-full border border-primary-sage/20 font-bold uppercase tracking-widest">
                                                   Admin
                                                 </span>
                                               )}
@@ -2433,7 +2433,7 @@ export default function Home() {
                                             onClick={() => handleCommentLike(reply)}
                                             className="flex items-center gap-1 group/reply-like text-[9px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors"
                                           >
-                                            <Heart size={12} className={hasReplyLiked ? "fill-primary-red text-primary-red" : "text-white/40 group-hover/reply-like:text-white transition-colors"} />
+                                            <Heart size={12} className={hasReplyLiked ? "fill-primary-sage text-primary-sage" : "text-white/40 group-hover/reply-like:text-white transition-colors"} />
                                             <span>{replyLikes.length}</span>
                                           </button>
                                         </div>
@@ -2456,7 +2456,7 @@ export default function Home() {
             <section key="bento" id="bento" className="relative z-10 scroll-mt-28 md:scroll-mt-36">
               <div className="flex justify-center md:justify-start mb-16">
                 <div className="inline-flex items-center gap-4 bg-[#0c0c0c]/85 backdrop-blur-2xl border border-white/15 px-6 py-3.5 rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.6)] transition-all duration-300">
-                  <span className="w-2.5 h-2.5 bg-primary-red rounded-full animate-pulse shadow-[0_0_10px_var(--primary-red)]"></span>
+                  <span className="w-2.5 h-2.5 bg-primary-sage rounded-full animate-pulse shadow-[0_0_10px_var(--primary-sage)]"></span>
                   <motion.h2 className="font-serif text-xl md:text-2xl text-white tracking-tight leading-none italic">{section.label}</motion.h2>
                   <div className="w-[1px] h-5 bg-white/15" />
                   <motion.p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white">{section.subLabel}</motion.p>
@@ -2464,10 +2464,10 @@ export default function Home() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="md:col-span-2 aspect-square md:aspect-video bg-black/20 backdrop-blur-md border border-white/20 rounded-2xl p-12 flex flex-col justify-between group overflow-hidden relative shadow-2xl hover:bg-black/30 transition-all">
-                  <div className="relative z-10"> <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--primary-red)] mb-4">Ma Bio</p> <h3 className="font-serif text-3xl md:text-5xl leading-tight mb-6 text-white">{parseMarkdown(settings.bio || "Exploration créative et solutions techniques.")}</h3> </div>
+                  <div className="relative z-10"> <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--primary-sage)] mb-4">Ma Bio</p> <h3 className="font-serif text-3xl md:text-5xl leading-tight mb-6 text-white">{parseMarkdown(settings.bio || "Exploration créative et solutions techniques.")}</h3> </div>
                   <Socials config={socialsConfig} color={textColor} />
                 </div>
-                <div className="aspect-square bg-[var(--primary-red)]/90 backdrop-blur-md border border-white/20 rounded-2xl p-10 flex flex-col justify-between text-white relative overflow-hidden group shadow-2xl hover:bg-[var(--primary-red)] transition-all">
+                <div className="aspect-square bg-[var(--primary-sage)]/90 backdrop-blur-md border border-white/20 rounded-2xl p-10 flex flex-col justify-between text-white relative overflow-hidden group shadow-2xl hover:bg-[var(--primary-sage)] transition-all">
                   <motion.div initial={{ scale: 1 }} whileHover={{ scale: 1.1 }} className="absolute -right-8 -bottom-8 opacity-20"><Zap size={200} fill="white" /></motion.div>
                   <p className="text-[10px] font-bold uppercase tracking-[0.2em] relative z-10">Disponibilité</p>
                   <h3 className="font-serif text-4xl italic relative z-10">Ouvert aux projets freelance</h3>
@@ -2476,7 +2476,7 @@ export default function Home() {
                   <p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-40">Contact</p>
                   <div className="space-y-4 relative z-10">
                     <p className="font-serif text-2xl truncate">{settings.email || "hello@lucascaillat.fr"}</p>
-                    <button onClick={copyEmail} className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 hover:text-primary-red transition-colors"> {copied ? <><Check size={14} /> Copié</> : <><Copy size={14} /> Copier l'email</>} </button>
+                    <button onClick={copyEmail} className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 hover:text-primary-sage transition-colors"> {copied ? <><Check size={14} /> Copié</> : <><Copy size={14} /> Copier l'email</>} </button>
                   </div>
                 </div>
               </div>
@@ -2490,7 +2490,7 @@ export default function Home() {
           <div className="max-w-md text-center md:text-left relative">
             <motion.h3 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} className="font-serif text-3xl md:text-4xl text-soft-black mb-6">Discutons de votre projet.</motion.h3>
             <div className="relative inline-block">
-              <button onClick={copyEmail} className="group flex items-center gap-3 text-lg md:text-xl border-b border-primary-red text-text-black hover:text-primary-red transition-all pb-1 font-medium"> {settings.email || "contact@lucascaillat.fr"} <Copy size={16} className="opacity-0 group-hover:opacity-40 transition-opacity" /> </button>
+              <button onClick={copyEmail} className="group flex items-center gap-3 text-lg md:text-xl border-b border-primary-sage text-text-black hover:text-primary-sage transition-all pb-1 font-medium"> {settings.email || "contact@lucascaillat.fr"} <Copy size={16} className="opacity-0 group-hover:opacity-40 transition-opacity" /> </button>
               <AnimatePresence> {copied && <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: -10 }} exit={{ opacity: 0, y: 0 }} className="absolute -top-12 left-0 bg-text-black text-white px-4 py-2 rounded-sm text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 shadow-xl"><Check size={12} className="text-green-500" /> Email Copié !</motion.div>} </AnimatePresence>
             </div>
           </div>

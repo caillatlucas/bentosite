@@ -97,7 +97,7 @@ export default function AdminDashboard() {
   const [musicEnabled, setMusicEnabled] = useState(false);
   const [musicUrl, setMusicUrl] = useState("");
   const [musicCover, setMusicCover] = useState("");
-  const [primaryColor, setPrimaryColor] = useState("#ff3131");
+  const [primaryColor, setPrimaryColor] = useState("#606c38");
   const [show3DBackground, setShow3DBackground] = useState(false);
   const [musicRotationEnabled, setMusicRotationEnabled] = useState(true);
   const [statueTextureUrl, setStatueTextureUrl] = useState("");
@@ -331,7 +331,7 @@ export default function AdminDashboard() {
         setMusicEnabled(global.musicEnabled || false);
         setMusicUrl(global.musicUrl || "");
         setMusicCover(global.musicCover || "");
-        setPrimaryColor(global.primaryColor || "#ff3131");
+        setPrimaryColor(global.primaryColor || "#606c38");
         setShow3DBackground(global.show3DBackground ?? false);
         setMusicRotationEnabled(global.musicRotationEnabled ?? true);
         setStatueTextureUrl(global.statueTextureUrl || "");
@@ -663,7 +663,7 @@ export default function AdminDashboard() {
       <aside className="w-full md:w-72 border-b md:border-b-0 md:border-r border-white/10 p-8 flex flex-col justify-between bg-white/5 backdrop-blur-xl">
         <div>
           <Link href="/" className="inline-block mb-12 group">
-            <motion.h1 className="font-serif text-3xl tracking-tighter text-primary-red group-hover:scale-105 transition-transform">
+            <motion.h1 className="font-serif text-3xl tracking-tighter text-primary-sage group-hover:scale-105 transition-transform">
               CAILLAT
               <span className="block text-xs font-sans tracking-[0.2em] text-white/40 mt-1 uppercase">Console Admin</span>
             </motion.h1>
@@ -672,18 +672,18 @@ export default function AdminDashboard() {
             {tabs.map((tab) => {
                const Icon = tab.icon;
                return (
-                <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 ${activeTab === tab.id ? "bg-primary-red text-white shadow-2xl shadow-primary-red/20 translate-x-2" : "text-white/60 hover:bg-white/5 hover:text-white hover:translate-x-1"}`}>
+                <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 ${activeTab === tab.id ? "bg-primary-sage text-white shadow-2xl shadow-primary-sage/20 translate-x-2" : "text-white/60 hover:bg-white/5 hover:text-white hover:translate-x-1"}`}>
                   <Icon size={20} strokeWidth={1.5} />
                   <span className="font-medium tracking-wide flex-1 text-left">{tab.label}</span>
                   {tab.id === "messages" && messages.filter(m => !m.order_id).length > 0 && <span className="bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-full">{messages.filter(m => !m.order_id).length}</span>}
-                  {tab.id === "orders" && messages.filter(m => m.order_id).length > 0 && <span className="bg-primary-red text-white text-[10px] px-2.5 py-0.5 rounded-full font-bold shadow-lg shadow-primary-red/20">{messages.filter(m => m.order_id).length}</span>}
+                  {tab.id === "orders" && messages.filter(m => m.order_id).length > 0 && <span className="bg-primary-sage text-white text-[10px] px-2.5 py-0.5 rounded-full font-bold shadow-lg shadow-primary-sage/20">{messages.filter(m => m.order_id).length}</span>}
                   {tab.id === "comments" && comments.length > 0 && <span className="bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-full">{comments.length}</span>}
                 </button>
               );
             })}
           </nav>
         </div>
-        <button onClick={handleLogout} className="flex items-center gap-3 text-white/30 hover:text-primary-red transition-all p-4">
+        <button onClick={handleLogout} className="flex items-center gap-3 text-white/30 hover:text-primary-sage transition-all p-4">
           <LogOut size={20} /> <span className="text-sm font-medium">Déconnexion</span>
         </button>
       </aside>
@@ -705,12 +705,12 @@ export default function AdminDashboard() {
               setFormDetails("");
               setFormGallery([]);
               setIsModalOpen(true);
-            }} className="bg-primary-red text-white px-8 py-3.5 rounded-2xl hover:bg-red-600 transition-all flex items-center gap-2 text-sm font-bold shadow-2xl shadow-primary-red/30">
+            }} className="bg-primary-sage text-white px-8 py-3.5 rounded-2xl hover:bg-red-600 transition-all flex items-center gap-2 text-sm font-bold shadow-2xl shadow-primary-sage/30">
               <Plus size={18} /> NOUVEAU POSTE
             </button>
           )}
           {activeTab === "shop" && (
-            <button onClick={() => { setEditingProduct(null); setProdName(""); setProdPrice(0); setProdDesc(""); setProdImages([]); setProdImagesText(""); setProdLink(""); setProdLinkText(""); setProdPurchaseMsg(""); setIsProductModalOpen(true); }} className="bg-primary-red text-white px-8 py-3.5 rounded-2xl hover:bg-red-600 transition-all flex items-center gap-2 text-sm font-bold shadow-2xl shadow-primary-red/30">
+            <button onClick={() => { setEditingProduct(null); setProdName(""); setProdPrice(0); setProdDesc(""); setProdImages([]); setProdImagesText(""); setProdLink(""); setProdLinkText(""); setProdPurchaseMsg(""); setIsProductModalOpen(true); }} className="bg-primary-sage text-white px-8 py-3.5 rounded-2xl hover:bg-red-600 transition-all flex items-center gap-2 text-sm font-bold shadow-2xl shadow-primary-sage/30">
               <Plus size={18} /> NOUVEAU PRODUIT
             </button>
           )}
@@ -783,7 +783,7 @@ export default function AdminDashboard() {
                   ].map((card, i) => {
                     const Icon = card.icon;
                     return (
-                      <div key={i} className="bg-black/35 backdrop-blur-2xl border border-white/10 p-6 rounded-3xl relative overflow-hidden group shadow-2xl flex flex-col justify-between min-h-[140px] hover:border-primary-red/30 transition-all">
+                      <div key={i} className="bg-black/35 backdrop-blur-2xl border border-white/10 p-6 rounded-3xl relative overflow-hidden group shadow-2xl flex flex-col justify-between min-h-[140px] hover:border-primary-sage/30 transition-all">
                         <div className={`absolute -right-8 -top-8 w-24 h-24 bg-gradient-to-br ${card.color} rounded-full opacity-30 group-hover:scale-125 transition-transform`} />
                         <div className="flex justify-between items-start">
                           <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">{card.label}</span>
@@ -804,7 +804,7 @@ export default function AdminDashboard() {
                   <div className="lg:col-span-8 bg-black/25 backdrop-blur-2xl border border-white/10 rounded-3xl p-8 shadow-2xl flex flex-col justify-between min-h-[400px]">
                     <div className="flex justify-between items-center mb-6">
                       <div>
-                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary-red">Analyses</span>
+                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary-sage">Analyses</span>
                         <h3 className="font-serif text-2xl text-white italic mt-1">Activité Récente</h3>
                       </div>
                       <span className="text-[9px] font-bold uppercase tracking-widest bg-white/10 px-3 py-1 rounded-full text-white/70">7 derniers jours</span>
@@ -816,8 +816,8 @@ export default function AdminDashboard() {
                       <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
                         <defs>
                           <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="var(--primary-red)" stopOpacity="0.4" />
-                            <stop offset="100%" stopColor="var(--primary-red)" stopOpacity="0.0" />
+                            <stop offset="0%" stopColor="var(--primary-sage)" stopOpacity="0.4" />
+                            <stop offset="100%" stopColor="var(--primary-sage)" stopOpacity="0.0" />
                           </linearGradient>
                         </defs>
                         {/* Area path */}
@@ -830,7 +830,7 @@ export default function AdminDashboard() {
                         <path
                           d={linePath}
                           fill="none"
-                          stroke="var(--primary-red)"
+                          stroke="var(--primary-sage)"
                           strokeWidth="2.5"
                           strokeLinecap="round"
                           className="transition-all duration-1000"
@@ -852,9 +852,9 @@ export default function AdminDashboard() {
                           </div>
                           <div 
                             style={{ height: `${maxVisits > 0 ? (col.val / maxVisits) * 160 : 0}px` }} 
-                            className="w-1.5 md:w-2 bg-white/10 group-hover:bg-primary-red rounded-full transition-all duration-500 relative min-h-[4px]"
+                            className="w-1.5 md:w-2 bg-white/10 group-hover:bg-primary-sage rounded-full transition-all duration-500 relative min-h-[4px]"
                           >
-                            <div className="absolute inset-0 bg-primary-red rounded-full scale-0 group-hover:scale-100 transition-transform origin-bottom" />
+                            <div className="absolute inset-0 bg-primary-sage rounded-full scale-0 group-hover:scale-100 transition-transform origin-bottom" />
                           </div>
                           <span className="text-[9px] font-bold text-white/40 uppercase tracking-wider">{col.day}</span>
                         </div>
@@ -865,7 +865,7 @@ export default function AdminDashboard() {
                   {/* Connection History Sidebar */}
                   <div className="lg:col-span-4 bg-black/25 backdrop-blur-2xl border border-white/10 rounded-3xl p-8 shadow-2xl flex flex-col justify-between min-h-[400px]">
                     <div className="mb-6">
-                      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary-red">Sécurité</span>
+                      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary-sage">Sécurité</span>
                       <h3 className="font-serif text-2xl text-white italic mt-1">Logs de Connexion</h3>
                     </div>
 
@@ -875,7 +875,7 @@ export default function AdminDashboard() {
                       ) : (
                         visits.slice(0, 5).map((log, i) => (
                           <div key={i} className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center gap-3.5 shadow-md">
-                            <div className="p-2.5 bg-primary-red/10 border border-primary-red/20 rounded-xl text-primary-red shrink-0">
+                            <div className="p-2.5 bg-primary-sage/10 border border-primary-sage/20 rounded-xl text-primary-sage shrink-0">
                               <Clock size={14} />
                             </div>
                             <div className="min-w-0 flex-1">
@@ -924,7 +924,7 @@ export default function AdminDashboard() {
                       setFormDetails((project as any).details || "");
                       setFormGallery(project.gallery || []);
                       setIsModalOpen(true);
-                    }} className="p-3 bg-white/5 hover:bg-white/10 rounded-xl text-white/50 hover:text-primary-red transition-all"><Edit2 size={18} /></button>
+                    }} className="p-3 bg-white/5 hover:bg-white/10 rounded-xl text-white/50 hover:text-primary-sage transition-all"><Edit2 size={18} /></button>
                     <button onClick={() => deleteProject(project.id)} className="p-3 bg-white/5 hover:bg-white/10 rounded-xl text-white/50 hover:text-red-500 transition-all"><Trash2 size={18} /></button>
                   </div>
                 </div>
@@ -935,12 +935,12 @@ export default function AdminDashboard() {
           {activeTab === "media" && (
             <motion.div key="media" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="relative flex flex-col items-center justify-center min-h-[150px] border-2 border-dashed border-text-black/10 rounded-sm bg-white/20 hover:border-primary-red/30 transition-all cursor-pointer">
-                  {isUploading ? <div className="animate-pulse text-primary-red font-bold">Envoi...</div> : (
-                    <> <Upload className="mx-auto mb-2 text-primary-red" size={32} /> <p className="font-serif text-lg">Upload Local</p> <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleFileUpload} /> </>
+                <div className="relative flex flex-col items-center justify-center min-h-[150px] border-2 border-dashed border-text-black/10 rounded-sm bg-white/20 hover:border-primary-sage/30 transition-all cursor-pointer">
+                  {isUploading ? <div className="animate-pulse text-primary-sage font-bold">Envoi...</div> : (
+                    <> <Upload className="mx-auto mb-2 text-primary-sage" size={32} /> <p className="font-serif text-lg">Upload Local</p> <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleFileUpload} /> </>
                   )}
                 </div>
-                <button onClick={addMediaByUrl} className="flex flex-col items-center justify-center min-h-[150px] border-2 border-dashed border-text-black/10 rounded-sm bg-white/20 hover:border-primary-red/30 transition-all"> <LinkIcon className="mx-auto mb-2 text-primary-red" size={32} /> <p className="font-serif text-lg">Ajouter par URL</p> </button>
+                <button onClick={addMediaByUrl} className="flex flex-col items-center justify-center min-h-[150px] border-2 border-dashed border-text-black/10 rounded-sm bg-white/20 hover:border-primary-sage/30 transition-all"> <LinkIcon className="mx-auto mb-2 text-primary-sage" size={32} /> <p className="font-serif text-lg">Ajouter par URL</p> </button>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
                 {mediaItems.map((item) => {
@@ -975,7 +975,7 @@ export default function AdminDashboard() {
                     <div key={platform.id} className="flex items-center gap-8">
                       <div className="w-12 h-12 bg-text-black/5 rounded-sm flex items-center justify-center"><platform.icon size={20} /></div>
                       <div className="flex-1"> <label className="block text-[10px] font-bold uppercase tracking-widest mb-1 opacity-50">{platform.label}</label> <input type="text" value={(socials as any)[platform.id]?.url || ""} onChange={(e) => setSocials({...socials, [platform.id]: {...(socials as any)[platform.id], url: e.target.value}})} className="w-full bg-transparent border-b border-text-black/20 py-1 outline-none text-sm" /> </div>
-                      <button onClick={() => setSocials({...socials, [platform.id]: {...(socials as any)[platform.id], enabled: !(socials as any)[platform.id]?.enabled}})} className={`w-12 h-6 rounded-full transition-colors relative ${ (socials as any)[platform.id]?.enabled ? "bg-primary-red" : "bg-text-black/10" }`}> <motion.div animate={{ x: (socials as any)[platform.id]?.enabled ? 24 : 4 }} className="w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm" /> </button>
+                      <button onClick={() => setSocials({...socials, [platform.id]: {...(socials as any)[platform.id], enabled: !(socials as any)[platform.id]?.enabled}})} className={`w-12 h-6 rounded-full transition-colors relative ${ (socials as any)[platform.id]?.enabled ? "bg-primary-sage" : "bg-text-black/10" }`}> <motion.div animate={{ x: (socials as any)[platform.id]?.enabled ? 24 : 4 }} className="w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm" /> </button>
                     </div>
                   ))}
                 </div>
@@ -992,7 +992,7 @@ export default function AdminDashboard() {
                         ];
                         setSocials({ ...socials, customLinks: updatedLinks });
                       }}
-                      className="bg-primary-red hover:bg-red-600 text-white font-bold text-[10px] tracking-widest uppercase px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all shadow-md"
+                      className="bg-primary-sage hover:bg-red-600 text-white font-bold text-[10px] tracking-widest uppercase px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all shadow-md"
                     >
                       <Plus size={12} /> Ajouter
                     </button>
@@ -1014,7 +1014,7 @@ export default function AdminDashboard() {
                                 updated[idx] = { ...updated[idx], icon: e.target.value };
                                 setSocials({ ...socials, customLinks: updated });
                               }}
-                              className="bg-[#121212]/90 border border-white/10 text-white rounded-lg px-2 py-1.5 text-xs focus:border-primary-red outline-none mb-2"
+                              className="bg-[#121212]/90 border border-white/10 text-white rounded-lg px-2 py-1.5 text-xs focus:border-primary-sage outline-none mb-2"
                             >
                               {Object.keys(ICON_MAP).map((iconKey) => (
                                 <option key={iconKey} value={iconKey} className="bg-[#121212] text-white">
@@ -1079,7 +1079,7 @@ export default function AdminDashboard() {
                                 setSocials({ ...socials, customLinks: updated });
                               }}
                               className={`w-10 h-5 rounded-full transition-colors relative shrink-0 ${
-                                link.enabled ? "bg-primary-red" : "bg-text-black/10"
+                                link.enabled ? "bg-primary-sage" : "bg-text-black/10"
                               }`}
                             >
                               <motion.div
@@ -1127,7 +1127,7 @@ export default function AdminDashboard() {
                         {(msg as any).profiles?.avatar_url ? (
                           <Image src={(msg as any).profiles.avatar_url} alt="Profile" fill className="object-cover" unoptimized />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-primary-red/10 text-primary-red">
+                          <div className="w-full h-full flex items-center justify-center bg-primary-sage/10 text-primary-sage">
                             <User size={24} />
                           </div>
                         )}
@@ -1199,7 +1199,7 @@ export default function AdminDashboard() {
                               value={replyText[msg.id] || ""} 
                               onChange={(e) => setReplyText({ ...replyText, [msg.id]: e.target.value })} 
                               rows={2} 
-                              className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 pr-12 text-sm text-white outline-none focus:border-primary-red transition-all resize-none" 
+                              className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 pr-12 text-sm text-white outline-none focus:border-primary-sage transition-all resize-none" 
                             />
                             <button 
                               onClick={() => {
@@ -1209,12 +1209,12 @@ export default function AdminDashboard() {
                                   setReplyMedia({ ...replyMedia, [msg.id]: [...current, { url, type: 'image' }] });
                                 }
                               }}
-                              className="absolute right-4 bottom-4 text-white/30 hover:text-primary-red transition-colors"
+                              className="absolute right-4 bottom-4 text-white/30 hover:text-primary-sage transition-colors"
                             >
                               <Plus size={20} />
                             </button>
                           </div>
-                          <button onClick={() => handleReply(msg.id)} className="bg-primary-red text-white px-8 py-4 text-xs font-bold rounded-2xl flex items-center gap-2 hover:bg-red-600 transition-all shadow-xl shadow-primary-red/20 h-[52px]"> <Send size={16} /> RÉPONDRE </button>
+                          <button onClick={() => handleReply(msg.id)} className="bg-primary-sage text-white px-8 py-4 text-xs font-bold rounded-2xl flex items-center gap-2 hover:bg-red-600 transition-all shadow-xl shadow-primary-sage/20 h-[52px]"> <Send size={16} /> RÉPONDRE </button>
                         </div>
                       </div>
                     </div>
@@ -1258,7 +1258,7 @@ export default function AdminDashboard() {
                 className="space-y-8"
               >
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-black/35 backdrop-blur-2xl border border-white/10 p-6 rounded-3xl relative overflow-hidden group shadow-2xl flex flex-col justify-between hover:border-primary-red/30 transition-all">
+                  <div className="bg-black/35 backdrop-blur-2xl border border-white/10 p-6 rounded-3xl relative overflow-hidden group shadow-2xl flex flex-col justify-between hover:border-primary-sage/30 transition-all">
                     <div className="absolute -right-8 -top-8 w-24 h-24 bg-gradient-to-br from-red-500/20 to-red-600/5 rounded-full opacity-30 group-hover:scale-125 transition-transform" />
                     <div className="flex justify-between items-start">
                       <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">Total Commandes</span>
@@ -1270,7 +1270,7 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  <div className="bg-black/35 backdrop-blur-2xl border border-white/10 p-6 rounded-3xl relative overflow-hidden group shadow-2xl flex flex-col justify-between hover:border-primary-red/30 transition-all">
+                  <div className="bg-black/35 backdrop-blur-2xl border border-white/10 p-6 rounded-3xl relative overflow-hidden group shadow-2xl flex flex-col justify-between hover:border-primary-sage/30 transition-all">
                     <div className="absolute -right-8 -top-8 w-24 h-24 bg-gradient-to-br from-emerald-500/20 to-emerald-600/5 rounded-full opacity-30 group-hover:scale-125 transition-transform" />
                     <div className="flex justify-between items-start">
                       <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">Chiffre Estimé</span>
@@ -1282,7 +1282,7 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  <div className="bg-black/35 backdrop-blur-2xl border border-white/10 p-6 rounded-3xl relative overflow-hidden group shadow-2xl flex flex-col justify-between hover:border-primary-red/30 transition-all">
+                  <div className="bg-black/35 backdrop-blur-2xl border border-white/10 p-6 rounded-3xl relative overflow-hidden group shadow-2xl flex flex-col justify-between hover:border-primary-sage/30 transition-all">
                     <div className="absolute -right-8 -top-8 w-24 h-24 bg-gradient-to-br from-blue-500/20 to-blue-600/5 rounded-full opacity-30 group-hover:scale-125 transition-transform" />
                     <div className="flex justify-between items-start">
                       <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">Engagement Cash</span>
@@ -1323,12 +1323,12 @@ export default function AdminDashboard() {
                       const isAgreed = msg.agreed_to_pay;
 
                       return (
-                        <div key={msg.id} className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-3xl p-8 space-y-8 relative group shadow-2xl hover:border-primary-red/20 transition-all">
+                        <div key={msg.id} className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-3xl p-8 space-y-8 relative group shadow-2xl hover:border-primary-sage/20 transition-all">
                           <button onClick={() => deleteMessage(msg.id)} className="absolute top-8 right-8 text-white/20 hover:text-red-500 transition-colors"><Trash2 size={20} /></button>
                           
                           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-6">
                             <div className="flex items-center gap-4 flex-wrap">
-                              <span className="bg-primary-red text-white font-mono text-sm font-bold tracking-widest px-4 py-1.5 rounded-xl shadow-lg shadow-primary-red/10 border border-primary-red/10">
+                              <span className="bg-primary-sage text-white font-mono text-sm font-bold tracking-widest px-4 py-1.5 rounded-xl shadow-lg shadow-primary-sage/10 border border-primary-sage/10">
                                 #{msg.order_id}
                               </span>
                               <span className="text-white/40 text-xs">{msg.date}</span>
@@ -1353,7 +1353,7 @@ export default function AdminDashboard() {
 
                           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                             <div className="lg:col-span-4 bg-white/5 p-6 rounded-2xl border border-white/5 space-y-4">
-                              <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary-red">Client</h4>
+                              <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary-sage">Client</h4>
                               
                               <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 rounded-full bg-white/10 border border-white/10 overflow-hidden relative shrink-0 flex items-center justify-center">
@@ -1448,7 +1448,7 @@ export default function AdminDashboard() {
                                     value={replyText[msg.id] || ""} 
                                     onChange={(e) => setReplyText({ ...replyText, [msg.id]: e.target.value })} 
                                     rows={2} 
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 pr-12 text-sm text-white outline-none focus:border-primary-red transition-all resize-none" 
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 pr-12 text-sm text-white outline-none focus:border-primary-sage transition-all resize-none" 
                                   />
                                   <button 
                                     onClick={() => {
@@ -1458,12 +1458,12 @@ export default function AdminDashboard() {
                                         setReplyMedia({ ...replyMedia, [msg.id]: [...current, { url, type: 'image' }] });
                                       }
                                     }}
-                                    className="absolute right-4 bottom-4 text-white/30 hover:text-primary-red transition-colors"
+                                    className="absolute right-4 bottom-4 text-white/30 hover:text-primary-sage transition-colors"
                                   >
                                     <Plus size={20} />
                                   </button>
                                 </div>
-                                <button onClick={() => handleReply(msg.id)} className="bg-primary-red text-white px-8 py-4 text-xs font-bold rounded-2xl flex items-center gap-2 hover:bg-red-600 transition-all shadow-xl shadow-primary-red/20 h-[52px]"> <Send size={16} /> RÉPONDRE </button>
+                                <button onClick={() => handleReply(msg.id)} className="bg-primary-sage text-white px-8 py-4 text-xs font-bold rounded-2xl flex items-center gap-2 hover:bg-red-600 transition-all shadow-xl shadow-primary-sage/20 h-[52px]"> <Send size={16} /> RÉPONDRE </button>
                               </div>
                             </div>
                           </div>
@@ -1480,7 +1480,7 @@ export default function AdminDashboard() {
             <motion.div key="comments" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
               <div className="bg-white/5 border border-white/10 p-4 rounded-2xl mb-6 shadow-lg flex justify-between items-center bg-white/5 backdrop-blur-xl">
                 <h3 className="text-white font-serif text-xl">Modération des Commentaires ({comments.length})</h3>
-                <span className="text-[10px] font-bold uppercase bg-primary-red/10 text-primary-red px-3 py-1 rounded-full border border-primary-red/20">Console Direct</span>
+                <span className="text-[10px] font-bold uppercase bg-primary-sage/10 text-primary-sage px-3 py-1 rounded-full border border-primary-sage/20">Console Direct</span>
               </div>
 
               {comments.length === 0 ? (
@@ -1515,7 +1515,7 @@ export default function AdminDashboard() {
                                 </span>
                               )}
                               {comment.user_email === 'caillatlucas2304@gmail.com' && (
-                                <span className="bg-primary-red/20 text-primary-red text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border border-primary-red/20">
+                                <span className="bg-primary-sage/20 text-primary-sage text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border border-primary-sage/20">
                                   Admin
                                 </span>
                               )}
@@ -1550,7 +1550,7 @@ export default function AdminDashboard() {
 
                             <div className="flex justify-between items-center pt-4 border-t border-white/5 mt-4">
                               <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest text-white/40">
-                                <span className="flex items-center gap-1.5"><Heart size={12} className="text-primary-red fill-primary-red animate-pulse" /> {commentLikesCount} likes</span>
+                                <span className="flex items-center gap-1.5"><Heart size={12} className="text-primary-sage fill-primary-sage animate-pulse" /> {commentLikesCount} likes</span>
                                 {comment.user_email && <span className="text-white/30 lowercase font-normal">{comment.user_email}</span>}
                               </div>
                               <button 
@@ -1597,7 +1597,7 @@ export default function AdminDashboard() {
               <motion.div key="users" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
                 <div className="flex justify-between items-center bg-white/5 border border-white/10 p-4 rounded-2xl mb-6 shadow-lg">
                   <h3 className="text-white font-serif text-xl">Communauté ({displayProfiles.length})</h3>
-                  <button onClick={fetchGlobalIps} className="bg-primary-red/10 text-primary-red border border-primary-red/20 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-primary-red/20 transition-all flex items-center gap-2 shadow-lg shadow-primary-red/5">
+                  <button onClick={fetchGlobalIps} className="bg-primary-sage/10 text-primary-sage border border-primary-sage/20 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-primary-sage/20 transition-all flex items-center gap-2 shadow-lg shadow-primary-sage/5">
                     Logs Globaux IP
                   </button>
                 </div>
@@ -1638,7 +1638,7 @@ export default function AdminDashboard() {
 
                         {/* Stats badges */}
                         <div className="flex flex-wrap items-center gap-2 mt-4">
-                          <span className="text-[9px] font-bold bg-primary-red/10 text-primary-red px-2.5 py-1 rounded-full border border-primary-red/20 shadow-md">
+                          <span className="text-[9px] font-bold bg-primary-sage/10 text-primary-sage px-2.5 py-1 rounded-full border border-primary-sage/20 shadow-md">
                             {userMessages.length} msg{userMessages.length > 1 ? 's' : ''}
                           </span>
                           {!profile.is_guest && (
@@ -1658,7 +1658,7 @@ export default function AdminDashboard() {
                                 comments: userComments
                               });
                             }}
-                            className="text-[9px] font-bold uppercase tracking-widest bg-white/5 border border-white/10 hover:bg-primary-red hover:text-white transition-all text-white/70 px-3.5 py-2 rounded-xl flex-1 text-center shadow-lg animate-pulse hover:animate-none"
+                            className="text-[9px] font-bold uppercase tracking-widest bg-white/5 border border-white/10 hover:bg-primary-sage hover:text-white transition-all text-white/70 px-3.5 py-2 rounded-xl flex-1 text-center shadow-lg animate-pulse hover:animate-none"
                           >
                             Historique
                           </button>
@@ -1688,7 +1688,7 @@ export default function AdminDashboard() {
                     <div key={product.id} className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden group shadow-2xl transition-all hover:bg-black/30">
                       <div className="relative aspect-square">
                         <Image src={product.images[0] || ""} alt={product.name} fill className="object-cover" unoptimized />
-                        <div className="absolute top-4 right-4 bg-primary-red text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-lg">{product.price}€</div>
+                        <div className="absolute top-4 right-4 bg-primary-sage text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-lg">{product.price}€</div>
                         <div className="absolute top-4 left-4 flex flex-col gap-2">
                           <button onClick={() => moveItem('products', idx, 'up')} className="p-2 bg-black/40 backdrop-blur-md rounded-full text-white/50 hover:text-white transition-all"><ArrowLeft size={14} className="rotate-90" /></button>
                           <button onClick={() => moveItem('products', idx, 'down')} className="p-2 bg-black/40 backdrop-blur-md rounded-full text-white/50 hover:text-white transition-all"><ArrowLeft size={14} className="-rotate-90" /></button>
@@ -1697,7 +1697,7 @@ export default function AdminDashboard() {
                       <div className="p-6 space-y-6">
                         <h3 className="font-serif text-2xl text-white">{product.name}</h3>
                         <div className="flex justify-between items-center pt-6 border-t border-white/10">
-                          <button onClick={() => { setEditingProduct(product); setProdName(product.name); setProdPrice(product.price); setProdDesc(product.description); setProdImages(product.images); setProdImagesText(product.images.join('\n')); setProdLink(product.link || ""); setProdLinkText(product.link_text || ""); setProdPurchaseMsg(product.purchase_message || ""); setIsProductModalOpen(true); }} className="text-[10px] font-bold uppercase tracking-widest text-white/60 hover:text-primary-red transition-colors flex items-center gap-2"><Edit2 size={14} /> Modifier</button>
+                          <button onClick={() => { setEditingProduct(product); setProdName(product.name); setProdPrice(product.price); setProdDesc(product.description); setProdImages(product.images); setProdImagesText(product.images.join('\n')); setProdLink(product.link || ""); setProdLinkText(product.link_text || ""); setProdPurchaseMsg(product.purchase_message || ""); setIsProductModalOpen(true); }} className="text-[10px] font-bold uppercase tracking-widest text-white/60 hover:text-primary-sage transition-colors flex items-center gap-2"><Edit2 size={14} /> Modifier</button>
                           <button onClick={() => deleteProduct(product.id)} className="text-[10px] font-bold uppercase tracking-widest text-red-400 hover:text-red-500 transition-colors flex items-center gap-2"><Trash2 size={14} /> Supprimer</button>
                         </div>
                       </div>
@@ -1713,7 +1713,7 @@ export default function AdminDashboard() {
               <div className="bg-white/40 border border-text-black/5 rounded-sm p-8 space-y-8">
                 <h3 className="font-serif text-2xl border-b border-text-black/10 pb-4">Musique & Hero</h3>
                 <div className="grid grid-cols-2 gap-6"> <input type="text" value={musicUrl} onChange={(e) => setMusicUrl(e.target.value)} placeholder="URL YouTube Music" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" /> <input type="text" value={musicCover} onChange={(e) => setMusicCover(e.target.value)} placeholder="URL Pochette" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none text-sm" /> </div>
-                <div className="flex items-center gap-3"> <span className="text-[9px] font-bold uppercase tracking-widest opacity-40">Musique Active</span> <button onClick={() => setMusicEnabled(!musicEnabled)} className={`w-12 h-6 rounded-full transition-colors relative ${ musicEnabled ? "bg-primary-red" : "bg-text-black/10" }`}> <motion.div animate={{ x: musicEnabled ? 24 : 4 }} className="w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm" /> </button> </div>
+                <div className="flex items-center gap-3"> <span className="text-[9px] font-bold uppercase tracking-widest opacity-40">Musique Active</span> <button onClick={() => setMusicEnabled(!musicEnabled)} className={`w-12 h-6 rounded-full transition-colors relative ${ musicEnabled ? "bg-primary-sage" : "bg-text-black/10" }`}> <motion.div animate={{ x: musicEnabled ? 24 : 4 }} className="w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm" /> </button> </div>
                 <div className="grid grid-cols-2 gap-6"> <input type="text" value={heroTitleMain} onChange={(e) => setHeroTitleMain(e.target.value)} placeholder="Titre Principal" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none font-serif text-xl" /> <input type="text" value={heroTitleSub} onChange={(e) => setHeroTitleSub(e.target.value)} placeholder="Titre Secondaire" className="w-full bg-transparent border-b border-text-black/20 py-2 outline-none font-serif italic text-xl" /> </div>
                 <div className="space-y-4">
                   <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Image d&apos;effet de texte (Remplace la couleur)</label>
@@ -1734,7 +1734,7 @@ export default function AdminDashboard() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Biographie (Bio)</label>
-                    <textarea value={profileBio} onChange={(e) => setProfileBio(e.target.value)} placeholder="Quelques mots sur vous..." rows={3} className="w-full bg-transparent border border-text-black/20 rounded-md p-3 outline-none text-sm resize-none focus:border-primary-red transition-all text-text-black" />
+                    <textarea value={profileBio} onChange={(e) => setProfileBio(e.target.value)} placeholder="Quelques mots sur vous..." rows={3} className="w-full bg-transparent border border-text-black/20 rounded-md p-3 outline-none text-sm resize-none focus:border-primary-sage transition-all text-text-black" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">Image de profil (Avatar)</label>
@@ -1768,7 +1768,7 @@ export default function AdminDashboard() {
 
                 <div className="flex items-center gap-3">
                   <span className="text-[9px] font-bold uppercase tracking-widest opacity-40">Modèle 3D Arrière-plan</span>
-                  <button onClick={() => setShow3DBackground(!show3DBackground)} className={`w-12 h-6 rounded-full transition-colors relative ${ show3DBackground ? "bg-primary-red" : "bg-text-black/10" }`}>
+                  <button onClick={() => setShow3DBackground(!show3DBackground)} className={`w-12 h-6 rounded-full transition-colors relative ${ show3DBackground ? "bg-primary-sage" : "bg-text-black/10" }`}>
                     <motion.div animate={{ x: show3DBackground ? 24 : 4 }} className="w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm" />
                   </button>
                 </div>
@@ -1783,7 +1783,7 @@ export default function AdminDashboard() {
                           type="text" 
                           value={statueModelUrl} 
                           onChange={(e) => setStatueModelUrl(e.target.value)} 
-                          className="flex-1 bg-white/5 border border-text-black/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white" 
+                          className="flex-1 bg-white/5 border border-text-black/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-sage transition-all text-white" 
                           placeholder="URL du fichier .glb (ex: https://...)" 
                         />
                         <label className="bg-white/10 border border-text-black/10 hover:bg-white/20 px-6 rounded-2xl text-xs font-bold uppercase tracking-widest flex items-center gap-2 cursor-pointer transition-all">
@@ -1815,7 +1815,7 @@ export default function AdminDashboard() {
                       <button 
                         type="button"
                         onClick={() => setUseOriginalMaterial(!useOriginalMaterial)} 
-                        className={`w-12 h-6 rounded-full transition-colors relative ${ useOriginalMaterial ? "bg-primary-red" : "bg-text-black/10" }`}
+                        className={`w-12 h-6 rounded-full transition-colors relative ${ useOriginalMaterial ? "bg-primary-sage" : "bg-text-black/10" }`}
                       >
                         <motion.div animate={{ x: useOriginalMaterial ? 24 : 4 }} className="w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm" />
                       </button>
@@ -1832,7 +1832,7 @@ export default function AdminDashboard() {
                           disabled={useOriginalMaterial}
                           value={statueTextureUrl} 
                           onChange={(e) => setStatueTextureUrl(e.target.value)} 
-                          className="flex-1 bg-white/5 border border-text-black/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white" 
+                          className="flex-1 bg-white/5 border border-text-black/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-sage transition-all text-white" 
                           placeholder="URL de la texture (ex: https://...)" 
                         />
                         <label className={`bg-white/10 border border-text-black/10 px-6 rounded-2xl text-xs font-bold uppercase tracking-widest flex items-center gap-2 cursor-pointer transition-all ${useOriginalMaterial ? 'cursor-not-allowed' : 'hover:bg-white/20'}`}>
@@ -1859,14 +1859,14 @@ export default function AdminDashboard() {
 
                 <div className="flex items-center gap-3">
                   <span className="text-[9px] font-bold uppercase tracking-widest opacity-40">Rotation Image Lecteur</span>
-                  <button onClick={() => setMusicRotationEnabled(!musicRotationEnabled)} className={`w-12 h-6 rounded-full transition-colors relative ${ musicRotationEnabled ? "bg-primary-red" : "bg-text-black/10" }`}>
+                  <button onClick={() => setMusicRotationEnabled(!musicRotationEnabled)} className={`w-12 h-6 rounded-full transition-colors relative ${ musicRotationEnabled ? "bg-primary-sage" : "bg-text-black/10" }`}>
                     <motion.div animate={{ x: musicRotationEnabled ? 24 : 4 }} className="w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm" />
                   </button>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <span className="text-[9px] font-bold uppercase tracking-widest opacity-40">Validation manuelle des commentaires</span>
-                  <button onClick={() => setRequireCommentValidation(!requireCommentValidation)} className={`w-12 h-6 rounded-full transition-colors relative ${ requireCommentValidation ? "bg-primary-red" : "bg-text-black/10" }`}>
+                  <button onClick={() => setRequireCommentValidation(!requireCommentValidation)} className={`w-12 h-6 rounded-full transition-colors relative ${ requireCommentValidation ? "bg-primary-sage" : "bg-text-black/10" }`}>
                     <motion.div animate={{ x: requireCommentValidation ? 24 : 4 }} className="w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm" />
                   </button>
                 </div>
@@ -1902,7 +1902,7 @@ export default function AdminDashboard() {
                           const newSections = [...sectionsConfig];
                           newSections[idx].visible = !newSections[idx].visible;
                           setSectionsConfig(newSections);
-                        }} className={`w-10 h-5 rounded-full transition-colors relative ${ section.visible ? "bg-primary-red" : "bg-text-black/10" }`}>
+                        }} className={`w-10 h-5 rounded-full transition-colors relative ${ section.visible ? "bg-primary-sage" : "bg-text-black/10" }`}>
                           <motion.div animate={{ x: section.visible ? 20 : 4 }} className="w-3 h-3 bg-white rounded-full absolute top-1 shadow-sm" />
                         </button>
                       </div>
@@ -1910,7 +1910,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                <button onClick={handleSaveSettings} className="bg-text-black text-white px-10 py-4 font-bold text-xs tracking-widest uppercase hover:bg-primary-red transition-colors">Enregistrer les réglages</button>
+                <button onClick={handleSaveSettings} className="bg-text-black text-white px-10 py-4 font-bold text-xs tracking-widest uppercase hover:bg-primary-sage transition-colors">Enregistrer les réglages</button>
                 <h3 className="font-serif text-2xl border-b border-text-black/10 pb-4 pt-4">Sécurité (A2F)</h3>
                 <div className="space-y-6">
                   {mfaFactors.length > 0 ? (
@@ -1921,11 +1921,11 @@ export default function AdminDashboard() {
                   ) : (
                     <div className="space-y-4">
                       {!mfaEnrollment ? (
-                        <button type="button" onClick={handleMfaEnroll} className="bg-primary-red text-white px-6 py-3 text-[10px] font-bold uppercase tracking-widest rounded-xs hover:bg-red-600 transition-all">Activer l&apos;A2F</button>
+                        <button type="button" onClick={handleMfaEnroll} className="bg-primary-sage text-white px-6 py-3 text-[10px] font-bold uppercase tracking-widest rounded-xs hover:bg-red-600 transition-all">Activer l&apos;A2F</button>
                       ) : (
                         <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-2xl space-y-8">
                           <QRCodeSVG value={mfaEnrollment.totp.uri} size={180} />
-                          <input type="text" value={mfaCode} onChange={(e) => setMfaCode(e.target.value)} placeholder="000 000" className="flex-1 bg-white/5 border border-white/10 py-4 rounded-xl outline-none text-center text-3xl tracking-[0.2em] font-serif focus:border-primary-red transition-all text-white" maxLength={6} autoFocus />
+                          <input type="text" value={mfaCode} onChange={(e) => setMfaCode(e.target.value)} placeholder="000 000" className="flex-1 bg-white/5 border border-white/10 py-4 rounded-xl outline-none text-center text-3xl tracking-[0.2em] font-serif focus:border-primary-sage transition-all text-white" maxLength={6} autoFocus />
                           <button type="button" onClick={handleMfaVerify} className="bg-text-black text-white px-8 py-2 text-[10px] font-bold uppercase tracking-widest rounded-xs">Vérifier & Activer</button>
                           {mfaError && <p className="text-red-600 text-[10px] font-bold uppercase">{mfaError}</p>}
                         </div>
@@ -1945,7 +1945,7 @@ export default function AdminDashboard() {
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-2xl bg-[#0a0a0a]/95 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl p-8 max-h-[90vh] overflow-y-auto text-white">
                 <form onSubmit={handleSubmitProduct} className="space-y-6">
                   <div className="flex justify-between items-center border-b border-white/10 pb-6">
-                    <h3 className="font-serif text-3xl italic text-primary-red">
+                    <h3 className="font-serif text-3xl italic text-primary-sage">
                       {editingProduct ? "Modifier le Produit" : "Nouveau Produit"}
                     </h3>
                     <button type="button" onClick={() => setIsProductModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors text-white/50 hover:text-white">
@@ -1960,7 +1960,7 @@ export default function AdminDashboard() {
                         type="text" 
                         value={prodName} 
                         onChange={(e) => setProdName(e.target.value)} 
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white" 
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-sage transition-all text-white" 
                         placeholder="Ex: Logo Design Premium" 
                         required 
                       />
@@ -1971,7 +1971,7 @@ export default function AdminDashboard() {
                         type="number" 
                         value={prodPrice} 
                         onChange={(e) => setProdPrice(Number(e.target.value))} 
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white" 
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-sage transition-all text-white" 
                         placeholder="Ex: 150" 
                         required 
                       />
@@ -1984,7 +1984,7 @@ export default function AdminDashboard() {
                       value={prodDesc} 
                       onChange={(e) => setProdDesc(e.target.value)} 
                       rows={4} 
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white resize-none" 
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-sage transition-all text-white resize-none" 
                       placeholder="Décrivez ce produit..." 
                       required 
                     />
@@ -2000,7 +2000,7 @@ export default function AdminDashboard() {
                           setProdImagesText(val);
                         }} 
                         rows={4} 
-                        className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white resize-none" 
+                        className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-sage transition-all text-white resize-none" 
                         placeholder="https://site.com/image1.jpg&#10;https://site.com/image2.jpg" 
                         required 
                       />
@@ -2037,7 +2037,7 @@ export default function AdminDashboard() {
                         type="text" 
                         value={prodLink} 
                         onChange={(e) => setProdLink(e.target.value)} 
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white" 
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-sage transition-all text-white" 
                         placeholder="https://..." 
                       />
                     </div>
@@ -2047,7 +2047,7 @@ export default function AdminDashboard() {
                         type="text" 
                         value={prodLinkText} 
                         onChange={(e) => setProdLinkText(e.target.value)} 
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white" 
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-sage transition-all text-white" 
                         placeholder="Ex: Voir la démo" 
                       />
                     </div>
@@ -2059,12 +2059,12 @@ export default function AdminDashboard() {
                       value={prodPurchaseMsg} 
                       onChange={(e) => setProdPurchaseMsg(e.target.value)} 
                       rows={3} 
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white resize-none" 
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-sage transition-all text-white resize-none" 
                       placeholder="Ex: Bonjour, je souhaite commander ce service..." 
                     />
                   </div>
 
-                  <button type="submit" className="w-full bg-primary-red text-white py-4 rounded-2xl font-bold text-xs tracking-widest uppercase hover:bg-red-600 transition-all shadow-2xl shadow-primary-red/30">
+                  <button type="submit" className="w-full bg-primary-sage text-white py-4 rounded-2xl font-bold text-xs tracking-widest uppercase hover:bg-red-600 transition-all shadow-2xl shadow-primary-sage/30">
                     Enregistrer le Produit
                   </button>
                 </form>
@@ -2078,7 +2078,7 @@ export default function AdminDashboard() {
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-5xl bg-[#0a0a0a]/95 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl p-10 max-h-[90vh] overflow-y-auto text-white">
                 <form onSubmit={handleSubmit} className="space-y-8">
                   <div className="flex justify-between items-center border-b border-white/10 pb-6">
-                    <h3 className="font-serif text-4xl italic text-primary-red">
+                    <h3 className="font-serif text-4xl italic text-primary-sage">
                       {editingProject ? "Modifier le Poste" : "Nouveau Poste"}
                     </h3>
                     <button type="button" onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors text-white/50 hover:text-white">
@@ -2093,7 +2093,7 @@ export default function AdminDashboard() {
                         type="text" 
                         value={formTitle} 
                         onChange={(e) => setFormTitle(e.target.value)} 
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white" 
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-sage transition-all text-white" 
                         placeholder="Ex: Refonte Site Web" 
                         required 
                       />
@@ -2104,7 +2104,7 @@ export default function AdminDashboard() {
                         type="text" 
                         value={formCategory} 
                         onChange={(e) => setFormCategory(e.target.value)} 
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white" 
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-sage transition-all text-white" 
                         placeholder="Ex: Web Design / Développement" 
                       />
                     </div>
@@ -2117,7 +2117,7 @@ export default function AdminDashboard() {
                         type="text" 
                         value={formDate} 
                         onChange={(e) => setFormDate(e.target.value)} 
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white" 
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-sage transition-all text-white" 
                         placeholder="Ex: 2024 ou Mai 2024" 
                         required 
                       />
@@ -2127,7 +2127,7 @@ export default function AdminDashboard() {
                       <select 
                         value={formStatus} 
                         onChange={(e) => setFormStatus(e.target.value as "Publié" | "Brouillon")} 
-                        className="w-full bg-[#111] border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white"
+                        className="w-full bg-[#111] border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-sage transition-all text-white"
                       >
                         <option value="Publié">Publié</option>
                         <option value="Brouillon">Brouillon</option>
@@ -2145,7 +2145,7 @@ export default function AdminDashboard() {
                           const val = e.target.value;
                           setFormImage(val);
                         }} 
-                        className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white" 
+                        className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-sage transition-all text-white" 
                         placeholder="URL de l'image (ex: https://...)" 
                         required 
                       />
@@ -2174,7 +2174,7 @@ export default function AdminDashboard() {
                       <select 
                         value={formLinkType} 
                         onChange={(e) => setFormLinkType(e.target.value as "external" | "internal")} 
-                        className="w-full bg-[#111] border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white"
+                        className="w-full bg-[#111] border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-sage transition-all text-white"
                       >
                         <option value="internal">Page interne (Détails du projet)</option>
                         <option value="external">Lien externe (Site web, github, etc)</option>
@@ -2187,7 +2187,7 @@ export default function AdminDashboard() {
                           type="text" 
                           value={formUrl} 
                           onChange={(e) => setFormUrl(e.target.value)} 
-                          className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white" 
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-sage transition-all text-white" 
                           placeholder="https://example.com" 
                           required 
                         />
@@ -2201,7 +2201,7 @@ export default function AdminDashboard() {
                       value={formContent} 
                       onChange={(e) => setFormContent(e.target.value)} 
                       rows={6} 
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white resize-none" 
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-sage transition-all text-white resize-none" 
                       placeholder="Décrivez le projet en détail..." 
                     />
                   </div>
@@ -2212,7 +2212,7 @@ export default function AdminDashboard() {
                       value={formDetails} 
                       onChange={(e) => setFormDetails(e.target.value)} 
                       rows={3} 
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-red transition-all text-white resize-none" 
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-primary-sage transition-all text-white resize-none" 
                       placeholder="Ex: Temps de lecture: 5 min • Rôle: Designer • Client: Lucas" 
                     />
                   </div>
@@ -2251,7 +2251,7 @@ export default function AdminDashboard() {
                     )}
                   </div>
 
-                  <button type="submit" className="w-full bg-primary-red text-white py-5 rounded-2xl font-bold text-xs tracking-widest uppercase hover:bg-red-600 transition-all shadow-2xl shadow-primary-red/30">
+                  <button type="submit" className="w-full bg-primary-sage text-white py-5 rounded-2xl font-bold text-xs tracking-widest uppercase hover:bg-red-600 transition-all shadow-2xl shadow-primary-sage/30">
                     ENREGISTRER LE POSTE
                   </button>
                 </form>
@@ -2261,7 +2261,7 @@ export default function AdminDashboard() {
         </AnimatePresence>
 
         {uploadSuccess && (
-          <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 50 }} className="fixed bottom-12 right-12 bg-primary-red text-white px-8 py-4 rounded-2xl font-bold text-xs tracking-widest shadow-2xl uppercase flex items-center gap-3 border border-white/20 backdrop-blur-xl">
+          <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 50 }} className="fixed bottom-12 right-12 bg-primary-sage text-white px-8 py-4 rounded-2xl font-bold text-xs tracking-widest shadow-2xl uppercase flex items-center gap-3 border border-white/20 backdrop-blur-xl">
             <Check size={18} /> Synchronisé !
           </motion.div>
         )}
@@ -2284,7 +2284,7 @@ export default function AdminDashboard() {
                 <h2 className="text-2xl font-serif text-white mb-6">Historique IP</h2>
                 
                 {isFetchingIps ? (
-                  <div className="py-12 flex justify-center"><div className="w-8 h-8 border-2 border-primary-red border-t-transparent rounded-full animate-spin"></div></div>
+                  <div className="py-12 flex justify-center"><div className="w-8 h-8 border-2 border-primary-sage border-t-transparent rounded-full animate-spin"></div></div>
                 ) : ipHistoryData.length > 0 ? (
                   <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
                     {ipHistoryData.map((item, idx) => (
@@ -2308,15 +2308,15 @@ export default function AdminDashboard() {
         <AnimatePresence>
           {isGlobalIpModalOpen && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-              <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} className="bg-[#111] border border-primary-red/30 rounded-3xl p-8 max-w-2xl w-full shadow-[0_0_50px_rgba(255,49,49,0.1)] relative">
+              <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} className="bg-[#111] border border-primary-sage/30 rounded-3xl p-8 max-w-2xl w-full shadow-[0_0_50px_rgba(255,49,49,0.1)] relative">
                 <button onClick={() => setIsGlobalIpModalOpen(false)} className="absolute top-6 right-6 text-white/50 hover:text-white transition-colors"><X size={24} /></button>
                 <div className="flex items-center gap-4 mb-6 border-b border-white/10 pb-4">
-                  <div className="p-3 bg-primary-red/10 text-primary-red rounded-xl"><User size={24} /></div>
+                  <div className="p-3 bg-primary-sage/10 text-primary-sage rounded-xl"><User size={24} /></div>
                   <h2 className="text-2xl font-serif text-white">Logs Globaux des Visiteurs (IP)</h2>
                 </div>
                 
                 {isFetchingGlobalIps ? (
-                  <div className="py-16 flex justify-center"><div className="w-10 h-10 border-2 border-primary-red border-t-transparent rounded-full animate-spin"></div></div>
+                  <div className="py-16 flex justify-center"><div className="w-10 h-10 border-2 border-primary-sage border-t-transparent rounded-full animate-spin"></div></div>
                 ) : globalIpData.length > 0 ? (
                   <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
                     {globalIpData.map((item, idx) => (
@@ -2333,7 +2333,7 @@ export default function AdminDashboard() {
                   <p className="text-white/40 italic text-center py-10">Aucun visiteur enregistré.</p>
                 )}
                 
-                <p className="text-[10px] text-primary-red mt-6 text-center leading-relaxed font-bold tracking-widest uppercase">
+                <p className="text-[10px] text-primary-sage mt-6 text-center leading-relaxed font-bold tracking-widest uppercase">
                   Attention: Ces données sont sensibles et privées.
                 </p>
               </motion.div>
@@ -2383,7 +2383,7 @@ export default function AdminDashboard() {
                 <div className="p-6 overflow-y-auto space-y-8 flex-1 custom-scrollbar">
                   {/* Messages Section */}
                   <div className="space-y-4">
-                    <h5 className="text-[10px] font-bold uppercase tracking-widest text-primary-red flex items-center gap-2 border-b border-white/5 pb-2">
+                    <h5 className="text-[10px] font-bold uppercase tracking-widest text-primary-sage flex items-center gap-2 border-b border-white/5 pb-2">
                       <Mail size={12} /> Contact & Messages ({selectedUserHistory.messages.length})
                     </h5>
                     {selectedUserHistory.messages.length === 0 ? (

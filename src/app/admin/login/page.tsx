@@ -100,11 +100,11 @@ export default function LoginPage() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md bg-white/40 border border-text-black/10 p-8 rounded-sm shadow-xl shadow-shadow-red/10 relative"
       >
-        <Link href="/" className="absolute -top-12 left-0 text-text-black/50 hover:text-primary-red flex items-center gap-2 text-sm uppercase tracking-widest font-medium transition-colors">
+        <Link href="/" className="absolute -top-12 left-0 text-text-black/50 hover:text-primary-sage flex items-center gap-2 text-sm uppercase tracking-widest font-medium transition-colors">
           <ArrowLeft size={16} /> Retour au site
         </Link>
         <div className="text-center mb-8">
-          <h1 className="font-serif text-4xl text-primary-red mb-2 tracking-tighter">CAILLAT</h1>
+          <h1 className="font-serif text-4xl text-primary-sage mb-2 tracking-tighter">CAILLAT</h1>
           <p className="text-text-black/50 text-sm uppercase tracking-widest">Accès Administration</p>
         </div>
 
@@ -116,7 +116,7 @@ export default function LoginPage() {
                 type="email" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-transparent border border-text-black/20 rounded-sm px-4 py-3 focus:outline-none focus:border-primary-red transition-colors"
+                className="w-full bg-transparent border border-text-black/20 rounded-sm px-4 py-3 focus:outline-none focus:border-primary-sage transition-colors"
                 placeholder="votre@email.com"
                 required
               />
@@ -127,13 +127,13 @@ export default function LoginPage() {
                 type="password" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-transparent border border-text-black/20 rounded-sm px-4 py-3 focus:outline-none focus:border-primary-red transition-colors"
+                className="w-full bg-transparent border border-text-black/20 rounded-sm px-4 py-3 focus:outline-none focus:border-primary-sage transition-colors"
                 required
               />
             </div>
 
             {error && (
-              <p className="text-primary-red text-sm font-medium">{error}</p>
+              <p className="text-primary-sage text-sm font-medium">{error}</p>
             )}
 
             <button 
@@ -155,7 +155,7 @@ export default function LoginPage() {
                   type="text" 
                   value={totpCode}
                   onChange={(e) => setTotpCode(e.target.value.replace(/\s/g, ''))}
-                  className="w-full bg-transparent border border-text-black/20 rounded-sm px-4 py-4 text-center text-3xl tracking-[0.5em] font-serif focus:outline-none focus:border-primary-red transition-colors"
+                  className="w-full bg-transparent border border-text-black/20 rounded-sm px-4 py-4 text-center text-3xl tracking-[0.5em] font-serif focus:outline-none focus:border-primary-sage transition-colors"
                   placeholder="000000"
                   maxLength={6}
                   required
@@ -164,7 +164,7 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <p className="text-primary-red text-sm font-medium text-center">{error}</p>
+              <p className="text-primary-sage text-sm font-medium text-center">{error}</p>
             )}
 
             <button 

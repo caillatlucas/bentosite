@@ -4,10 +4,10 @@
 
 :root {
   --background: #d3d3d3;
-  --primary-red: #ff3131;
+  --primary-sage: #606c38;
   --text-black: #111111;
   --soft-black: #1c1c1c;
-  --shadow-red: rgba(255, 49, 49, 0.18);
+  --shadow-sage: rgba(96, 108, 56, 0.18);
   --font-serif: var(--font-playfair);
   --font-sans: var(--font-inter);
 }
@@ -22,7 +22,7 @@ html, body {
 }
 
 ::selection {
-  background: var(--primary-red);
+  background: var(--primary-sage);
   color: #fff;
 }
 
@@ -38,7 +38,19 @@ html, body {
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--primary-red);
+  background: var(--primary-sage);
+}
+
+@layer utilities {
+  .text-primary-sage {
+    color: var(--primary-sage);
+  }
+  .bg-primary-sage {
+    background-color: var(--primary-sage);
+  }
+  .border-primary-sage {
+    border-color: var(--primary-sage);
+  }
 }
 
 .no-scrollbar::-webkit-scrollbar {
