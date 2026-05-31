@@ -16,8 +16,8 @@ export const metadata: Metadata = {
   title: "CAILLAT.",
   description: "Portfolio de Lucas Caillat - Freelance Informatique",
   icons: {
-    icon: "/favicon.png",
-    shortcut: "/favicon.ico",
+    icon: "public/favicon.ico",
+    shortcut: "public/favicon.ico",
   },
 };
 
