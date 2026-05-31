@@ -4,11 +4,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  basePath: '/bentosite',
   trailingSlash: true,
-};
-  basePath: '/bentosite',
-  output: 'export', // si vous utilisez l'export statique
 };
 
 export default nextConfig;
