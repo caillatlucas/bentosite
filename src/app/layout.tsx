@@ -16,9 +16,9 @@ export const metadata: Metadata = {
   title: "CAILLAT.",
   description: "Portfolio de Lucas Caillat - Freelance Informatique",
   icons: {
-    icon: "/favicon.ico",          // Corrigé : suppression de "public"
-    shortcut: "/favicon.ico",      // Corrigé : suppression de "public"
-    apple: "/icon-192x192.png",
+    icon: "/bentosite/favicon.ico",
+    shortcut: "/bentosite/favicon.ico",
+    apple: "/bentosite/icon-192x192.png",
   },
 };
 
@@ -33,18 +33,18 @@ export default function RootLayout({
       className={`${playfair.variable} ${inter.variable} h-full antialiased`}
     >
       <head>
-        {/* Tous les chemins /bentosite/... ont été corrigés en /... */}
-        <link rel="icon" type="image/png" href="/favicon.png?v=2" />
-        <link rel="shortcut icon" href="/favicon.ico?v=2" />
-        <link rel="manifest" href="/manifest.json" />
+        {/* Tous les chemins corrigés avec basePath /bentosite/ */}
+        <link rel="icon" type="image/png" href="/bentosite/favicon.png?v=2" />
+        <link rel="shortcut icon" href="/bentosite/favicon.ico?v=2" />
+        <link rel="manifest" href="/bentosite/manifest.json" />
         <meta name="theme-color" content="#0d0d0d" />
-        <link rel="apple-touch-icon" href="/icon-192x192.png" />
+        <link rel="apple-touch-icon" href="/bentosite/icon-192x192.png" />
         <script
           dangerouslySetInnerHTML={{
             __html: `
               if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
                 window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js').then(
+                  navigator.serviceWorker.register('/bentosite/sw.js').then(
                     function(registration) {
                       console.log('PWA Service Worker registered with scope: ', registration.scope);
                     },
